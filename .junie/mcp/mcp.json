@@ -1,0 +1,22 @@
+{
+    "mcpServers": {
+        "laravel-boost": {
+            "command": "C:\\Users\\Mohamed",
+            "args": [
+                "Ayman\\.config\\herd\\bin\\php84\\php.exe",
+                "C:\\Users\\Mohamed Ayman\\Herd\\credited-hour-system\\artisan",
+                "boost:mcp"
+            ]
+        },
+        "herd": {
+            "command": "C:\\Users\\Mohamed",
+            "args": [
+                "Ayman\\.config\\herd\\bin\\php84\\php.exe",
+                "C:/Users/Mohamed Ayman/.config/herd/bin/herd-mcp.phar"
+            ],
+            "env": {
+                "SITE_PATH": "C:\\Users\\Mohamed Ayman\\Herd\\credited-hour-system"
+            }
+        }
+    }
+}
