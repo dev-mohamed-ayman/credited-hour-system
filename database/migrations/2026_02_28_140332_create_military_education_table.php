@@ -10,11 +10,12 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('levels', function (Blueprint $table) {
+        Schema::create('military_education', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->boolean('military_required_for_males')->default(false);
-            $table->boolean('military_required_for_females')->default(false);
+            $table->foreignId('student_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('level_id')->constrained();
+            $table->string('status')->default('pending');
+            $table->date('completed_at')->nullable();
             $table->timestamps();
         });
     }
@@ -24,6 +25,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('levels');
+        Schema::dropIfExists('military_education');
     }
 };

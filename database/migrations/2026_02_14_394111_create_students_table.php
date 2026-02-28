@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -45,6 +44,7 @@ return new class extends Migration
             $table->string('password');
             $table->string('plain_password');
             $table->foreignId('academic_advisor_id')->nullable()->constrained()->nullOnDelete();
+            $table->boolean('military_education_passed')->default(false);
             $table->softDeletes();
             $table->timestamps();
         });
