@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AcademicAdvisorController;
 use App\Http\Controllers\Admin\CertificateTypeController;
 use App\Http\Controllers\Admin\CityController;
 use App\Http\Controllers\Admin\CountryController;
@@ -42,3 +43,6 @@ Route::resource('levels', LevelController::class)->except(['show']);
 
 // Student Routes
 Route::resource('students', StudentController::class);
+
+// Academic Advisor Routes
+Route::resource('academic-advisors', AcademicAdvisorController::class)->except(['show']);

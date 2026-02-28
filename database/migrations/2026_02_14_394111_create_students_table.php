@@ -44,6 +44,7 @@ return new class extends Migration
             $table->string('username')->unique();
             $table->string('password');
             $table->string('plain_password');
+            $table->foreignId('academic_advisor_id')->nullable()->constrained()->nullOnDelete();
             $table->timestamps();
         });
     }

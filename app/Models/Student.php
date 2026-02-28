@@ -43,6 +43,7 @@ class Student extends Model
     {
         return $this->belongsTo(Section::class);
     }
+
     public function level()
     {
         return $this->belongsTo(Level::class);
@@ -52,8 +53,14 @@ class Student extends Model
     {
         return $this->belongsTo(Country::class);
     }
+
     public function city()
     {
         return $this->belongsTo(City::class);
+    }
+
+    public function academicAdvisor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(AcademicAdvisor::class);
     }
 }

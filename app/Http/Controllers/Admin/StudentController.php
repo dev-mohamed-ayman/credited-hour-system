@@ -23,6 +23,11 @@ class StudentController extends Controller
         return view('admin.pages.student.edit', compact('student'));
     }
 
+    public function show(Student $student)
+    {
+        return view('admin.pages.student.show', compact('student'));
+    }
+
     public function update(Request $request, Student $student)
     {
         return $request;

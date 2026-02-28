@@ -109,12 +109,21 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <label class="form-label small">الحالة</label>
                         <select wire:model.live="status" class="form-select form-select-sm">
                             <option value="">الكل</option>
                             @foreach(\App\Enums\Student\StudentStatus::cases() as $st)
                                 <option value="{{ $st->value }}">{{ $st->label() }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">المرشد الأكاديمي</label>
+                        <select wire:model.live="academic_advisor_id" class="form-select form-select-sm">
+                            <option value="">الكل</option>
+                            @foreach($this->academicAdvisors as $advisor)
+                                <option value="{{ $advisor->id }}">{{ $advisor->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -159,6 +168,9 @@
                 @if(in_array('section', $selectedColumns))
                     <th class="fw-bold">الشعبة</th>
                 @endif
+                @if(in_array('academic_advisor', $selectedColumns))
+                    <th class="fw-bold">المرشد الأكاديمي</th>
+                @endif
                 @if(in_array('status', $selectedColumns))
                     <th class="fw-bold">الحالة</th>
                 @endif
@@ -171,7 +183,7 @@
                     @if(in_array('name', $selectedColumns))
                         <td>
                             <div class="d-flex justify-content-start align-items-center">
-                                <div class="avatar-wrapper me-3">
+                                <a href="{{ route('students.show', $student) }}" class="avatar-wrapper me-3">
                                     <div class="avatar avatar-sm">
                                         @if($student->image)
                                             <img src="{{ asset('storage/' . $student->image) }}" alt="Avatar"
@@ -182,9 +194,11 @@
                                                 </span>
                                         @endif
                                     </div>
-                                </div>
+                                </a>
                                 <div class="d-flex flex-column">
-                                    <span class="text-heading fw-medium">{{ $student->name }}</span>
+                                    <a href="{{ route('students.show', $student) }}" class="text-heading fw-medium text-decoration-none hover-primary">
+                                        {{ $student->name }}
+                                    </a>
                                     @if(!in_array('email', $selectedColumns))
                                         <small class="text-muted">{{ $student->email ?? 'لا يوجد بريد' }}</small>
                                     @endif
@@ -223,6 +237,15 @@
                     @if(in_array('section', $selectedColumns))
                         <td>{{ $student->section?->name }}</td>
                     @endif
+                    @if(in_array('academic_advisor', $selectedColumns))
+                        <td>
+                            @if($student->academicAdvisor)
+                                <span class="badge bg-label-primary">{{ $student->academicAdvisor->name }}</span>
+                            @else
+                                <span class="badge bg-label-secondary">غير معين</span>
+                            @endif
+                        </td>
+                    @endif
                     @if(in_array('status', $selectedColumns))
                         <td>
                             @php
@@ -245,6 +268,9 @@
                                 <i class="ti tabler-dots-vertical"></i>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end">
+                                <a href="{{ route('students.show', $student) }}" class="dropdown-item">
+                                    <i class="ti tabler-eye me-1"></i> عرض التفاصيل
+                                </a>
                                 <a href="{{ route('students.edit', $student) }}" class="dropdown-item">
                                     <i class="ti tabler-edit me-1"></i> تعديل
                                 </a>

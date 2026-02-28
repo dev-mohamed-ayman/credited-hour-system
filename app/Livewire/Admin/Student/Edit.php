@@ -14,6 +14,8 @@ use App\Models\Nationality;
 use App\Models\Section;
 use App\Models\Student;
 use App\Models\StudentScore;
+use App\Models\AcademicAdvisor;
+use App\Models\AcademicAdvisorAssignment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -321,6 +323,9 @@ class Edit extends Component
 
         $validated = $this->validate($rules);
 
+        // Convert empty strings to null
+        $validated = array_map(fn($value) => $value === '' ? null : $value, $validated);
+
         if ($this->image) {
             $validated['image'] = $this->image->store('students', 'public');
         } else {
@@ -336,6 +341,39 @@ class Edit extends Component
 
         unset($validated['department_id']);
         unset($validated['requirements']);
+
+        // Handle Academic Advisor re-assignment if section or level changed
+        if ($this->student->section_id != $validated['section_id'] || $this->student->level_id != $validated['level_id']) {
+            // Decrement old advisor's count
+            if ($this->student->academicAdvisor) {
+                $this->student->academicAdvisor->decrement('current_students');
+            }
+
+            // Find best new academic advisor
+            $advisor = AcademicAdvisor::query()
+                ->whereHas('assignments', function ($query) use ($validated) {
+                    $query->where(function ($q) {
+                        $q->where('department_id', $this->department_id)
+                            ->orWhereNull('department_id');
+                    })->where(function ($q) use ($validated) {
+                        $q->where('section_id', $validated['section_id'])
+                            ->orWhereNull('section_id');
+                    })->where(function ($q) use ($validated) {
+                        $q->where('level_id', $validated['level_id'])
+                            ->orWhereNull('level_id');
+                    });
+                })
+                ->whereColumn('current_students', '<', 'max_students')
+                ->orderBy('current_students')
+                ->first();
+
+            if ($advisor) {
+                $validated['academic_advisor_id'] = $advisor->id;
+                $advisor->increment('current_students');
+            } else {
+                $validated['academic_advisor_id'] = null;
+            }
+        }
 
         $this->student->update($validated);
 

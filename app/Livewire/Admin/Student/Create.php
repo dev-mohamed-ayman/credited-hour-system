@@ -14,6 +14,8 @@ use App\Models\Nationality;
 use App\Models\Section;
 use App\Models\Student;
 use App\Models\StudentScore;
+use App\Models\AcademicAdvisor;
+use App\Models\AcademicAdvisorAssignment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -41,32 +43,32 @@ class Create extends Component
 
     public $nationality_id;
 
-    public $address = '';
+    public $address;
 
     public $is_foreign = false;
 
-    public $national_id = '';
+    public $national_id;
 
-    public $national_id_place = '';
+    public $national_id_place;
 
-    public $email = '';
+    public $email;
 
-    public $phone = '';
+    public $phone;
 
-    public $landline_phone = '';
+    public $landline_phone;
 
-    public $guardian_job = '';
+    public $guardian_job;
 
-    public $guardian_phone_1 = '';
+    public $guardian_phone_1;
 
-    public $guardian_phone_2 = '';
+    public $guardian_phone_2;
 
     // Certificate Info
     public $certificate_type_id;
 
     public $graduation_date;
 
-    public $seat_number = '';
+    public $seat_number;
 
     public $score;
 
@@ -77,7 +79,7 @@ class Create extends Component
 
     public $status;
 
-    public $status_notes = '';
+    public $status_notes;
 
     public $department_id;
 
@@ -87,15 +89,15 @@ class Create extends Component
 
     public $study_status;
 
-    public $username = '';
+    public $username;
 
-    public $password = '';
+    public $password;
 
     public $showFullForm = false;
 
     public function toggleFullForm()
     {
-        $this->showFullForm = ! $this->showFullForm;
+        $this->showFullForm = !$this->showFullForm;
     }
 
     public function mount()
@@ -154,7 +156,7 @@ class Create extends Component
     #[Computed]
     public function levels()
     {
-        return $this->section_id ? Level::whereHas('sections', fn ($q) => $q->where('section_id', $this->section_id))->get() : collect();
+        return $this->section_id ? Level::whereHas('sections', fn($q) => $q->where('section_id', $this->section_id))->get() : collect();
     }
 
     #[Computed]
@@ -167,7 +169,7 @@ class Create extends Component
     public function percentageScore()
     {
         if ($this->selectedCertificateType && $this->score) {
-            return number_format(($this->score / $this->selectedCertificateType->total_score) * 100, 2).'%';
+            return number_format(($this->score / $this->selectedCertificateType->total_score) * 100, 2) . '%';
         }
 
         return '0%';
@@ -176,7 +178,7 @@ class Create extends Component
     #[Computed]
     public function departmentRequirements()
     {
-        if (! $this->selectedCertificateType || ! $this->department_id) {
+        if (!$this->selectedCertificateType || !$this->department_id) {
             return collect();
         }
 
@@ -216,7 +218,7 @@ class Create extends Component
         $this->dispatch('section-updated');
 
         if ($value) {
-            $levels = Level::whereHas('sections', fn ($q) => $q->where('section_id', $value))->get(['id', 'name'])->toArray();
+            $levels = Level::whereHas('sections', fn($q) => $q->where('section_id', $value))->get(['id', 'name'])->toArray();
             $this->dispatch('levels-loaded', levels: $levels);
         } else {
             $this->dispatch('levels-loaded', levels: []);
@@ -292,6 +294,9 @@ class Create extends Component
 
         $validated = $this->validate($rules);
 
+        // Convert empty strings to null
+        $validated = array_map(fn($value) => $value === '' ? null : $value, $validated);
+
         if ($this->image) {
             $validated['image'] = $this->image->store('students', 'public');
         }
@@ -303,6 +308,30 @@ class Create extends Component
         // Remove department_id as it's not in the students table
         unset($validated['department_id']);
         unset($validated['requirements']);
+
+        // Find best academic advisor
+        $advisor = AcademicAdvisor::query()
+            ->whereHas('assignments', function ($query) use ($validated) {
+                $query->where(function ($q) use ($validated) {
+                    $q->where('department_id', $this->department_id)
+                        ->orWhereNull('department_id');
+                })->where(function ($q) use ($validated) {
+                    $q->where('section_id', $validated['section_id'])
+                        ->orWhereNull('section_id');
+                })->where(function ($q) use ($validated) {
+                    $q->where('level_id', $validated['level_id'])
+                        ->orWhereNull('level_id');
+                });
+            })
+            ->whereColumn('current_students', '<', 'max_students')
+            ->orderBy('current_students')
+            ->first();
+
+        if ($advisor) {
+            $validated['academic_advisor_id'] = $advisor->id;
+            $advisor->increment('current_students');
+        }
+
 
         $student = Student::create($validated);
 

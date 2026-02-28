@@ -53,6 +53,9 @@ class Index extends Component
     #[Url(except: '')]
     public $study_status = '';
 
+    #[Url(except: '')]
+    public $academic_advisor_id = '';
+
     public array $selectedColumns = ['name', 'username', 'national_id', 'score', 'status'];
 
     public array $availableColumns = [
@@ -66,6 +69,7 @@ class Index extends Component
         ['key' => 'gender', 'label' => 'الجنس'],
         ['key' => 'level', 'label' => 'الفرقة'],
         ['key' => 'section', 'label' => 'الشعبة'],
+        ['key' => 'academic_advisor', 'label' => 'المرشد الأكاديمي'],
     ];
 
     public $showFilters = false;
@@ -100,6 +104,7 @@ class Index extends Component
             'application_category',
             'status',
             'study_status',
+            'academic_advisor_id',
         ]);
         $this->resetPage();
     }
@@ -109,7 +114,7 @@ class Index extends Component
         if (in_array($property, [
             'search', 'perPage', 'department_id', 'section_id', 'level_id',
             'gender', 'nationality_id', 'certificate_type_id',
-            'application_category', 'status', 'study_status',
+            'application_category', 'status', 'study_status', 'academic_advisor_id',
         ])) {
             $this->resetPage();
         }
@@ -143,6 +148,12 @@ class Index extends Component
     public function certificateTypes()
     {
         return CertificateType::all();
+    }
+
+    #[Computed]
+    public function academicAdvisors()
+    {
+        return \App\Models\AcademicAdvisor::all();
     }
 
     public function render()
@@ -186,6 +197,10 @@ class Index extends Component
             ->when($this->study_status, function ($query) {
                 $query->where('study_status', $this->study_status);
             })
+            ->when($this->academic_advisor_id, function ($query) {
+                $query->where('academic_advisor_id', $this->academic_advisor_id);
+            })
+            ->with(['level', 'section', 'academicAdvisor'])
             ->latest()
             ->paginate($this->perPage);
 
