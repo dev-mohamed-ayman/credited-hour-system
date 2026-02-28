@@ -48,4 +48,11 @@
     @if (session('info'))
     window.toast('info', @json(session('info')));
     @endif
+
+    document.addEventListener('livewire:init', () => {
+        Livewire.on('toast', (data) => {
+            const toastData = Array.isArray(data) ? data[0] : data;
+            window.toast(toastData.type || 'success', toastData.message || '');
+        });
+    });
 </script>

@@ -175,29 +175,50 @@
         </div>
     </div>
 
+    <!-- Modal Delete -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">تأكيد الحذف</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="ti tabler-alert-triangle text-warning" style="font-size: 4rem;"></i>
+                    </div>
+                    <div class="text-center">
+                        <p class="mb-1">هل أنت متأكد من حذف المرشد الأكاديمي: <br>
+                            <strong class="text-danger" id="deleteAdvisorName"></strong>؟
+                        </p>
+                        <small class="text-muted">هذا الإجراء لا يمكن التراجع عنه وسيتم حذف كافة الارتباطات الخاصة به.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">تأكيد الحذف</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @script
     <script>
+        let advisorIdToDelete = null;
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+
         window.confirmDelete = function (id, name) {
-            Swal.fire({
-                title: 'هل أنت متأكد؟',
-                text: `سيتم حذف المرشد الأكاديمي: ${name}`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'نعم، احذف!',
-                cancelButtonText: 'إلغاء',
-                customClass: {
-                    confirmButton: 'btn btn-primary me-1',
-                    cancelButton: 'btn btn-label-secondary'
-                },
-                buttonsStyling: false
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $wire.delete(id);
-                }
-            });
+            advisorIdToDelete = id;
+            document.getElementById('deleteAdvisorName').textContent = name;
+            deleteModal.show();
         }
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+            if (advisorIdToDelete) {
+                $wire.delete(advisorIdToDelete);
+                deleteModal.hide();
+            }
+        });
     </script>
     @endscript
 </div>
