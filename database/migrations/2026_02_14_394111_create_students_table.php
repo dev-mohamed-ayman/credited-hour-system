@@ -43,6 +43,7 @@ return new class extends Migration
             $table->string('study_status')->nullable();
             $table->string('username')->unique();
             $table->string('password');
+            $table->string('plain_password');
             $table->timestamps();
         });
     }

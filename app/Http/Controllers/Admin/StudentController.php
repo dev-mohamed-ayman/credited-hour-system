@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Student;
 use Illuminate\Http\Request;
 
 class StudentController extends Controller
@@ -17,7 +18,12 @@ class StudentController extends Controller
         return view('admin.pages.student.create');
     }
 
-    public function store(Request $request)
+    public function edit(Student $student)
+    {
+        return view('admin.pages.student.edit', compact('student'));
+    }
+
+    public function update(Request $request, Student $student)
     {
         return $request;
     }
