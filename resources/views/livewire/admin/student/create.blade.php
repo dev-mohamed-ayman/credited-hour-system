@@ -1,4 +1,14 @@
 <div>
+    @if (session()->has('error'))
+        <div class="alert alert-danger alert-dismissible mx-4 mt-3" role="alert">
+            <div class="d-flex">
+                <i class="ti tabler-alert-circle me-2"></i>
+                <div>{{ session('error') }}</div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     <div class="card-header d-flex justify-content-between align-items-center">
         <h4 class="mb-0 card-title">إضافة طالب جديد</h4>
         <button type="button" wire:click="toggleFullForm" class="btn {{ $showFullForm ? 'btn-label-primary' : 'btn-primary' }}">
@@ -36,59 +46,67 @@
                 @enderror
             </div>
 
-            <div class="form-group col-md-4 mb-3" wire:ignore>
+            <div class="form-group col-md-4 mb-3">
                 <label class="form-label">التخصص <span class="text-danger">*</span></label>
-                <select wire:model.live="department_id" id="department_id"
-                    class="form-select select2 @error('department_id') is-invalid @enderror">
-                    <option value="">اختر التخصص</option>
-                    @foreach($this->departments as $department)
-                        <option value="{{$department->id}}">{{$department->name}}</option>
-                    @endforeach
-                </select>
+                <div wire:ignore>
+                    <select wire:model.live="department_id" id="department_id"
+                        class="form-select select2 @error('department_id') is-invalid @enderror">
+                        <option value="">اختر التخصص</option>
+                        @foreach($this->departments as $department)
+                            <option value="{{$department->id}}">{{$department->name}}</option>
+                        @endforeach
+                    </select>
+                </div>
                 @error('department_id')
-                    <div class="invalid-feedback">{{ $message }}</div>
+                    <div class="text-danger small mt-1">{{ $message }}</div>
                 @enderror
             </div>
 
-            <div class="form-group col-md-4 mb-3" wire:ignore>
+            <div class="form-group col-md-4 mb-3">
                 <label class="form-label">الشعبة <span class="text-danger">*</span></label>
-                <select wire:model.live="section_id" id="section_id"
-                    class="form-select select2 @error('section_id') is-invalid @enderror">
-                    <option value="">اختر الشعبة</option>
-                    @foreach($this->sections as $section)
-                        <option value="{{$section->id}}">{{$section->name}}</option>
-                    @endforeach
-                </select>
+                <div wire:ignore>
+                    <select wire:model.live="section_id" id="section_id"
+                        class="form-select select2 @error('section_id') is-invalid @enderror">
+                        <option value="">اختر الشعبة</option>
+                        @foreach($this->sections as $section)
+                            <option value="{{$section->id}}">{{$section->name}}</option>
+                        @endforeach
+                    </select>
+                </div>
                 @error('section_id')
-                    <div class="invalid-feedback">{{ $message }}</div>
+                    <div class="text-danger small mt-1">{{ $message }}</div>
                 @enderror
             </div>
 
-            <div class="form-group col-md-4 mb-3" wire:ignore>
+            <div class="form-group col-md-4 mb-3">
                 <label class="form-label">الفرقة الدراسية <span class="text-danger">*</span></label>
-                <select wire:model.live="level_id" id="level_id"
-                    class="form-select select2 @error('level_id') is-invalid @enderror">
-                    <option value="">اختر الفرقة</option>
-                    @foreach($this->levels as $level)
-                        <option value="{{$level->id}}">{{$level->name}}</option>
-                    @endforeach
-                </select>
+                <div wire:ignore>
+                    <select wire:model.live="level_id" id="level_id"
+                        class="form-select select2 @error('level_id') is-invalid @enderror">
+                        <option value="">اختر الفرقة</option>
+                        @foreach($this->levels as $level)
+                            <option value="{{$level->id}}">{{$level->name}}</option>
+                        @endforeach
+                    </select>
+                </div>
                 @error('level_id')
-                    <div class="invalid-feedback">{{ $message }}</div>
+                    <div class="text-danger small mt-1">{{ $message }}</div>
                 @enderror
             </div>
 
-            <div class="form-group col-md-6 mb-3" wire:ignore>
+            <div class="form-group col-md-6 mb-3">
                 <label class="form-label">الشهاده الحاصل عليها <span class="text-danger">*</span></label>
-                <select wire:model.live="certificate_type_id" id="certificate_type_id"
-                    class="form-select select2 @error('certificate_type_id') is-invalid @enderror">
-                    <option value="">اختر شهاده</option>
-                    @foreach($this->certificateTypes as $certificateType)
-                        <option value="{{$certificateType->id}}">{{$certificateType->name}}</option>
-                    @endforeach
-                </select>
+                <div wire:ignore>
+                    <select wire:model.live="certificate_type_id" id="certificate_type_id"
+                        class="form-select select2 @error('certificate_type_id') is-invalid @enderror">
+                        <option value="">اختر شهاده</option>
+                        @foreach($this->certificateTypes as $certificateType)
+                            <option value="{{$certificateType->id}}">{{$certificateType->name}}</option>
+                        @endforeach
+                    </select>
+                </div>
                 @error('certificate_type_id')
-                    <div class="invalid-feedback">{{ $message }}</div>
+                    <div class="text-danger small mt-1">{{ $message }}</div>
                 @enderror
             </div>
 

@@ -311,6 +311,7 @@ class Create extends Component
 
         // Find best academic advisor
         $advisor = AcademicAdvisor::query()
+            ->where('is_active', true)
             ->whereHas('assignments', function ($query) use ($validated) {
                 $query->where(function ($q) use ($validated) {
                     $q->where('department_id', $this->department_id)
@@ -330,8 +331,11 @@ class Create extends Component
         if ($advisor) {
             $validated['academic_advisor_id'] = $advisor->id;
             $advisor->increment('current_students');
+        } else {
+            session()->flash('error', 'لا يوجد مرشد أكاديمي متاح لهذا القسم والشعبة والمستوى. يرجى التواصل مع الإدارة.');
+            $this->addError('department_id', 'لا يوجد مرشد أكاديمي متاح لهذا القسم والشعبة والمستوى. يرجى التواصل مع الإدارة.');
+            return;
         }
-
 
         $student = Student::create($validated);
 

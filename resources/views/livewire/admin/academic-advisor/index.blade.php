@@ -35,6 +35,7 @@
                     <th class="fw-bold">الشعب</th>
                     <th class="fw-bold">الفرق الدراسية</th>
                     <th class="fw-bold text-center">الطلاب (الحالي/الأقصى)</th>
+                    <th class="fw-bold text-center">الحالة</th>
                     <th class="fw-bold text-center">الإجراءات</th>
                 </tr>
                 </thead>
@@ -125,6 +126,13 @@
                             </div>
                         </td>
                         <td class="text-center">
+                            <div class="form-check form-switch d-flex justify-content-center">
+                                <input class="form-check-input cursor-pointer" type="checkbox"
+                                       wire:click="toggleStatus({{ $advisor->id }})"
+                                       {{ $advisor->is_active ? 'checked' : '' }}>
+                            </div>
+                        </td>
+                        <td class="text-center">
                             <div class="d-flex align-items-center justify-content-center">
                                 <a href="{{ route('students.index', ['academic_advisor_id' => $advisor->id]) }}"
                                    class="btn btn-sm btn-icon btn-label-primary me-2" title="عرض الطلاب">
@@ -140,8 +148,7 @@
                                             <i class="ti tabler-edit me-1"></i> تعديل
                                         </a>
                                         <button type="button" class="dropdown-item text-danger"
-                                                wire:click="delete({{ $advisor->id }})"
-                                                wire:confirm="هل أنت متأكد من حذف هذا المرشد الأكاديمي؟">
+                                                onclick="confirmDelete({{ $advisor->id }}, '{{ $advisor->name }}')">
                                             <i class="ti tabler-trash me-1"></i> حذف
                                         </button>
                                     </div>
@@ -151,7 +158,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center py-5 text-muted">
+                        <td colspan="8" class="text-center py-5 text-muted">
                             <div class="d-flex flex-column align-items-center">
                                 <i class="ti tabler-user-off d-block mb-2" style="font-size: 3rem;"></i>
                                 لا يوجد مرشدين أكاديميين مطابقين للبحث
@@ -167,4 +174,30 @@
             {{ $advisors->links() }}
         </div>
     </div>
+
+    @script
+    <script>
+        window.confirmDelete = function (id, name) {
+            Swal.fire({
+                title: 'هل أنت متأكد؟',
+                text: `سيتم حذف المرشد الأكاديمي: ${name}`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'نعم، احذف!',
+                cancelButtonText: 'إلغاء',
+                customClass: {
+                    confirmButton: 'btn btn-primary me-1',
+                    cancelButton: 'btn btn-label-secondary'
+                },
+                buttonsStyling: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $wire.delete(id);
+                }
+            });
+        }
+    </script>
+    @endscript
 </div>

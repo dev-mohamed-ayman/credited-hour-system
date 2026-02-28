@@ -274,9 +274,10 @@
                                 <a href="{{ route('students.edit', $student) }}" class="dropdown-item">
                                     <i class="ti tabler-edit me-1"></i> تعديل
                                 </a>
-                                <a href="javascript:void(0);" class="dropdown-item text-danger delete-record">
+                                <button type="button" class="dropdown-item text-danger"
+                                        onclick="confirmDeleteStudent({{ $student->id }}, '{{ $student->name }}')">
                                     <i class="ti tabler-trash me-1"></i> حذف
-                                </a>
+                                </button>
                             </div>
                         </div>
                     </td>
@@ -298,4 +299,30 @@
     <div class="card-footer border-top pt-3">
         {{ $students->links() }}
     </div>
+
+    @script
+    <script>
+        window.confirmDeleteStudent = function (id, name) {
+            Swal.fire({
+                title: 'هل أنت متأكد؟',
+                text: `سيتم حذف الطالب: ${name}`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'نعم، احذف!',
+                cancelButtonText: 'إلغاء',
+                customClass: {
+                    confirmButton: 'btn btn-primary me-1',
+                    cancelButton: 'btn btn-label-secondary'
+                },
+                buttonsStyling: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $wire.delete(id);
+                }
+            });
+        }
+    </script>
+    @endscript
 </div>

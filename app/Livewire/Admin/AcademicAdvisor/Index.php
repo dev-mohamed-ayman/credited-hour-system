@@ -29,6 +29,13 @@ class Index extends Component
         $this->dispatch('toast', ['message' => 'تم حذف المرشد الأكاديمي بنجاح', 'type' => 'success']);
     }
 
+    public function toggleStatus($id): void
+    {
+        $advisor = AcademicAdvisor::findOrFail($id);
+        $advisor->update(['is_active' => ! $advisor->is_active]);
+        $this->dispatch('toast', ['message' => 'تم تغيير حالة المرشد الأكاديمي بنجاح', 'type' => 'success']);
+    }
+
     public function render()
     {
         $advisors = AcademicAdvisor::query()

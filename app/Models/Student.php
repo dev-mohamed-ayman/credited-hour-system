@@ -6,9 +6,12 @@ use App\Enums\Student\ApplicationCategory;
 use App\Enums\Student\StudentStatus;
 use App\Enums\Student\StudyStatus;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Student extends Model
 {
+    use SoftDeletes;
+
     protected $guarded = [];
 
     protected $casts = [
@@ -27,16 +30,16 @@ class Student extends Model
         $prefix = strtoupper($prefix);
         $year = date('y');
 
-        $lastStudent = self::where('username', 'like', $prefix.$year.'%')->orderByDesc('username')->first();
+        $lastStudent = self::where('username', 'like', $prefix . $year . '%')->orderByDesc('username')->first();
 
         if ($lastStudent) {
-            $lastNumber = (int) substr($lastStudent->username, -4);
+            $lastNumber = (int)substr($lastStudent->username, -4);
             $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
         } else {
             $newNumber = '0001';
         }
 
-        return $prefix.$year.$newNumber;
+        return $prefix . $year . $newNumber;
     }
 
     public function section()

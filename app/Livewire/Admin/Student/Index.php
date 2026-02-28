@@ -208,4 +208,14 @@ class Index extends Component
             'students' => $students,
         ]);
     }
+
+    public function delete($id): void
+    {
+        $student = Student::findOrFail($id);
+        if ($student->academicAdvisor) {
+            $student->academicAdvisor->decrement('current_students');
+        }
+        $student->delete();
+        $this->dispatch('toast', ['message' => 'تم حذف الطالب بنجاح', 'type' => 'success']);
+    }
 }
