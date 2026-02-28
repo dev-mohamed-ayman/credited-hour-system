@@ -1,0 +1,59 @@
+@extends('admin.layouts.app')
+@section('title', 'الشهادات')
+@section('content')
+    <div class="card">
+        <form action="{{ route('certificate-types.update', $certificateType->id) }}" method="POST">
+            @csrf
+            @method('PUT')
+            <div class="card-body row">
+                <div class="form-group col-md-6 mb-4">
+                    <label for="name" class="form-label">اسم الشهادة</label>
+                    <input type="text" name="name" id="name" value="{{ old('name', $certificateType->name) }}"
+                           class="form-control @error('name') is-invalid @enderror">
+                    @error('name')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="form-group col-md-6 mb-4">
+                    <label for="total_score" class="form-label">المجموع الكلي</label>
+                    <input type="text" name="total_score" id="total_score" value="{{ old('total_score', $certificateType->total_score) }}"
+                           class="form-control @error('total_score') is-invalid @enderror">
+                    @error('total_score')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="col-12 mb-4">
+                    <label class="form-label d-block mb-3">متطلبات الأقسام المتاحة</label>
+                    <div class="row g-3">
+                        @foreach($requirements as $requirement)
+                            <div class="col-md-4 col-sm-6">
+                                <div class="form-check custom-option custom-option-basic h-100">
+                                    <label class="form-check-label custom-option-content"
+                                        for="req{{ $requirement->id }}">
+                                        <input class="form-check-input" type="checkbox" name="requirement_ids[]"
+                                            value="{{ $requirement->id }}" id="req{{ $requirement->id }}"
+                                            {{ in_array($requirement->id, old('requirement_ids', $certificateType->requirements->pluck('id')->toArray())) ? 'checked' : '' }} />
+                                        <span class="custom-option-header mb-1">
+                                            <span class="h6 mb-0">{{ $requirement->subject_name }}</span>
+                                            <span class="badge bg-label-primary">{{ $requirement->min_score }}</span>
+                                        </span>
+                                        <span class="custom-option-body">
+                                            <small class="text-muted">القسم: {{ $requirement->department->name }}</small>
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    @error('requirement_ids')
+                        <div class="text-danger small mt-2">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary">تحديث</button>
+                <a href="{{ route('certificate-types.index') }}" class="btn btn-label-secondary">إلغاء</a>
+            </div>
+        </form>
+    </div>
+@endsection
