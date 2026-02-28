@@ -17,6 +17,11 @@ class Student extends Model
         'study_status' => StudyStatus::class,
     ];
 
+    public function scores()
+    {
+        return $this->hasMany(StudentScore::class);
+    }
+
     public static function generateStudentCode(string $prefix): string
     {
         $prefix = strtoupper($prefix);
@@ -32,5 +37,23 @@ class Student extends Model
         }
 
         return $prefix.$year.$newNumber;
+    }
+
+    public function section()
+    {
+        return $this->belongsTo(Section::class);
+    }
+    public function level()
+    {
+        return $this->belongsTo(Level::class);
+    }
+
+    public function country()
+    {
+        return $this->belongsTo(Country::class);
+    }
+    public function city()
+    {
+        return $this->belongsTo(City::class);
     }
 }

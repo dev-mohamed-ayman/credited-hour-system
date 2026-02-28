@@ -2,9 +2,6 @@
 @section('title', 'إضافة طالب')
 @section('content')
     <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0">إضافة طالب جديد</h5>
-        </div>
 
         @livewire('admin.student.create')
 

@@ -13,6 +13,7 @@ use App\Models\Level;
 use App\Models\Nationality;
 use App\Models\Section;
 use App\Models\Student;
+use App\Models\StudentScore;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -89,6 +90,13 @@ class Create extends Component
     public $username = '';
 
     public $password = '';
+
+    public $showFullForm = false;
+
+    public function toggleFullForm()
+    {
+        $this->showFullForm = ! $this->showFullForm;
+    }
 
     public function mount()
     {
@@ -168,7 +176,13 @@ class Create extends Component
     #[Computed]
     public function departmentRequirements()
     {
-        return $this->selectedCertificateType ? $this->selectedCertificateType->requirements : collect();
+        if (! $this->selectedCertificateType || ! $this->department_id) {
+            return collect();
+        }
+
+        return $this->selectedCertificateType->requirements()
+            ->where('department_id', $this->department_id)
+            ->get();
     }
 
     public function updatedCertificateTypeId($value)
@@ -211,57 +225,115 @@ class Create extends Component
 
     public function save(Request $request)
     {
-        $validated = $this->validate([
+        $rules = [
             'name' => 'required|string|max:255',
-            'religion' => 'required|string',
-            'gender' => 'required|in:male,female',
-            'image' => 'nullable|image|max:1024',
-            'birth_date' => 'required|date',
-            'country_id' => 'required|exists:countries,id',
-            'city_id' => 'required|exists:cities,id',
-            'nationality_id' => 'required|exists:nationalities,id',
-            'address' => 'required|string|max:500',
-            'is_foreign' => 'boolean',
             'national_id' => 'required|string|unique:students,national_id',
-            'national_id_place' => 'required|string|max:255',
+            'department_id' => 'required|exists:departments,id',
+            'section_id' => 'required|exists:sections,id',
+            'level_id' => 'required|exists:levels,id',
+            'certificate_type_id' => 'required|exists:certificate_types,id',
+            'score' => 'required|numeric|min:0',
+            'username' => 'required|unique:students,username',
+            'password' => 'required|min:8',
+            'gender' => 'required|in:male,female',
+        ];
+
+        // Validate Subject Requirements
+        foreach ($this->departmentRequirements as $requirement) {
+            $rules["requirements.{$requirement->id}"] = [
+                'required',
+                'numeric',
+                "min:{$requirement->min_score}",
+            ];
+        }
+
+        if ($this->showFullForm) {
+            $rules = array_merge($rules, [
+                'religion' => 'required|string',
+                'image' => 'nullable|image|max:1024',
+                'birth_date' => 'required|date',
+                'country_id' => 'required|exists:countries,id',
+                'city_id' => 'required|exists:cities,id',
+                'nationality_id' => 'required|exists:nationalities,id',
+                'address' => 'required|string|max:500',
+                'national_id_place' => 'required|string|max:255',
+                'graduation_date' => 'required|date',
+                'seat_number' => 'required|string',
+            ]);
+        } else {
+            $rules = array_merge($rules, [
+                'religion' => 'nullable|string',
+                'image' => 'nullable|image|max:1024',
+                'birth_date' => 'nullable|date',
+                'country_id' => 'nullable|exists:countries,id',
+                'city_id' => 'nullable|exists:cities,id',
+                'nationality_id' => 'nullable|exists:nationalities,id',
+                'address' => 'nullable|string|max:500',
+                'national_id_place' => 'nullable|string|max:255',
+                'graduation_date' => 'nullable|date',
+                'seat_number' => 'nullable|string',
+            ]);
+        }
+
+        // Common fields with default validation
+        $rules = array_merge($rules, [
             'email' => 'nullable|email|unique:students,email',
             'phone' => 'nullable|string|max:20',
             'landline_phone' => 'nullable|string|max:20',
             'guardian_job' => 'nullable|string|max:255',
             'guardian_phone_1' => 'nullable|string|max:20',
             'guardian_phone_2' => 'nullable|string|max:20',
-            'certificate_type_id' => 'required|exists:certificate_types,id',
-            'graduation_date' => 'required|date',
-            'seat_number' => 'required|string',
-            'score' => 'required|numeric|min:0',
             'application_category' => 'required',
             'status' => 'required',
             'status_notes' => 'nullable|string|max:1000',
-            'section_id' => 'required|exists:sections,id',
-            'level_id' => 'required|exists:levels,id',
             'study_status' => 'required',
-            'username' => 'required|unique:students,username',
-            'password' => 'required|min:8',
+            'is_foreign' => 'boolean',
         ]);
+
+        $validated = $this->validate($rules);
 
         if ($this->image) {
             $validated['image'] = $this->image->store('students', 'public');
         }
 
-        // We don't store department_id in the student table, but it's used for validation and logic.
-        // We'll remove it from the validated data to avoid any issues if the table doesn't have it.
-        // Actually, $validated already contains only what we validated.
-        // If department_id was in $this->validate(), it would be in $validated.
-        // Since I removed it from the validate array above (replaced it with section_id and level_id), it won't be in $validated.
+        // Remove department_id as it's not in the students table
+        unset($validated['department_id']);
+        unset($validated['requirements']);
 
         $student = Student::create($validated);
 
-        // Handle requirements if needed (assuming a relation exists)
-        // foreach ($this->requirements as $reqId => $score) { ... }
+        // Handle requirements
+        foreach ($this->requirements as $reqId => $score) {
+            StudentScore::create([
+                'student_id' => $student->id,
+                'department_requirement_id' => $reqId,
+                'score' => $score,
+            ]);
+        }
 
         session()->flash('success', 'تم إضافة الطالب بنجاح');
 
         return redirect()->route('students.index');
+    }
+
+    protected function validationAttributes(): array
+    {
+        $attributes = [];
+        if ($this->department_id && $this->certificate_type_id) {
+            foreach ($this->departmentRequirements as $requirement) {
+                $attributes["requirements.{$requirement->id}"] = $requirement->subject_name;
+            }
+        }
+
+        return $attributes;
+    }
+
+    protected function messages(): array
+    {
+        return [
+            'requirements.*.min' => 'درجة :attribute يجب أن لا تقل عن :min للقبول في هذا التخصص.',
+            'requirements.*.required' => 'درجة :attribute مطلوبة للقبول في هذا التخصص.',
+        ];
     }
 
     public function render()

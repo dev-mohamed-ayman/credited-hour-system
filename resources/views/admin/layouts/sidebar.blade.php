@@ -96,10 +96,15 @@
 
         <li class="menu-item {{isActiveRoute(['students.*'], true)}}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
-                <i class="menu-icon icon-base ti tabler-smart-home"></i>
+                <i class="menu-icon icon-base ti tabler-users"></i>
                 <div data-i18n="شئون الطلبه">شئون الطلبه</div>
             </a>
             <ul class="menu-sub">
+                <li class="menu-item {{isActiveRoute('students.index')}}">
+                    <a href="{{route('students.index')}}" class="menu-link">
+                        <div data-i18n="قائمة الطلاب">قائمة الطلاب</div>
+                    </a>
+                </li>
                 <li class="menu-item {{isActiveRoute('students.create')}}">
                     <a href="{{route('students.create')}}" class="menu-link">
                         <div data-i18n="اضافه طالب">اضافه طالب</div>
