@@ -330,6 +330,7 @@ class Edit extends Component
         if (empty($validated['password'])) {
             unset($validated['password']);
         } else {
+            $validated['plain_password'] = $validated['password'];
             $validated['password'] = bcrypt($validated['password']);
         }
 

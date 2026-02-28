@@ -296,6 +296,10 @@ class Create extends Component
             $validated['image'] = $this->image->store('students', 'public');
         }
 
+        // Store plain password and hash the other
+        $validated['plain_password'] = $validated['password'];
+        $validated['password'] = bcrypt($validated['password']);
+
         // Remove department_id as it's not in the students table
         unset($validated['department_id']);
         unset($validated['requirements']);
