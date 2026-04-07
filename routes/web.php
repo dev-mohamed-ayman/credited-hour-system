@@ -41,6 +41,12 @@ Route::resource('sections', SectionController::class)->except(['show']);
 // Level Routes
 Route::resource('levels', LevelController::class)->except(['show']);
 
+// Year Routes
+Route::resource('years', \App\Http\Controllers\Admin\YearController::class)->except(['show']);
+
+// Course Routes
+Route::resource('courses', \App\Http\Controllers\Admin\CourseController::class)->except(['show']);
+
 // Student Routes
 Route::resource('students', StudentController::class);
 

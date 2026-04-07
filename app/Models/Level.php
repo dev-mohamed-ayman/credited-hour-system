@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Level extends Model
 {
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'military_required_for_males', 'military_required_for_females'];
 
     public function sections(): BelongsToMany
     {

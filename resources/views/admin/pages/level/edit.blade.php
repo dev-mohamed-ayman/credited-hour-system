@@ -18,6 +18,35 @@
                     @enderror
                 </div>
 
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input @error('military_required_for_males') is-invalid @enderror"
+                                   type="checkbox" name="military_required_for_males" id="military_required_for_males"
+                                   {{ old('military_required_for_males', $level->military_required_for_males) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="military_required_for_males">
+                                التربية العسكرية مطلوبة للذكور في هذه الفرقة
+                            </label>
+                            @error('military_required_for_males')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input @error('military_required_for_females') is-invalid @enderror"
+                                   type="checkbox" name="military_required_for_females" id="military_required_for_females"
+                                   {{ old('military_required_for_females', $level->military_required_for_females) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="military_required_for_females">
+                                التربية العسكرية مطلوبة للإناث في هذه الفرقة
+                            </label>
+                            @error('military_required_for_females')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label d-block">تعديل الشعب المرتبطة</label>
                     <div class="row g-3">

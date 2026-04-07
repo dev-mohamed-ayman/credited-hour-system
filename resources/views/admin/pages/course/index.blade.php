@@ -1,11 +1,11 @@
 @extends('admin.layouts.app')
-@section('title', 'الفرق الدراسية')
+@section('title', 'المواد الدراسية')
 @section('content')
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">قائمة الفرق الدراسية</h5>
-            <a class="btn btn-primary waves-effect waves-light" href="{{ route('levels.create') }}">
-                <i class="fa-solid fa-plus me-1"></i> إضافة فرقة
+            <h5 class="mb-0">قائمة المواد الدراسية</h5>
+            <a class="btn btn-primary waves-effect waves-light" href="{{ route('courses.create') }}">
+                <i class="fa-solid fa-plus me-1"></i> إضافة مادة
             </a>
         </div>
 
@@ -14,54 +14,51 @@
                 <thead class="table-light">
                     <tr>
                         <th class="text-center" style="width: 50px;">#</th>
-                        <th>الفرقة الدراسية</th>
-                        <th>الشعب المرتبطة</th>
-                        <th class="text-center">تربية عسكرية (ذكور)</th>
-                        <th class="text-center">تربية عسكرية (إناث)</th>
+                        <th>كود المادة</th>
+                        <th>اسم المادة</th>
+                        <th>الساعات</th>
+                        <th>التخصص</th>
+                        <th>الترم</th>
+                        <th>الشعب</th>
                         <th class="text-center">الإجراءات</th>
                     </tr>
                 </thead>
                 <tbody class="table-border-bottom-0">
-                    @forelse($levels as $level)
+                    @forelse($courses as $course)
                         <tr>
                             <td class="text-center">{{ $loop->iteration }}</td>
                             <td>
-                                <span class="fw-bold text-primary">{{ $level->name }}</span>
+                                <span class="badge bg-label-secondary fw-bold text-uppercase">{{ $course->code }}</span>
                             </td>
                             <td>
-                                @forelse($level->sections as $section)
-                                    <span class="badge bg-label-info me-1">{{ $section->name }}
-                                        ({{ $section->department->name }})</span>
-                                @empty
-                                    <span class="text-muted small">لا توجد شعب</span>
-                                @endforelse
+                                <span class="fw-bold text-primary">{{ $course->name }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-label-info">{{ $course->hours }} ساعة</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-label-dark">{{ $course->department->name }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-label-warning">{{ $course->semester }}</span>
+                            </td>
+                            <td>
+                                @foreach($course->sections as $section)
+                                    <span class="badge bg-label-primary mb-1">{{ $section->name }}</span>
+                                @endforeach
                             </td>
                             <td class="text-center">
-                                @if($level->military_required_for_males)
-                                    <span class="badge bg-label-success"><i class="fa-solid fa-check me-1"></i> مطلوبة</span>
-                                @else
-                                    <span class="badge bg-label-secondary"><i class="fa-solid fa-xmark me-1"></i> غير مطلوبة</span>
-                                @endif
-                            </td>
-                            <td class="text-center">
-                                @if($level->military_required_for_females)
-                                    <span class="badge bg-label-success"><i class="fa-solid fa-check me-1"></i> مطلوبة</span>
-                                @else
-                                    <span class="badge bg-label-secondary"><i class="fa-solid fa-xmark me-1"></i> غير مطلوبة</span>
-                                @endif
-                            </td>
-                            <td class="text-center">
-                                <a class="btn btn-sm btn-success" href="{{ route('levels.edit', $level->id) }}">
+                                <a class="btn btn-sm btn-success" href="{{ route('courses.edit', $course->id) }}">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </a>
                                 <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal"
-                                    data-bs-target="#deleteModal{{ $level->id }}">
+                                    data-bs-target="#deleteModal{{ $course->id }}">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </td>
                         </tr>
                         <!-- Modal Delete -->
-                        <div class="modal fade" id="deleteModal{{ $level->id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal fade" id="deleteModal{{ $course->id }}" tabindex="-1" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered" role="document">
                                 <div class="modal-content">
                                     <div class="modal-header">
@@ -69,7 +66,7 @@
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"
                                             aria-label="Close"></button>
                                     </div>
-                                    <form action="{{ route('levels.destroy', $level->id) }}" method="POST">
+                                    <form action="{{ route('courses.destroy', $course->id) }}" method="POST">
                                         @csrf
                                         @method('DELETE')
                                         <div class="modal-body">
@@ -77,13 +74,13 @@
                                                 <i class="fa-solid fa-triangle-exclamation text-warning fs-1"></i>
                                             </div>
                                             <div class="text-center">
-                                                <p>هل أنت متأكد من حذف الفرقة: <br>
-                                                    <strong class="text-danger">{{ $level->name }}</strong>؟
+                                                <p>هل أنت متأكد من حذف المادة: <br>
+                                                    <strong class="text-danger">{{ $course->name }}</strong>؟
                                                 </p>
                                                 <small class="text-muted">هذا الإجراء لا يمكن التراجع عنه.</small>
                                             </div>
                                         </div>
-                                        <div class="modal-footer">
+                                        <div class="modal-footer text-end">
                                             <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">
                                                 إلغاء
                                             </button>
@@ -95,8 +92,8 @@
                         </div>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center py-5">
-                                <div class="text-muted">لا توجد فرق دراسية مضافة حالياً</div>
+                            <td colspan="8" class="text-center py-5">
+                                <div class="text-muted">لا توجد مواد دراسية مضافة حالياً</div>
                             </td>
                         </tr>
                     @endforelse
