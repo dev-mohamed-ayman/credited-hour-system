@@ -171,22 +171,27 @@
 
     </div>
     @endforeach
-    <script src="{{asset('assets/plugins/jquery/jquery.min.js')}}"></script>
+    <script src="{{asset('assets/vendor/libs/jquery/jquery.js')}}"></script>
     <script src="{{asset('js/JsBarcode.all.min.js')}}"></script>
     <script type="text/javascript">
-    $(document).ready(function() {
+    document.addEventListener("DOMContentLoaded", function() {
         @if(optional($settings)->card_show_barcode)
             @foreach($students as $student)
-                JsBarcode("#barcode-{{$student->username}}", "{{$student->username}}", {
-                    displayValue: false,
-                    fontSize: 14,
-                    width: 1.5,
-                     height: 40
-                });
+                if (document.querySelector("#barcode-{{$student->username}}")) {
+                    JsBarcode("#barcode-{{$student->username}}", "{{$student->username}}", {
+                        displayValue: false,
+                        fontSize: 14,
+                        width: 1.5,
+                        height: 40
+                    });
+                }
             @endforeach
         @endif
 
-        window.print();
+        setTimeout(function() {
+            window.print();
+        }, 500); // Give a small delay to render barcodes and images
+        
         window.onafterprint = function () {
             window.location.replace("{{route('print.student.cards.index')}}");
         };
