@@ -17,6 +17,8 @@
         width:322px;
         height: 204px;
         position: relative;
+        margin-bottom: 20px;
+        page-break-inside: avoid;
     } 
     .topnav{
         display: flex;
@@ -48,8 +50,7 @@
         width: 71%;
         margin: auto;
         padding: 4px;
-
-        }
+    }
     .center{
         width: 65%;
         padding: 5px;
@@ -65,7 +66,7 @@
     .center div{
         font-size: 9px;
         font-weight: 600;
-        line-height: 20px;
+        line-height: 15px;
     }
     .footer{
          margin-bottom: 0;
@@ -91,8 +92,17 @@
         text-align: center;
         font-size: 9px;
         margin: 0;
+        padding-top: 5px;
     }
 
+    @media print {
+        body {
+            -webkit-print-color-adjust: exact;
+        }
+        .card {
+            margin-bottom: 0px;
+        }
+    }
 </style>
 <body>
     @foreach($students as $student)
@@ -111,22 +121,52 @@
         </div>
         <div class="content">
             <div class="left">
-                <img src="{{$student->photo}}"  alt="">
+                @if(optional($settings)->card_show_photo && $student->image)
+                    <!-- Using image field instead of photo just in case, but keeping previous logic or similar -->
+                    <img src="{{($student->image && file_exists(public_path('uploads/students/'.$student->image))) ? asset('uploads/students/'.$student->image) : $student->photo}}"  alt="">
+                @elseif(optional($settings)->card_show_photo && $student->photo)
+                    <img src="{{$student->photo}}" alt="">
+                @else
+                    <div style="height: 60px; width: 60px; margin: auto; padding: 4px; border: 1px solid #ccc; margin-top:10px;">صورة</div>
+                @endif
             </div>
 
             <div class="center">
+                @if(optional($settings)->card_show_name)
                 <div><span style="margin-left: 12px;">اسم الطالب </span><span id="name">{{Str::words($student->name, 5,'')}}</span></div>
-                <div><span id="code"> {{$student->username}}</span><span style="margin-left: 12px;">كود الطالب </span></div>
-                    <div style="width: 100px; margin: auto;">
-                        <svg id="barcode-{{$student->username}}" width="100%" > </svg>
-                    </div>
+                @endif
+                
+                @if(optional($settings)->card_show_code)
+                <div><span style="margin-left: 12px;">كود الطالب </span><span id="code"> {{$student->username}}</span></div>
+                @endif
+                
+                @if(optional($settings)->card_show_department && $student->section && $student->section->department)
+                <div><span style="margin-left: 12px;">التخصص </span><span>{{$student->section->department->name}}</span></div>
+                @endif
+                
+                @if(optional($settings)->card_show_section && $student->section)
+                <div><span style="margin-left: 12px;">الشعبة </span><span>{{$student->section->name}}</span></div>
+                @endif
+                
+                @if(optional($settings)->card_show_level && $student->level)
+                <div><span style="margin-left: 12px;">الفرقة </span><span>{{$student->level->name}}</span></div>
+                @endif
+
+                @if(optional($settings)->card_show_national_id && $student->national_id)
+                <div><span style="margin-left: 12px;">الرقم القومي </span><span>{{$student->national_id}}</span></div>
+                @endif
+
+                @if(optional($settings)->card_show_barcode)
+                <div style="width: 100px; margin: auto;">
+                    <svg id="barcode-{{$student->username}}" width="100%" > </svg>
+                </div>
+                @endif
             </div>
 
         </div>
         <!--<div class="footer"></div>-->
         <div class="footer-bottom">
-            <p class="footer-info pt-5">www.ahi.edu.eg</p>
-            <!--<p style="color:white;font-size:7px;margin-top:-15px;margin-left:12%;">{{$year}}</p>-->
+            <p class="footer-info">www.ahi.edu.eg</p>
         </div>
 
     </div>
@@ -135,15 +175,16 @@
     <script src="{{asset('js/JsBarcode.all.min.js')}}"></script>
     <script type="text/javascript">
     $(document).ready(function() {
-        @foreach($students as $student)
-            JsBarcode("#barcode-{{$student->username}}", "{{$student->username}}", {
-                displayValue: false,
-                fontSize: 14,
-                width: 1.5,
-                 height: 40
-
-            });
-        @endforeach
+        @if(optional($settings)->card_show_barcode)
+            @foreach($students as $student)
+                JsBarcode("#barcode-{{$student->username}}", "{{$student->username}}", {
+                    displayValue: false,
+                    fontSize: 14,
+                    width: 1.5,
+                     height: 40
+                });
+            @endforeach
+        @endif
 
         window.print();
         window.onafterprint = function () {

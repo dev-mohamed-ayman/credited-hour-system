@@ -12,14 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('settings', function (Blueprint $table) {
-            $table->boolean('card_show_photo')->default(true);
-            $table->boolean('card_show_name')->default(true);
-            $table->boolean('card_show_code')->default(true);
-            $table->boolean('card_show_barcode')->default(true);
-            $table->boolean('card_show_department')->default(false);
-            $table->boolean('card_show_section')->default(false);
-            $table->boolean('card_show_level')->default(false);
-            $table->boolean('card_show_national_id')->default(false);
+            $table->boolean('card_show_photo')->default(1);
+            $table->boolean('card_show_name')->default(1);
+            $table->boolean('card_show_code')->default(1);
+            $table->boolean('card_show_barcode')->default(1);
+            $table->boolean('card_show_department')->default(1);
+            $table->boolean('card_show_section')->default(1);
+            $table->boolean('card_show_level')->default(1);
+            $table->boolean('card_show_national_id')->default(1);
         });
     }
 
@@ -37,7 +37,7 @@ return new class extends Migration
                 'card_show_department',
                 'card_show_section',
                 'card_show_level',
-                'card_show_national_id',
+                'card_show_national_id'
             ]);
         });
     }

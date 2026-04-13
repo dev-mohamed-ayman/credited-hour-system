@@ -48,6 +48,8 @@ Route::resource('years', \App\Http\Controllers\Admin\YearController::class)->exc
 Route::resource('courses', \App\Http\Controllers\Admin\CourseController::class)->except(['show']);
 
 // Student Routes
+Route::get('students/print-cards', [StudentController::class, 'printCardsIndex'])->name('print.student.cards.index');
+Route::post('students/print-cards', [StudentController::class, 'printCards'])->name('print.student.cards.print');
 Route::resource('students', StudentController::class);
 
 // Academic Advisor Routes
