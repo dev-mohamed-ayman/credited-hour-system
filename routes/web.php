@@ -50,6 +50,10 @@ Route::resource('courses', \App\Http\Controllers\Admin\CourseController::class)-
 // Student Routes
 Route::get('students/print-cards', [StudentController::class, 'printCardsIndex'])->name('print.student.cards.index');
 Route::post('students/print-cards', [StudentController::class, 'printCards'])->name('print.student.cards.print');
+Route::get('students/print-seat-numbers', [StudentController::class, 'printSeatNumbersIndex'])->name('print.seat.numbers.index');
+Route::post('students/print-seat-numbers', [StudentController::class, 'printSeatNumbers'])->name('print.seat.numbers.print');
+Route::get('students/print-certificates', [StudentController::class, 'printCertificatesIndex'])->name('print.certificates.index');
+Route::post('students/print-certificates', [StudentController::class, 'printCertificates'])->name('print.certificates.print');
 Route::resource('students', StudentController::class);
 
 // Academic Advisor Routes
