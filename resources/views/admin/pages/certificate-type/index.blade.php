@@ -16,7 +16,8 @@
                         <th class="text-center" style="width: 50px;">#</th>
                         <th>اسم الشهادة</th>
                         <th>المجموع الكلي</th>
-                        <th>المتطلبات المرتبطة</th>
+                        <th>المتطلبات</th>
+                        <th>الشعب</th>
                         <th class="text-center">الإجراءات</th>
                     </tr>
                 </thead>
@@ -42,6 +43,20 @@
                                     </div>
                                 @else
                                     <span class="text-muted small">لا توجد متطلبات</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($type->sections->count() > 0)
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @foreach($type->sections as $section)
+                                            <span class="badge bg-label-secondary border" data-bs-toggle="tooltip"
+                                                data-bs-placement="top" title="القسم: {{ $section->department->name }}">
+                                                {{ $section->name }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <span class="text-muted small">لا توجد شعب</span>
                                 @endif
                             </td>
                             <td class="text-center">
@@ -90,7 +105,7 @@
                         </div>
                     @empty
                         <tr>
-                            <td colspan="5" class="text-center py-5">
+                            <td colspan="6" class="text-center py-5">
                                 <div class="text-muted">لا توجد شهادات مضافة حالياً</div>
                             </td>
                         </tr>

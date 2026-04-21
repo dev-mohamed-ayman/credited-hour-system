@@ -8,8 +8,12 @@
             <div class="card-body row">
                 <div class="form-group col-md-6 mb-4">
                     <label for="name" class="form-label">اسم الشهادة</label>
-                    <input type="text" name="name" id="name" value="{{ old('name', $certificateType->name) }}"
-                           class="form-control @error('name') is-invalid @enderror">
+                    <select name="name" id="name" class="form-select @error('name') is-invalid @enderror">
+                        <option value="">اختر الشهادة</option>
+                        @foreach(\App\Models\CertificateType::NAMES as $name)
+                            <option value="{{ $name }}" {{ old('name', $certificateType->name) == $name ? 'selected' : '' }}>{{ $name }}</option>
+                        @endforeach
+                    </select>
                     @error('name')
                     <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
@@ -46,6 +50,33 @@
                         @endforeach
                     </div>
                     @error('requirement_ids')
+                        <div class="text-danger small mt-2">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="col-12 mb-4">
+                    <hr>
+                    <label class="form-label d-block mb-3">الشعب المتاحة لهذه الشهادة</label>
+                    <div class="row g-3">
+                        @foreach($sections as $section)
+                            <div class="col-md-4 col-sm-6">
+                                <div class="form-check custom-option custom-option-basic h-100">
+                                    <label class="form-check-label custom-option-content"
+                                        for="sec{{ $section->id }}">
+                                        <input class="form-check-input" type="checkbox" name="section_ids[]"
+                                            value="{{ $section->id }}" id="sec{{ $section->id }}"
+                                            {{ in_array($section->id, old('section_ids', $certificateType->sections->pluck('id')->toArray())) ? 'checked' : '' }} />
+                                        <span class="custom-option-header mb-1">
+                                            <span class="h6 mb-0">{{ $section->name }}</span>
+                                        </span>
+                                        <span class="custom-option-body">
+                                            <small class="text-muted">القسم: {{ $section->department->name }}</small>
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    @error('section_ids')
                         <div class="text-danger small mt-2">{{ $message }}</div>
                     @enderror
                 </div>

@@ -20,4 +20,9 @@ class Section extends Model
     {
         return $this->belongsToMany(Level::class, 'level_section');
     }
+
+    public function certificateTypes(): BelongsToMany
+    {
+        return $this->belongsToMany(CertificateType::class, 'certificate_type_section');
+    }
 }

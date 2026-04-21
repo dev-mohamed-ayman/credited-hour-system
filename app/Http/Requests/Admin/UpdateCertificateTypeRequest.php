@@ -22,10 +22,12 @@ class UpdateCertificateTypeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
+            'name' => ['required', 'string', \Illuminate\Validation\Rule::in(\App\Models\CertificateType::NAMES)],
             'total_score' => 'required|numeric|min:0',
             'requirement_ids' => 'nullable|array',
             'requirement_ids.*' => 'exists:department_requirements,id',
+            'section_ids' => 'nullable|array',
+            'section_ids.*' => 'exists:sections,id',
         ];
     }
 
@@ -35,6 +37,7 @@ class UpdateCertificateTypeRequest extends FormRequest
             'name' => 'اسم الشهادة',
             'total_score' => 'المجموع الكلي',
             'requirement_ids' => 'متطلبات الأقسام',
+            'section_ids' => 'الشعب',
         ];
     }
 }

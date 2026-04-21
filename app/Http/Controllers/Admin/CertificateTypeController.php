@@ -6,12 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreCertificateTypeRequest;
 use App\Http\Requests\Admin\UpdateCertificateTypeRequest;
 use App\Models\CertificateType;
+use App\Models\Section;
 
 class CertificateTypeController extends Controller
 {
     public function index()
     {
-        $certificateTypes = CertificateType::with('requirements.department')->latest()->get();
+        $certificateTypes = CertificateType::with(['requirements.department', 'sections.department'])->latest()->get();
 
         return view('admin.pages.certificate-type.index', compact('certificateTypes'));
     }
@@ -19,8 +20,9 @@ class CertificateTypeController extends Controller
     public function create()
     {
         $requirements = \App\Models\DepartmentRequirement::with('department')->get();
+        $sections = Section::with('department')->get();
 
-        return view('admin.pages.certificate-type.create', compact('requirements'));
+        return view('admin.pages.certificate-type.create', compact('requirements', 'sections'));
     }
 
     public function store(StoreCertificateTypeRequest $request)
@@ -28,16 +30,18 @@ class CertificateTypeController extends Controller
         $certificateType = CertificateType::create($request->validated());
 
         $certificateType->requirements()->sync($request->input('requirement_ids', []));
+        $certificateType->sections()->sync($request->input('section_ids', []));
 
         return redirect()->route('certificate-types.index')->with('success', 'تم إضافة الشهادة بنجاح');
     }
 
     public function edit(CertificateType $certificateType)
     {
-        $certificateType->load('requirements');
+        $certificateType->load(['requirements', 'sections']);
         $requirements = \App\Models\DepartmentRequirement::with('department')->get();
+        $sections = Section::with('department')->get();
 
-        return view('admin.pages.certificate-type.edit', compact('certificateType', 'requirements'));
+        return view('admin.pages.certificate-type.edit', compact('certificateType', 'requirements', 'sections'));
     }
 
     public function update(UpdateCertificateTypeRequest $request, CertificateType $certificateType)
@@ -45,6 +49,7 @@ class CertificateTypeController extends Controller
         $certificateType->update($request->validated());
 
         $certificateType->requirements()->sync($request->input('requirement_ids', []));
+        $certificateType->sections()->sync($request->input('section_ids', []));
 
         return redirect()->route('certificate-types.index')->with('success', 'تم تحديث الشهادة بنجاح');
     }
