@@ -16,6 +16,7 @@ class StoreSectionRequest extends FormRequest
         return [
             'department_id' => 'required|exists:departments,id',
             'name' => 'required|string|max:255',
+            'cgpa' => 'nullable|numeric|between:0,5',
         ];
     }
 
@@ -25,6 +26,8 @@ class StoreSectionRequest extends FormRequest
             'department_id.required' => 'يجب اختيار التخصص',
             'department_id.exists' => 'التخصص المختار غير موجود',
             'name.required' => 'اسم الشعبة مطلوب',
+            'cgpa.numeric' => 'يجب أن يكون CGPA رقماً',
+            'cgpa.between' => 'يجب أن يكون CGPA بين 0 و 5',
         ];
     }
 }

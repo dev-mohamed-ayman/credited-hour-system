@@ -30,6 +30,14 @@
                     <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
+                <div class="form-group mb-3">
+                    <label for="cgpa" class="form-label">CGPA</label>
+                    <input type="number" step="0.01" name="cgpa" id="cgpa" value="{{ old('cgpa') }}"
+                           class="form-control @error('cgpa') is-invalid @enderror" placeholder="أدخل CGPA">
+                    @error('cgpa')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
             </div>
             <div class="card-footer">
                 <button type="submit" class="btn btn-primary">حفظ</button>
