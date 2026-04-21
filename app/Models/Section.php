@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Section extends Model
 {
-    protected $fillable = ['department_id', 'name'];
+    protected $fillable = ['department_id', 'name', 'cgpa'];
 
     public function department(): BelongsTo
     {
