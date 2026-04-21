@@ -66,4 +66,9 @@ class Student extends Model
     {
         return $this->belongsTo(AcademicAdvisor::class);
     }
+
+    public function warnings()
+    {
+        return $this->hasMany(StudentWarning::class);
+    }
 }

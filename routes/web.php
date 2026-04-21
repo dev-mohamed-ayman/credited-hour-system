@@ -56,5 +56,9 @@ Route::get('students/print-certificates', [StudentController::class, 'printCerti
 Route::post('students/print-certificates', [StudentController::class, 'printCertificates'])->name('print.certificates.print');
 Route::resource('students', StudentController::class);
 
+// Student Warning Routes
+Route::get('student-warnings', \App\Livewire\Admin\StudentWarning\Index::class)->name('student-warnings.index');
+Route::get('student-warnings/create', \App\Livewire\Admin\StudentWarning\Create::class)->name('student-warnings.create');
+
 // Academic Advisor Routes
 Route::resource('academic-advisors', AcademicAdvisorController::class)->except(['show']);

@@ -115,7 +115,7 @@
             </a>
         </li>
 
-        <li class="menu-item {{isActiveRoute(['students.*', 'print.student.cards.*', 'print.seat.numbers.*', 'print.certificates.*'], true)}}">
+        <li class="menu-item {{isActiveRoute(['students.*', 'print.student.cards.*', 'print.seat.numbers.*', 'print.certificates.*', 'student-warnings.*'], true)}}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base ti tabler-users"></i>
                 <div data-i18n="شئون الطلبه">شئون الطلبه</div>
@@ -144,6 +144,11 @@
                 <li class="menu-item {{isActiveRoute('print.certificates.index')}}">
                     <a href="{{route('print.certificates.index')}}" class="menu-link">
                         <div data-i18n="طباعة شهادات التخرج">طباعة شهادات التخرج</div>
+                    </a>
+                </li>
+                <li class="menu-item {{isActiveRoute('student-warnings.*')}}">
+                    <a href="{{route('student-warnings.index')}}" class="menu-link">
+                        <div data-i18n="تنبيه الطلاب">تنبيه الطلاب</div>
                     </a>
                 </li>
             </ul>
