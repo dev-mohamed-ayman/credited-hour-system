@@ -147,6 +147,12 @@
                                         <a href="{{ route('academic-advisors.edit', $advisor) }}" class="dropdown-item">
                                             <i class="ti tabler-edit me-1"></i> تعديل
                                         </a>
+                                        @if($advisor->is_active && $advisor->current_students > 0)
+                                        <button type="button" class="dropdown-item text-warning"
+                                                wire:click="openTransferModal({{ $advisor->id }})">
+                                            <i class="ti tabler-transfer-out me-1"></i> إيقاف وتحويل الطلاب
+                                        </button>
+                                        @endif
                                         <button type="button" class="dropdown-item text-danger"
                                                 onclick="confirmDelete({{ $advisor->id }}, '{{ $advisor->name }}')">
                                             <i class="ti tabler-trash me-1"></i> حذف
@@ -202,10 +208,76 @@
         </div>
     </div>
 
+    <!-- Modal Transfer -->
+    <div class="modal fade" id="transferModal" tabindex="-1" aria-hidden="true" wire:ignore.self>
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">إيقاف المرشد وتحويل الطلاب</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="ti tabler-transfer-out text-warning" style="font-size: 3rem;"></i>
+                    </div>
+                    <p>سيتم إيقاف المرشد الأكاديمي المختار، وتحويل طلابه المسجلين وفقاً للخيار المحدد بالأسفل.</p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">طريقة التحويل</label>
+                        <div class="form-check mt-2">
+                            <input name="transferMode" class="form-check-input" type="radio" value="auto" id="transferModeAuto" wire:model.live="transferMode">
+                            <label class="form-check-label" for="transferModeAuto">
+                                توزيع تلقائي <small class="text-muted d-block">سيتم توزيع الطلاب على أفضل المرشدين المتاحين بناءً على القسم والشعبة والمستوى والسعة المتاحة.</small>
+                            </label>
+                        </div>
+                        <div class="form-check mt-3">
+                            <input name="transferMode" class="form-check-input" type="radio" value="specific" id="transferModeSpecific" wire:model.live="transferMode">
+                            <label class="form-check-label" for="transferModeSpecific">
+                                مرشد محدد <small class="text-muted d-block">سيتم نقل جميع الطلاب إلى المرشد الأكاديمي المختار أدناه.</small>
+                            </label>
+                        </div>
+                    </div>
+
+                    @if($transferMode === 'specific')
+                    <div class="mb-3">
+                        <label class="form-label" for="targetAdvisor">المرشد الأكاديمي البديل</label>
+                        <select id="targetAdvisor" class="form-select @error('targetAdvisorId') is-invalid @enderror" wire:model="targetAdvisorId">
+                            <option value="">-- اختر المرشد البديل --</option>
+                            @foreach($this->activeAdvisors as $activeAdvisor)
+                                <option value="{{ $activeAdvisor->id }}">{{ $activeAdvisor->name }} (متاح: {{ $activeAdvisor->max_students - $activeAdvisor->current_students }})</option>
+                            @endforeach
+                        </select>
+                        @error('targetAdvisorId')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    @endif
+                    
+                    <div class="alert alert-warning mb-0">
+                        <div class="d-flex align-items-center mb-1">
+                            <i class="ti tabler-info-circle me-2 fs-5"></i>
+                            <strong>ملاحظة هامة:</strong>
+                        </div>
+                        <p class="mb-0 ms-4">هذا الإجراء سيقوم بتغيير حالة المرشد إلى "غير نشط" بعد الانتهاء من تحويل جميع الطلاب.</p>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="button" class="btn btn-warning" wire:click="transferStudents" wire:loading.attr="disabled">
+                        <span wire:loading.remove wire:target="transferStudents">تأكيد الإيقاف والتحويل</span>
+                        <span wire:loading wire:target="transferStudents">جاري التحويل...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @script
     <script>
         let advisorIdToDelete = null;
         const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        const transferModal = new bootstrap.Modal(document.getElementById('transferModal'));
 
         window.confirmDelete = function (id, name) {
             advisorIdToDelete = id;
@@ -218,6 +290,14 @@
                 $wire.delete(advisorIdToDelete);
                 deleteModal.hide();
             }
+        });
+
+        window.addEventListener('open-transfer-modal', event => {
+            transferModal.show();
+        });
+        
+        window.addEventListener('close-transfer-modal', event => {
+            transferModal.hide();
         });
     </script>
     @endscript
