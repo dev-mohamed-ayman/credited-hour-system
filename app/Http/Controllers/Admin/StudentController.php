@@ -148,4 +148,9 @@ class StudentController extends Controller
     {
         return $request;
     }
+
+    public function searchIndex()
+    {
+        return view('admin.pages.student.search');
+    }
 }

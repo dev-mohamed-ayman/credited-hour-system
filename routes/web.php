@@ -54,11 +54,15 @@ Route::get('students/print-seat-numbers', [StudentController::class, 'printSeatN
 Route::post('students/print-seat-numbers', [StudentController::class, 'printSeatNumbers'])->name('print.seat.numbers.print');
 Route::get('students/print-certificates', [StudentController::class, 'printCertificatesIndex'])->name('print.certificates.index');
 Route::post('students/print-certificates', [StudentController::class, 'printCertificates'])->name('print.certificates.print');
+Route::get('students/search', [\App\Http\Controllers\Admin\StudentController::class, 'searchIndex'])->name('students.search.index');
 Route::resource('students', StudentController::class);
 
 // Student Warning Routes
 Route::get('student-warnings', \App\Livewire\Admin\StudentWarning\Index::class)->name('student-warnings.index');
 Route::get('student-warnings/create', \App\Livewire\Admin\StudentWarning\Create::class)->name('student-warnings.create');
+
+// Student Search Route
+Route::get('student-search', \App\Livewire\Admin\StudentSearch::class)->name('student-search.index');
 
 // Academic Advisor Routes
 Route::resource('academic-advisors', AcademicAdvisorController::class)->except(['show']);
