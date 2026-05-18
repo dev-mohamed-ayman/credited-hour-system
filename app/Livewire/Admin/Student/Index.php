@@ -2,9 +2,6 @@
 
 namespace App\Livewire\Admin\Student;
 
-use App\Enums\Student\ApplicationCategory;
-use App\Enums\Student\StudentStatus;
-use App\Enums\Student\StudyStatus;
 use App\Models\CertificateType;
 use App\Models\Department;
 use App\Models\Level;
@@ -70,6 +67,31 @@ class Index extends Component
         ['key' => 'level', 'label' => 'الفرقة'],
         ['key' => 'section', 'label' => 'الشعبة'],
         ['key' => 'academic_advisor', 'label' => 'المرشد الأكاديمي'],
+        ['key' => 'plain_password', 'label' => 'كلمة السر'],
+        ['key' => 'national_id_place', 'label' => 'جهة اصدار الرقم القومي'],
+        ['key' => 'nationality', 'label' => 'الجنسية'],
+        ['key' => 'country', 'label' => 'دولة الميلاد'],
+        ['key' => 'city', 'label' => 'محافظة الميلاد'],
+        ['key' => 'birth_date', 'label' => 'تاريخ الميلاد'],
+        ['key' => 'certificate_type', 'label' => 'الشهادة الحاصل عليها'],
+        ['key' => 'seat_number', 'label' => 'رقم جلوس الشهادة'],
+        ['key' => 'student_scores', 'label' => 'درجات الطالب'],
+        ['key' => 'total_score', 'label' => 'اجمالي المجموع الدرجات'],
+        ['key' => 'english_score', 'label' => 'درجة اللغة الانجليزية'],
+        ['key' => 'graduation_date', 'label' => 'تاريخ الحصول علي الشهادة'],
+        ['key' => 'enrollment_date', 'label' => 'تاريخ قيد الطالب بالمعهد'],
+        ['key' => 'application_category', 'label' => 'تصنيف التقديم'],
+        ['key' => 'religion', 'label' => 'الديانة'],
+        ['key' => 'address', 'label' => 'العنوان'],
+        ['key' => 'landline_phone', 'label' => 'التليفون الارضي'],
+        ['key' => 'guardian_job', 'label' => 'مهنة ولي الامر'],
+        ['key' => 'guardian_phone_1', 'label' => 'تليفون ولي الامر'],
+        ['key' => 'guardian_phone_2', 'label' => 'تليفون ولي الامر الثاني'],
+        ['key' => 'study_status', 'label' => 'تصنيف الطالب'],
+        ['key' => 'department', 'label' => 'التخصص'],
+        ['key' => 'is_foreign', 'label' => 'طالب وافد'],
+        ['key' => 'status_notes', 'label' => 'بيانات اخري'],
+        ['key' => 'military_education_passed', 'label' => 'التربية العسكرية'],
     ];
 
     public $showFilters = false;
@@ -161,11 +183,11 @@ class Index extends Component
         $students = Student::query()
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%')
-                        ->orWhere('username', 'like', '%' . $this->search . '%')
-                        ->orWhere('national_id', 'like', '%' . $this->search . '%')
-                        ->orWhere('email', 'like', '%' . $this->search . '%')
-                        ->orWhere('phone', 'like', '%' . $this->search . '%');
+                    $q->where('name', 'like', '%'.$this->search.'%')
+                        ->orWhere('username', 'like', '%'.$this->search.'%')
+                        ->orWhere('national_id', 'like', '%'.$this->search.'%')
+                        ->orWhere('email', 'like', '%'.$this->search.'%')
+                        ->orWhere('phone', 'like', '%'.$this->search.'%');
                 });
             })
             ->when($this->department_id, function ($query) {
@@ -200,7 +222,7 @@ class Index extends Component
             ->when($this->academic_advisor_id, function ($query) {
                 $query->where('academic_advisor_id', $this->academic_advisor_id);
             })
-            ->with(['level', 'section', 'academicAdvisor'])
+            ->with(['level', 'section.department', 'academicAdvisor', 'country', 'city', 'nationality', 'certificateType', 'scores.requirement'])
             ->latest()
             ->paginate($this->perPage);
 

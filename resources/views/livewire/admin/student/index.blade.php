@@ -141,39 +141,11 @@
         <table class="table table-hover">
             <thead class="table-light">
             <tr>
-                @if(in_array('name', $selectedColumns))
-                    <th class="fw-bold">الطالب</th>
-                @endif
-                @if(in_array('username', $selectedColumns))
-                    <th class="fw-bold">كود المستخدم</th>
-                @endif
-                @if(in_array('national_id', $selectedColumns))
-                    <th class="fw-bold">الرقم القومي</th>
-                @endif
-                @if(in_array('email', $selectedColumns))
-                    <th class="fw-bold">البريد الإلكتروني</th>
-                @endif
-                @if(in_array('phone', $selectedColumns))
-                    <th class="fw-bold">رقم الهاتف</th>
-                @endif
-                @if(in_array('gender', $selectedColumns))
-                    <th class="fw-bold">الجنس</th>
-                @endif
-                @if(in_array('score', $selectedColumns))
-                    <th class="fw-bold">المجموع</th>
-                @endif
-                @if(in_array('level', $selectedColumns))
-                    <th class="fw-bold">الفرقة</th>
-                @endif
-                @if(in_array('section', $selectedColumns))
-                    <th class="fw-bold">الشعبة</th>
-                @endif
-                @if(in_array('academic_advisor', $selectedColumns))
-                    <th class="fw-bold">المرشد الأكاديمي</th>
-                @endif
-                @if(in_array('status', $selectedColumns))
-                    <th class="fw-bold">الحالة</th>
-                @endif
+                @foreach($availableColumns as $col)
+                    @if(in_array($col['key'], $selectedColumns))
+                        <th class="fw-bold">{{ $col['label'] }}</th>
+                    @endif
+                @endforeach
                 <th class="fw-bold text-center">الإجراءات</th>
             </tr>
             </thead>
@@ -250,9 +222,12 @@
                         <td>
                             @php
                                 $statusClass = match($student->status?->value) {
-                                    'active' => 'bg-label-success',
-                                    'inactive' => 'bg-label-danger',
+                                    'registered' => 'bg-label-success',
+                                    'excused' => 'bg-label-info',
                                     'suspended' => 'bg-label-warning',
+                                    'withdrawn' => 'bg-label-secondary',
+                                    'dismissed' => 'bg-label-danger',
+                                    'graduated' => 'bg-label-primary',
                                     default => 'bg-label-secondary'
                                 };
                             @endphp
@@ -260,6 +235,81 @@
                                     {{ $student->status?->label() ?? 'غير محدد' }}
                                 </span>
                         </td>
+                    @endif
+                    @if(in_array('plain_password', $selectedColumns))
+                        <td><code class="text-dark">{{ $student->plain_password }}</code></td>
+                    @endif
+                    @if(in_array('national_id_place', $selectedColumns))
+                        <td>{{ $student->national_id_place }}</td>
+                    @endif
+                    @if(in_array('nationality', $selectedColumns))
+                        <td>{{ $student->nationality?->name }}</td>
+                    @endif
+                    @if(in_array('country', $selectedColumns))
+                        <td>{{ $student->country?->name }}</td>
+                    @endif
+                    @if(in_array('city', $selectedColumns))
+                        <td>{{ $student->city?->name }}</td>
+                    @endif
+                    @if(in_array('birth_date', $selectedColumns))
+                        <td>{{ $student->birth_date ? \Carbon\Carbon::parse($student->birth_date)->format('Y-m-d') : '-' }}</td>
+                    @endif
+                    @if(in_array('certificate_type', $selectedColumns))
+                        <td>{{ $student->certificateType?->name }}</td>
+                    @endif
+                    @if(in_array('seat_number', $selectedColumns))
+                        <td>{{ $student->seat_number }}</td>
+                    @endif
+                    @if(in_array('student_scores', $selectedColumns))
+                        <td>{{ $student->scores->pluck('score')->join(', ') ?: '-' }}</td>
+                    @endif
+                    @if(in_array('total_score', $selectedColumns))
+                        <td>{{ $student->certificateType?->total_score ?? '-' }}</td>
+                    @endif
+                    @if(in_array('english_score', $selectedColumns))
+                        <td>{{ $student->scores->where('requirement.subject_name', 'اللغة الإنجليزية')->first()?->score ?? '-' }}</td>
+                    @endif
+                    @if(in_array('graduation_date', $selectedColumns))
+                        <td>{{ $student->graduation_date ? \Carbon\Carbon::parse($student->graduation_date)->format('Y-m-d') : '-' }}</td>
+                    @endif
+                    @if(in_array('enrollment_date', $selectedColumns))
+                        <td>{{ $student->created_at ? $student->created_at->format('Y-m-d') : '-' }}</td>
+                    @endif
+                    @if(in_array('application_category', $selectedColumns))
+                        <td>{{ $student->application_category?->label() ?? '-' }}</td>
+                    @endif
+                    @if(in_array('religion', $selectedColumns))
+                        <td>{{ $student->religion ?? '-' }}</td>
+                    @endif
+                    @if(in_array('address', $selectedColumns))
+                        <td>{{ $student->address ?? '-' }}</td>
+                    @endif
+                    @if(in_array('landline_phone', $selectedColumns))
+                        <td>{{ $student->landline_phone ?? '-' }}</td>
+                    @endif
+                    @if(in_array('guardian_job', $selectedColumns))
+                        <td>{{ $student->guardian_job ?? '-' }}</td>
+                    @endif
+                    @if(in_array('guardian_phone_1', $selectedColumns))
+                        <td>{{ $student->guardian_phone_1 ?? '-' }}</td>
+                    @endif
+                    @if(in_array('guardian_phone_2', $selectedColumns))
+                        <td>{{ $student->guardian_phone_2 ?? '-' }}</td>
+                    @endif
+                    @if(in_array('study_status', $selectedColumns))
+                        <td>{{ $student->study_status?->label() ?? '-' }}</td>
+                    @endif
+                    @if(in_array('department', $selectedColumns))
+                        <td>{{ $student->section?->department?->name ?? '-' }}</td>
+                    @endif
+                    @if(in_array('is_foreign', $selectedColumns))
+                        <td>{!! $student->is_foreign ? '<span class="badge bg-label-primary">نعم</span>' : '<span class="badge bg-label-secondary">لا</span>' !!}</td>
+                    @endif
+                    @if(in_array('status_notes', $selectedColumns))
+                        <td>{{ \Illuminate\Support\Str::limit($student->status_notes, 30, '...') ?: '-' }}</td>
+                    @endif
+                    @if(in_array('military_education_passed', $selectedColumns))
+                        <td>{!! $student->military_education_passed ? '<span class="badge bg-label-success">نعم</span>' : '<span class="badge bg-label-danger">لا</span>' !!}</td>
                     @endif
                     <td class="text-center">
                         <div class="d-inline-block">

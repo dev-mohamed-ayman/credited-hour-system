@@ -62,6 +62,16 @@ class Student extends Model
         return $this->belongsTo(City::class);
     }
 
+    public function nationality()
+    {
+        return $this->belongsTo(Nationality::class);
+    }
+
+    public function certificateType()
+    {
+        return $this->belongsTo(CertificateType::class);
+    }
+
     public function academicAdvisor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(AcademicAdvisor::class);
