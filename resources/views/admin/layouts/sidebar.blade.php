@@ -176,6 +176,11 @@
                                 <div data-i18n="Student Registration">Student Registration</div>
                             </a>
                         </li>
+                        <li class="menu-item {{isActiveRoute('additional-fees.*')}}">
+                            <a href="{{route('additional-fees.index')}}" class="menu-link">
+                                <div data-i18n="Additional Fees">Additional Fees</div>
+                            </a>
+                        </li>
                     </ul>
                 </li>
             </ul>

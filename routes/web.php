@@ -20,6 +20,7 @@ Route::get('', [DashboardController::class, 'index'])->name('dashboard');
 Route::get('settings', [SettingController::class, 'index'])->name('setting.index');
 Route::post('settings', [SettingController::class, 'update'])->name('setting.update');
 Route::get('registration-fees', \App\Livewire\Admin\RegistrationFee\Index::class)->name('registration-fees.index');
+Route::get('additional-fees', \App\Livewire\Admin\AdditionalFee\Index::class)->name('additional-fees.index');
 
 // Department Routes
 Route::resource('departments', DepartmentController::class)->except(['show']);

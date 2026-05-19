@@ -1,0 +1,356 @@
+<div>
+    <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between mb-4 gap-3">
+        <div>
+            <h4 class="mb-0 fw-bold text-heading">المصاريف الإضافية</h4>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb breadcrumb-style1 mb-0 small">
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">الرئيسية</a></li>
+                    <li class="breadcrumb-item active">المصاريف الإضافية</li>
+                </ol>
+            </nav>
+        </div>
+        @if(!$showForm)
+            <button class="btn btn-primary" wire:click="create">
+                <i class="ti tabler-plus me-1"></i>
+                إضافة مصروف جديد
+            </button>
+        @endif
+    </div>
+
+    @if (session()->has('message'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="ti tabler-circle-check me-2"></i>
+                {{ session('message') }}
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    <div class="row">
+        @if($showForm)
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">{{ $editingFeeId ? 'تعديل مصروف' : 'إضافة مصروف جديد' }}</h5>
+                        <button class="btn-close" wire:click="resetForm"></button>
+                    </div>
+                    <div class="card-body">
+                        <form wire:submit.prevent="save">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">اسم المصروف</label>
+                                    <input type="text" class="form-control @error('name') is-invalid @enderror"
+                                        wire:model="name" placeholder="مثلاً: خدمات عامة، كتب، ...">
+                                    @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">المبلغ</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">LE</span>
+                                        <input type="number" step="0.01"
+                                            class="form-control @error('amount') is-invalid @enderror" wire:model="amount">
+                                    </div>
+                                    @error('amount') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">الجنس</label>
+                                    <select class="form-select @error('gender') is-invalid @enderror" wire:model="gender">
+                                        <option value="both">الكل (ذكور وإناث)</option>
+                                        <option value="male">ذكور فقط</option>
+                                        <option value="female">إناث فقط</option>
+                                    </select>
+                                    @error('gender') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">تكرار الدفع</label>
+                                    <div class="d-flex gap-3 mt-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" value="1" id="one_time_yes"
+                                                wire:model="is_one_time">
+                                            <label class="form-check-label" for="one_time_yes">مرة واحدة فقط</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" value="0" id="one_time_no"
+                                                wire:model="is_one_time">
+                                            <label class="form-check-label" for="one_time_no">يتكرر</label>
+                                        </div>
+                                    </div>
+                                    @error('is_one_time') <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">المصروف الأب (إن وجد)</label>
+                                    <select class="form-select @error('parent_id') is-invalid @enderror"
+                                        wire:model="parent_id">
+                                        <option value="">لا يوجد (مصروف رئيسي)</option>
+                                        @foreach($parentFees as $pFee)
+                                            <option value="{{ $pFee->id }}">{{ $pFee->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('parent_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                </div>
+
+                                <hr class="my-4">
+
+                                <div class="col-12">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <i class="ti tabler-target text-primary fs-4 me-2"></i>
+                                        <h6 class="fw-bold mb-0">تخصيص المصروف (Targeting)</h6>
+                                    </div>
+                                    <div class="row g-4">
+                                        {{-- Departments --}}
+                                        <div class="col-md-4">
+                                            <div class="card h-100 border shadow-none bg-light-subtle">
+                                                <div
+                                                    class="card-header d-flex justify-content-between align-items-center p-3 border-bottom bg-white">
+                                                    <span class="fw-medium text-dark"><i
+                                                            class="ti tabler-layout-grid me-2 text-primary"></i>التخصصات</span>
+                                                    <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2"
+                                                        wire:click="selectAllDepartments">
+                                                        {{ count($selectedDepartments) === count($departments) ? 'إلغاء التحديد' : 'تحديد الكل' }}
+                                                    </button>
+                                                </div>
+                                                <div class="card-body p-3" style="max-height: 250px; overflow-y: auto;">
+                                                    <div class="d-flex flex-wrap gap-2">
+                                                        @foreach($departments as $dept)
+                                                            <div class="target-item">
+                                                                <input type="checkbox" class="btn-check"
+                                                                    id="dept_{{ $dept->id }}" value="{{ $dept->id }}"
+                                                                    wire:model="selectedDepartments">
+                                                                <label
+                                                                    class="btn btn-outline-secondary btn-sm rounded-pill px-3"
+                                                                    for="dept_{{ $dept->id }}">
+                                                                    {{ $dept->name }}
+                                                                </label>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {{-- Levels --}}
+                                        <div class="col-md-4">
+                                            <div class="card h-100 border shadow-none bg-light-subtle">
+                                                <div
+                                                    class="card-header d-flex justify-content-between align-items-center p-3 border-bottom bg-white">
+                                                    <span class="fw-medium text-dark"><i
+                                                            class="ti tabler-stairs me-2 text-info"></i>الفرق</span>
+                                                    <button type="button" class="btn btn-xs btn-outline-info py-0 px-2"
+                                                        wire:click="selectAllLevels">
+                                                        {{ count($selectedLevels) === count($levels) ? 'إلغاء التحديد' : 'تحديد الكل' }}
+                                                    </button>
+                                                </div>
+                                                <div class="card-body p-3" style="max-height: 250px; overflow-y: auto;">
+                                                    <div class="d-flex flex-wrap gap-2">
+                                                        @foreach($levels as $lvl)
+                                                            <div class="target-item">
+                                                                <input type="checkbox" class="btn-check" id="lvl_{{ $lvl->id }}"
+                                                                    value="{{ $lvl->id }}" wire:model="selectedLevels">
+                                                                <label
+                                                                    class="btn btn-outline-secondary btn-sm rounded-pill px-3"
+                                                                    for="lvl_{{ $lvl->id }}">
+                                                                    {{ $lvl->name }}
+                                                                </label>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {{-- Sections --}}
+                                        <div class="col-md-4">
+                                            <div class="card h-100 border shadow-none bg-light-subtle">
+                                                <div class="card-header d-flex justify-content-between align-items-center p-3 border-bottom bg-white">
+                                                    <span class="fw-medium text-dark"><i class="ti tabler-subtask me-2 text-warning"></i>الشعب</span>
+                                                    <button type="button" class="btn btn-xs btn-outline-warning py-0 px-2" wire:click="selectAllSections">
+                                                        {{ count($selectedSections) === count($sections) ? 'إلغاء التحديد' : 'تحديد الكل' }}
+                                                    </button>
+                                                </div>
+                                                <div class="card-body p-3" style="max-height: 250px; overflow-y: auto;">
+                                                    <div class="d-flex flex-wrap gap-2">
+                                                        @foreach($sections as $sec)
+                                                            <div class="target-item">
+                                                                <input type="checkbox" class="btn-check" id="sec_{{ $sec->id }}"
+                                                                    value="{{ $sec->id }}" wire:model="selectedSections">
+                                                                <label
+                                                                    class="btn btn-outline-secondary btn-sm rounded-pill px-3"
+                                                                    for="sec_{{ $sec->id }}">
+                                                                    {{ $sec->name }}
+                                                                </label>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <style>
+                                        .btn-check:checked+.btn-outline-primary {
+                                            background-color: var(--bs-primary);
+                                            color: white;
+                                            border-color: var(--bs-primary);
+                                        }
+
+                                        .btn-check:checked+.btn-outline-info {
+                                            background-color: var(--bs-info);
+                                            color: white;
+                                            border-color: var(--bs-info);
+                                        }
+
+                                        .btn-check:checked+.btn-outline-warning {
+                                            background-color: var(--bs-warning);
+                                            color: white;
+                                            border-color: var(--bs-warning);
+                                        }
+
+                                        .btn-check:checked+.btn-outline-secondary {
+                                            background-color: #5a8dee;
+                                            color: white;
+                                            border-color: #5a8dee;
+                                            box-shadow: 0 2px 4px rgba(90, 141, 238, 0.4);
+                                        }
+
+                                        .target-item label {
+                                            transition: all 0.2s ease;
+                                            font-size: 0.85rem;
+                                            background-color: white;
+                                        }
+
+                                        .target-item label:hover {
+                                            transform: translateY(-2px);
+                                        }
+                                    </style>
+                                </div>
+
+                                <div class="col-12 mt-4 d-flex justify-content-end gap-2">
+                                    <button type="button" class="btn btn-label-secondary"
+                                        wire:click="resetForm">إلغاء</button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="ti tabler-device-floppy me-1"></i>
+                                        {{ $editingFeeId ? 'تحديث البيانات' : 'حفظ المصروف' }}
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        <div class="col-12">
+            <div class="card">
+                <div class="card-datatable table-responsive">
+                    <table class="table table-hover border-top">
+                        <thead>
+                            <tr>
+                                <th width="30%">المصروف</th>
+                                <th>المبلغ</th>
+                                <th>الجنس</th>
+                                <th>تكرار الدفع</th>
+                                <th>التخصيص</th>
+                                <th width="150">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($additionalFees as $fee)
+                                                    <tr class="bg-light fw-bold">
+                                                        <td>
+                                                            <i class="ti tabler-folder me-2 text-primary"></i>
+                                                            {{ $fee->name }}
+                                                        </td>
+                                                        <td>{{ number_format($fee->amount, 2) }} LE</td>
+                                                        <td>
+                                                            @if($fee->gender == 'both')
+                                                                <span class="badge bg-label-info">الكل</span>
+                                                            @elseif($fee->gender == 'male')
+                                                                <span class="badge bg-label-primary">ذكور</span>
+                                                            @else
+                                                                <span class="badge bg-label-danger">إناث</span>
+                                                            @endif
+                                                        </td>
+                                                        <td>
+                                                            {!! $fee->is_one_time
+                                ? '<span class="text-success"><i class="ti tabler-check me-1"></i>مرة واحدة</span>'
+                                : '<span class="text-warning"><i class="ti tabler-refresh me-1"></i>متكرر</span>' !!}
+                                                        </td>
+                                                        <td>
+                                                            <small class="text-muted">
+                                                                أقسام: {{ $fee->departments->count() }} |
+                                                                فرق: {{ $fee->levels->count() }} |
+                                                                شعب: {{ $fee->sections->count() }}
+                                                            </small>
+                                                        </td>
+                                                        <td>
+                                                            <div class="d-flex align-items-center">
+                                                                <button class="btn btn-sm btn-icon edit-record"
+                                                                    wire:click="edit({{ $fee->id }})">
+                                                                    <i class="ti tabler-edit"></i>
+                                                                </button>
+                                                                <button class="btn btn-sm btn-icon delete-record text-danger"
+                                                                    onclick="confirm('هل أنت متأكد من الحذف؟') || event.stopImmediatePropagation()"
+                                                                    wire:click="delete({{ $fee->id }})">
+                                                                    <i class="ti tabler-trash"></i>
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    @foreach($fee->children as $child)
+                                                                        <tr>
+                                                                            <td class="ps-5">
+                                                                                <i class="ti tabler-corner-down-left me-2 text-muted"></i>
+                                                                                {{ $child->name }}
+                                                                            </td>
+                                                                            <td>{{ number_format($child->amount, 2) }} LE</td>
+                                                                            <td>
+                                                                                @if($child->gender == 'both')
+                                                                                    <span class="badge bg-label-info">الكل</span>
+                                                                                @elseif($child->gender == 'male')
+                                                                                    <span class="badge bg-label-primary">ذكور</span>
+                                                                                @else
+                                                                                    <span class="badge bg-label-danger">إناث</span>
+                                                                                @endif
+                                                                            </td>
+                                                                            <td>
+                                                                                {!! $child->is_one_time
+                                                        ? '<span class="text-success"><i class="ti tabler-check me-1"></i>مرة واحدة</span>'
+                                                        : '<span class="text-warning"><i class="ti tabler-refresh me-1"></i>متكرر</span>' !!}
+                                                                            </td>
+                                                                            <td>
+                                                                                <small class="text-muted">
+                                                                                    أقسام: {{ $child->departments->count() }} |
+                                                                                    فرق: {{ $child->levels->count() }} |
+                                                                                    شعب: {{ $child->sections->count() }}
+                                                                                </small>
+                                                                            </td>
+                                                                            <td>
+                                                                                <div class="d-flex align-items-center">
+                                                                                    <button class="btn btn-sm btn-icon edit-record"
+                                                                                        wire:click="edit({{ $child->id }})">
+                                                                                        <i class="ti tabler-edit"></i>
+                                                                                    </button>
+                                                                                    <button class="btn btn-sm btn-icon delete-record text-danger"
+                                                                                        onclick="confirm('هل أنت متأكد من الحذف؟') || event.stopImmediatePropagation()"
+                                                                                        wire:click="delete({{ $child->id }})">
+                                                                                        <i class="ti tabler-trash"></i>
+                                                                                    </button>
+                                                                                </div>
+                                                                            </td>
+                                                                        </tr>
+                                                    @endforeach
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">لا يوجد مصاريف مضافة حالياً.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
