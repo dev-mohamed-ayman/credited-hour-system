@@ -160,19 +160,19 @@
             </ul>
         </li>
 
-        <li class="menu-item">
+        <li class="menu-item {{isActiveRoute(['registration-fees.*'], true)}}">
             <a href="javascript:void(0)" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base ti tabler-user-shield"></i>
                 <div data-i18n="Admin">Admin</div>
             </a>
             <ul class="menu-sub">
-                <li class="menu-item">
+                <li class="menu-item {{isActiveRoute(['registration-fees.*'], true)}}">
                     <a href="javascript:void(0)" class="menu-link menu-toggle">
                         <div data-i18n="Site Configuration">Site Configuration</div>
                     </a>
                     <ul class="menu-sub">
-                        <li class="menu-item">
-                            <a href="javascript:void(0)" class="menu-link">
+                        <li class="menu-item {{isActiveRoute('registration-fees.*')}}">
+                            <a href="{{route('registration-fees.index')}}" class="menu-link">
                                 <div data-i18n="Student Registration">Student Registration</div>
                             </a>
                         </li>
