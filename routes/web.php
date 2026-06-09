@@ -48,6 +48,7 @@ Route::resource('years', \App\Http\Controllers\Admin\YearController::class)->exc
 
 // Finance Routes
 Route::get('finance/fee-issuance', \App\Livewire\Admin\Finance\FeeIssuance::class)->name('admin.finance.fee-issuance');
+Route::get('finance/fee-payment', \App\Livewire\Admin\Finance\FeePayment::class)->name('admin.finance.fee-payment');
 Route::get('finance/print-tickets', [\App\Http\Controllers\Admin\FinanceController::class, 'printTickets'])->name('admin.finance.print-tickets');
 
 // Course Routes

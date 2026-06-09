@@ -21,6 +21,8 @@ class FeeIssuance extends Component
 
     public $selectedFees = []; // Array of 'type-id'
 
+    public $pendingTickets = [];
+
     public $notes;
 
     public function searchStudent()
@@ -38,6 +40,38 @@ class FeeIssuance extends Component
         }
 
         $this->loadFees();
+        $this->loadPendingTickets();
+    }
+
+    public function loadPendingTickets()
+    {
+        if (! $this->student) {
+            $this->pendingTickets = [];
+
+            return;
+        }
+
+        $this->pendingTickets = StudentFeeTicket::where('student_id', $this->student->id)
+            ->where('status', 'pending')
+            ->get();
+    }
+
+    public function deleteTicket($ticketId)
+    {
+        $ticket = StudentFeeTicket::find($ticketId);
+        if ($ticket && $ticket->status === 'pending') {
+            $ticket->delete();
+            $this->dispatch('alert', ['type' => 'success', 'message' => 'تم حذف الحافظة بنجاح']);
+            $this->loadFees();
+            $this->loadPendingTickets();
+        }
+    }
+
+    public function printTicket($ticketNumber)
+    {
+        return redirect()->route('admin.finance.print-tickets', [
+            'tickets' => $ticketNumber,
+        ]);
     }
 
     public function loadFees()

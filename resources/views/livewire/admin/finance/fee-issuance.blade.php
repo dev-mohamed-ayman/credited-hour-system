@@ -175,6 +175,53 @@
                     </div>
                 </div>
             </div>
+
+            {{-- Pending Tickets Section --}}
+            @if($pendingTickets && count($pendingTickets) > 0)
+                <div class="col-md-12 mt-4">
+                    <div class="card border-warning">
+                        <div class="card-header bg-label-warning d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">الحافظات الصادرة (غير المدفوعة)</h5>
+                            <span class="badge bg-warning text-dark">{{ count($pendingTickets) }} حافظة</span>
+                        </div>
+                        <div class="card-body pt-3">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>رقم الحافظة</th>
+                                            <th>نوع الرسوم</th>
+                                            <th>المبلغ</th>
+                                            <th>تاريخ الإصدار</th>
+                                            <th class="text-center">إجراءات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($pendingTickets as $ticket)
+                                            <tr>
+                                                <td class="fw-bold">{{ $ticket->ticket_number }}</td>
+                                                <td>{{ $ticket->fee_type === 'additional' ? 'رسوم إضافية' : 'رسوم تسجيل' }}</td>
+                                                <td class="text-success fw-bold">{{ number_format($ticket->amount, 2) }} ج.م</td>
+                                                <td>{{ $ticket->created_at->format('Y-m-d H:i') }}</td>
+                                                <td class="text-center">
+                                                    <div class="btn-group">
+                                                        <button type="button" wire:click="printTicket('{{ $ticket->ticket_number }}')" class="btn btn-sm btn-icon btn-label-primary" title="طباعة">
+                                                            <i class="ti tabler-printer"></i>
+                                                        </button>
+                                                        <button type="button" wire:confirm="هل أنت متأكد من حذف هذه الحافظة؟" wire:click="deleteTicket({{ $ticket->id }})" class="btn btn-sm btn-icon btn-label-danger" title="حذف">
+                                                            <i class="ti tabler-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
         @endif
     </div>
 

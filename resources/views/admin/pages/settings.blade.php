@@ -178,6 +178,31 @@
                 </div>
             </div>
 
+            <hr class="my-4">
+
+            <h5 class="mb-3">إعدادات أرقام الإيصالات الوزارية</h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="ministerial_receipt_start">رقم البداية</label>
+                        <input type="number" class="form-control" id="ministerial_receipt_start" name="ministerial_receipt_start" value="{{ optional($settings)->ministerial_receipt_start }}">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="ministerial_receipt_end">رقم النهاية</label>
+                        <input type="number" class="form-control" id="ministerial_receipt_end" name="ministerial_receipt_end" value="{{ optional($settings)->ministerial_receipt_end }}">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="ministerial_receipt_current">الرقم الحالي (آخر رقم مستخدم)</label>
+                        <input type="number" class="form-control" id="ministerial_receipt_current" name="ministerial_receipt_current" value="{{ optional($settings)->ministerial_receipt_current }}">
+                        <small class="text-muted">سيتم استخدام الرقم التالي لهذا الرقم عند السداد</small>
+                    </div>
+                </div>
+            </div>
+
         </div>
         <div class="card-footer">
             <button type="submit" class="btn btn-primary btn-sm">حفظ التعديلات</button>

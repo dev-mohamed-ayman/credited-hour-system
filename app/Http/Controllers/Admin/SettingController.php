@@ -46,6 +46,10 @@ class SettingController extends Controller
             'cert_show_cgpa' => $request->has('cert_show_cgpa'),
             'cert_show_semester' => $request->has('cert_show_semester'),
             'cert_show_extra' => $request->has('cert_show_extra'),
+
+            'ministerial_receipt_start' => $request->ministerial_receipt_start,
+            'ministerial_receipt_end' => $request->ministerial_receipt_end,
+            'ministerial_receipt_current' => $request->ministerial_receipt_current,
         ]);
 
         return redirect()->back()->with('success', 'تم التحديث بنجاح');

@@ -13,8 +13,19 @@ class StudentFeeTicket extends Model
         'fee_id',
         'amount',
         'status',
+        'ministerial_receipt_number',
+        'payment_method',
+        'visa_last_four',
+        'paid_at',
         'notes',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'paid_at' => 'datetime',
+        ];
+    }
 
     public function student()
     {
