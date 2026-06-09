@@ -18,7 +18,7 @@ class Index extends Component
 
     public $is_one_time = true;
 
-    public $parent_id = null;
+    public $items = [];
 
     public $selectedDepartments = [];
 
@@ -35,7 +35,8 @@ class Index extends Component
         'amount' => 'required|numeric|min:0',
         'gender' => 'required|in:male,female,both',
         'is_one_time' => 'required|boolean',
-        'parent_id' => 'nullable|exists:additional_fees,id',
+        'items.*.name' => 'required|string|max:255',
+        'items.*.amount' => 'required|numeric|min:0',
         'selectedDepartments' => 'array',
         'selectedLevels' => 'array',
         'selectedSections' => 'array',
@@ -52,7 +53,7 @@ class Index extends Component
         $this->amount = 0;
         $this->gender = 'both';
         $this->is_one_time = true;
-        $this->parent_id = null;
+        $this->items = [];
 
         // Default to all selected
         $this->selectedDepartments = Department::pluck('id')->map(fn ($id) => (string) $id)->toArray();
@@ -64,6 +65,30 @@ class Index extends Component
         $this->resetErrorBag();
     }
 
+    public function addItem()
+    {
+        $this->items[] = ['name' => '', 'amount' => 0];
+    }
+
+    public function removeItem($index)
+    {
+        unset($this->items[$index]);
+        $this->items = array_values($this->items);
+        $this->calculateTotal();
+    }
+
+    public function updatedItems()
+    {
+        $this->calculateTotal();
+    }
+
+    public function calculateTotal()
+    {
+        if (! empty($this->items)) {
+            $this->amount = array_sum(array_column($this->items, 'amount'));
+        }
+    }
+
     public function create()
     {
         $this->resetForm();
@@ -72,14 +97,18 @@ class Index extends Component
 
     public function edit($id)
     {
-        $fee = AdditionalFee::with(['departments', 'levels', 'sections'])->findOrFail($id);
+        $fee = AdditionalFee::with(['departments', 'levels', 'sections', 'items'])->findOrFail($id);
 
         $this->editingFeeId = $fee->id;
         $this->name = $fee->name;
         $this->amount = $fee->amount;
         $this->gender = $fee->gender;
         $this->is_one_time = $fee->is_one_time;
-        $this->parent_id = $fee->parent_id;
+        $this->items = $fee->items->map(fn ($item) => [
+            'id' => $item->id,
+            'name' => $item->name,
+            'amount' => $item->amount,
+        ])->toArray();
 
         $this->selectedDepartments = $fee->departments->pluck('id')->map(fn ($id) => (string) $id)->toArray();
         $this->selectedLevels = $fee->levels->pluck('id')->map(fn ($id) => (string) $id)->toArray();
@@ -90,6 +119,7 @@ class Index extends Component
 
     public function save()
     {
+        $this->calculateTotal();
         $this->validate();
 
         $data = [
@@ -97,7 +127,6 @@ class Index extends Component
             'amount' => $this->amount,
             'gender' => $this->gender,
             'is_one_time' => $this->is_one_time,
-            'parent_id' => $this->parent_id,
         ];
 
         if ($this->editingFeeId) {
@@ -105,6 +134,15 @@ class Index extends Component
             $fee->update($data);
         } else {
             $fee = AdditionalFee::create($data);
+        }
+
+        // Handle items
+        $fee->items()->delete();
+        foreach ($this->items as $item) {
+            $fee->items()->create([
+                'name' => $item['name'],
+                'amount' => $item['amount'],
+            ]);
         }
 
         $fee->departments()->sync($this->selectedDepartments);
@@ -157,11 +195,7 @@ class Index extends Component
     public function render()
     {
         return view('livewire.admin.additional-fee.index', [
-            'additionalFees' => AdditionalFee::with(['children', 'departments', 'levels', 'sections'])
-                ->whereNull('parent_id')
-                ->get(),
-            'parentFees' => AdditionalFee::whereNull('parent_id')
-                ->where('id', '!=', $this->editingFeeId)
+            'additionalFees' => AdditionalFee::with(['items', 'departments', 'levels', 'sections'])
                 ->get(),
             'departments' => Department::all(),
             'levels' => Level::all(),

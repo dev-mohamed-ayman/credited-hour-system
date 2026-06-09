@@ -7,21 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 class AdditionalFee extends Model
 {
     protected $fillable = [
-        'parent_id',
         'name',
         'gender',
         'amount',
         'is_one_time',
     ];
 
-    public function parent()
+    public function items()
     {
-        return $this->belongsTo(AdditionalFee::class, 'parent_id');
-    }
-
-    public function children()
-    {
-        return $this->hasMany(AdditionalFee::class, 'parent_id');
+        return $this->hasMany(AdditionalFeeItem::class);
     }
 
     public function departments()

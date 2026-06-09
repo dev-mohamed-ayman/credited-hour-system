@@ -45,12 +45,16 @@
                                     @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label">المبلغ</label>
+                                    <label class="form-label">المبلغ الإجمالي</label>
                                     <div class="input-group">
                                         <span class="input-group-text">LE</span>
                                         <input type="number" step="0.01"
-                                            class="form-control @error('amount') is-invalid @enderror" wire:model="amount">
+                                            class="form-control @error('amount') is-invalid @enderror" wire:model="amount"
+                                            {{ count($items) > 0 ? 'readonly bg-light' : '' }}>
                                     </div>
+                                    @if(count($items) > 0)
+                                        <small class="text-info">يتم حسابه تلقائياً من البنود بالأسفل</small>
+                                    @endif
                                     @error('amount') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                                 </div>
                                 <div class="col-md-3">
@@ -81,16 +85,57 @@
                                     @enderror
                                 </div>
 
-                                <div class="col-md-6">
-                                    <label class="form-label">المصروف الأب (إن وجد)</label>
-                                    <select class="form-select @error('parent_id') is-invalid @enderror"
-                                        wire:model="parent_id">
-                                        <option value="">لا يوجد (مصروف رئيسي)</option>
-                                        @foreach($parentFees as $pFee)
-                                            <option value="{{ $pFee->id }}">{{ $pFee->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('parent_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                {{-- Fee Items Section --}}
+                                <div class="col-12">
+                                    <div class="card border shadow-none bg-light-subtle">
+                                        <div
+                                            class="card-header d-flex justify-content-between align-items-center p-3 border-bottom bg-white">
+                                            <span class="fw-bold"><i
+                                                    class="ti tabler-list-details me-2 text-primary"></i>بنود المصروف
+                                                (اختياري)</span>
+                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                                wire:click="addItem">
+                                                <i class="ti tabler-plus me-1"></i> إضافة بند
+                                            </button>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            @if(count($items) > 0)
+                                                @foreach($items as $index => $item)
+                                                    <div class="row g-2 mb-2 align-items-center">
+                                                        <div class="col-7">
+                                                            <input type="text"
+                                                                class="form-control form-control-sm @error('items.' . $index . '.name') is-invalid @enderror"
+                                                                wire:model.live="items.{{ $index }}.name"
+                                                                placeholder="اسم البند (مثلاً: كتب، كارنيه...)">
+                                                            @error('items.' . $index . '.name') <div class="invalid-feedback">
+                                                            {{ $message }}</div> @enderror
+                                                        </div>
+                                                        <div class="col-4">
+                                                            <div class="input-group input-group-sm">
+                                                                <input type="number" step="0.01"
+                                                                    class="form-control @error('items.' . $index . '.amount') is-invalid @enderror"
+                                                                    wire:model.live="items.{{ $index }}.amount"
+                                                                    placeholder="المبلغ">
+                                                                <span class="input-group-text">LE</span>
+                                                            </div>
+                                                            @error('items.' . $index . '.amount') <div class="invalid-feedback">
+                                                            {{ $message }}</div> @enderror
+                                                        </div>
+                                                        <div class="col-1 text-end">
+                                                            <button type="button" class="btn btn-sm btn-icon text-danger"
+                                                                wire:click="removeItem({{ $index }})">
+                                                                <i class="ti tabler-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            @else
+                                                <div class="text-center py-3 text-muted small">
+                                                    لا توجد بنود مضافة. سيتم استخدام المبلغ الإجمالي المدخل أعلاه.
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <hr class="my-4">
@@ -165,9 +210,12 @@
                                         {{-- Sections --}}
                                         <div class="col-md-4">
                                             <div class="card h-100 border shadow-none bg-light-subtle">
-                                                <div class="card-header d-flex justify-content-between align-items-center p-3 border-bottom bg-white">
-                                                    <span class="fw-medium text-dark"><i class="ti tabler-subtask me-2 text-warning"></i>الشعب</span>
-                                                    <button type="button" class="btn btn-xs btn-outline-warning py-0 px-2" wire:click="selectAllSections">
+                                                <div
+                                                    class="card-header d-flex justify-content-between align-items-center p-3 border-bottom bg-white">
+                                                    <span class="fw-medium text-dark"><i
+                                                            class="ti tabler-subtask me-2 text-warning"></i>الشعب</span>
+                                                    <button type="button" class="btn btn-xs btn-outline-warning py-0 px-2"
+                                                        wire:click="selectAllSections">
                                                         {{ count($selectedSections) === count($sections) ? 'إلغاء التحديد' : 'تحديد الكل' }}
                                                     </button>
                                                 </div>
@@ -299,47 +347,14 @@
                                                             </div>
                                                         </td>
                                                     </tr>
-                                                    @foreach($fee->children as $child)
+                                                    @foreach($fee->items as $item)
                                                                         <tr>
                                                                             <td class="ps-5">
                                                                                 <i class="ti tabler-corner-down-left me-2 text-muted"></i>
-                                                                                {{ $child->name }}
+                                                                                {{ $item->name }}
                                                                             </td>
-                                                                            <td>{{ number_format($child->amount, 2) }} LE</td>
-                                                                            <td>
-                                                                                @if($child->gender == 'both')
-                                                                                    <span class="badge bg-label-info">الكل</span>
-                                                                                @elseif($child->gender == 'male')
-                                                                                    <span class="badge bg-label-primary">ذكور</span>
-                                                                                @else
-                                                                                    <span class="badge bg-label-danger">إناث</span>
-                                                                                @endif
-                                                                            </td>
-                                                                            <td>
-                                                                                {!! $child->is_one_time
-                                                        ? '<span class="text-success"><i class="ti tabler-check me-1"></i>مرة واحدة</span>'
-                                                        : '<span class="text-warning"><i class="ti tabler-refresh me-1"></i>متكرر</span>' !!}
-                                                                            </td>
-                                                                            <td>
-                                                                                <small class="text-muted">
-                                                                                    أقسام: {{ $child->departments->count() }} |
-                                                                                    فرق: {{ $child->levels->count() }} |
-                                                                                    شعب: {{ $child->sections->count() }}
-                                                                                </small>
-                                                                            </td>
-                                                                            <td>
-                                                                                <div class="d-flex align-items-center">
-                                                                                    <button class="btn btn-sm btn-icon edit-record"
-                                                                                        wire:click="edit({{ $child->id }})">
-                                                                                        <i class="ti tabler-edit"></i>
-                                                                                    </button>
-                                                                                    <button class="btn btn-sm btn-icon delete-record text-danger"
-                                                                                        onclick="confirm('هل أنت متأكد من الحذف؟') || event.stopImmediatePropagation()"
-                                                                                        wire:click="delete({{ $child->id }})">
-                                                                                        <i class="ti tabler-trash"></i>
-                                                                                    </button>
-                                                                                </div>
-                                                                            </td>
+                                                                            <td>{{ number_format($item->amount, 2) }} LE</td>
+                                                                            <td colspan="4"></td>
                                                                         </tr>
                                                     @endforeach
                             @empty
