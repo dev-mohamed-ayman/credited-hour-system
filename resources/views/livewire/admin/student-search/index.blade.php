@@ -127,7 +127,7 @@
                             </li>
                             <li class="d-flex align-items-center gap-2 mb-2">
                                 <i class="ti tabler-subtask text-warning"></i>
-                                <span class="fw-medium small">التخصص:</span>
+                                <span class="fw-medium small">الشعبة:</span>
                                 <span class="small text-muted ms-auto">{{ $student->section?->name ?? 'غير محدد' }}</span>
                             </li>
                             <li class="d-flex align-items-center gap-2 mb-2">
@@ -219,8 +219,53 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <small class="text-muted d-block">التخصص</small>
+                                        <small class="text-muted d-block">الشعبة</small>
                                         <span class="fw-medium text-heading">{{ $student->section?->name ?? 'غير محدد' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Seat Number --}}
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="avatar flex-shrink-0">
+                                        <div class="avatar-initial bg-label-info rounded">
+                                            <i class="ti tabler-number"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted d-block">رقم الجلوس</small>
+                                        <span class="fw-medium text-heading">{{ $student->seat_number ?? '---' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Exam Period --}}
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="avatar flex-shrink-0">
+                                        <div class="avatar-initial bg-label-secondary rounded">
+                                            <i class="ti tabler-calendar-time"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted d-block">فترة الامتحانات</small>
+                                        <span class="fw-medium text-heading">---</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Application Category --}}
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="avatar flex-shrink-0">
+                                        <div class="avatar-initial bg-label-primary rounded">
+                                            <i class="ti tabler-category"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted d-block">تصنيف الطالب</small>
+                                        <span class="fw-medium text-heading">{{ $student->application_category?->label() ?? '---' }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -297,21 +342,19 @@
                             </div>
 
                             {{-- Notes --}}
-                            @if($student->status_notes)
-                                <div class="col-12">
-                                    <div class="d-flex align-items-start gap-3">
-                                        <div class="avatar flex-shrink-0">
-                                            <div class="avatar-initial bg-label-secondary rounded">
-                                                <i class="ti tabler-notes"></i>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <small class="text-muted d-block">الملاحظات</small>
-                                            <span class="fw-medium text-heading">{{ $student->status_notes }}</span>
+                            <div class="col-12">
+                                <div class="d-flex align-items-start gap-3">
+                                    <div class="avatar flex-shrink-0">
+                                        <div class="avatar-initial bg-label-secondary rounded">
+                                            <i class="ti tabler-notes"></i>
                                         </div>
                                     </div>
+                                    <div>
+                                        <small class="text-muted d-block">الملاحظات</small>
+                                        <span class="fw-medium text-heading">{{ $student->status_notes ?? '---' }}</span>
+                                    </div>
                                 </div>
-                            @endif
+                            </div>
                         </div>
                     </div>
                 </div>

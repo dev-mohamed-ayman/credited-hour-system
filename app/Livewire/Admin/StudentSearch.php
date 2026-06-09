@@ -20,7 +20,7 @@ class StudentSearch extends Component
         ]);
 
         $this->student = Student::where('username', trim($this->searchCode))
-            ->with(['level', 'section', 'academicAdvisor', 'warnings' => function ($query) {
+            ->with(['level', 'section.department', 'academicAdvisor', 'warnings' => function ($query) {
                 $query->orderBy('created_at', 'desc');
             }])
             ->first();
