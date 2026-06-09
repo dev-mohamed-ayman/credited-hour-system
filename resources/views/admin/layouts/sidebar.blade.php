@@ -116,7 +116,7 @@
         </li>
 
         <li
-            class="menu-item {{isActiveRoute(['students.*', 'print.student.cards.*', 'print.seat.numbers.*', 'print.certificates.*', 'student-warnings.*', 'student-search.*'], true)}}">
+            class="menu-item {{isActiveRoute(['students.*', 'print.student.cards.*', 'print.seat.numbers.*', 'print.certificates.*', 'student-warnings.*', 'student-search.*', 'admin.finance.fee-issuance'], true)}}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base ti tabler-users"></i>
                 <div data-i18n="شئون الطلبه">شئون الطلبه</div>
@@ -135,6 +135,11 @@
                 <li class="menu-item {{isActiveRoute('student-search.index')}}">
                     <a href="{{route('student-search.index')}}" class="menu-link">
                         <div data-i18n="البحث عن طالب">البحث عن طالب</div>
+                    </a>
+                </li>
+                <li class="menu-item {{isActiveRoute('admin.finance.fee-issuance')}}">
+                    <a href="{{route('admin.finance.fee-issuance')}}" class="menu-link">
+                        <div data-i18n="إصدار حافظة مصاريف">إصدار حافظة مصاريف</div>
                     </a>
                 </li>
                 <li class="menu-item {{isActiveRoute('print.student.cards.index')}}">
