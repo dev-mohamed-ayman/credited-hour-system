@@ -157,11 +157,15 @@
 
                 {{-- Main info card --}}
                 <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header border-bottom">
+                    <div class="card-header border-bottom d-flex align-items-center justify-content-between">
                         <h5 class="card-title mb-0">
                             <i class="ti tabler-file-description me-2 text-primary"></i>
                             بيانات الطالب التفصيلية
                         </h5>
+                        <a href="{{ route('students.print-report', $student->id) }}" target="_blank" class="btn btn-sm btn-label-secondary">
+                            <i class="ti tabler-printer me-1"></i>
+                            طباعة التقرير
+                        </a>
                     </div>
                     <div class="card-body pt-4">
                         <div class="row g-4">

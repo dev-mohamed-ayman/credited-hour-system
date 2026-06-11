@@ -143,19 +143,6 @@
                     </a>
                 </li>
 
-                <li class="menu-item {{isActiveRoute('admin.finance.fee-payment')}}">
-                    <a href="javascript:void(0);" class="menu-link menu-toggle">
-                        <i class="menu-icon icon-base ti tabler-currency-dollar"></i>
-                        <div data-i18n="خيارات المالية">خيارات المالية</div>
-                    </a>
-                    <ul class="menu-sub">
-                        <li class="menu-item {{isActiveRoute('admin.finance.fee-payment')}}">
-                            <a href="{{route('admin.finance.fee-payment')}}" class="menu-link">
-                                <div data-i18n="سداد الحافظة">سداد الحافظة</div>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
                 <li class="menu-item {{isActiveRoute('print.student.cards.index')}}">
                     <a href="{{route('print.student.cards.index')}}" class="menu-link">
                         <div data-i18n="طباعة الكارنيهات">طباعة الكارنيهات</div>
@@ -179,6 +166,19 @@
             </ul>
         </li>
 
+        <li class="menu-item {{isActiveRoute('admin.finance.fee-payment')}}">
+            <a href="javascript:void(0)" class="menu-link menu-toggle">
+                <i class="menu-icon icon-base ti tabler-currency-dollar"></i>
+                <div data-i18n="خيارات المالية">خيارات المالية</div>
+            </a>
+            <ul class="menu-sub">
+                <li class="menu-item {{isActiveRoute('admin.finance.fee-payment')}}">
+                    <a href="{{route('admin.finance.fee-payment')}}" class="menu-link">
+                        <div data-i18n="سداد الحافظة">سداد الحافظة</div>
+                    </a>
+                </li>
+            </ul>
+        </li>
         <li class="menu-item {{isActiveRoute(['registration-fees.*'], true)}}">
             <a href="javascript:void(0)" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base ti tabler-user-shield"></i>

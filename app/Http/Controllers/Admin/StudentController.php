@@ -124,6 +124,14 @@ class StudentController extends Controller
         return view('admin.pages.student.print_certificate', compact('students', 'settings'));
     }
 
+    public function printReport(Student $student): \Illuminate\View\View
+    {
+        $student->load(['level', 'section.department', 'academicAdvisor', 'warnings']);
+        $settings = Setting::query()->firstOrCreate();
+
+        return view('admin.pages.student.print_report', compact('student', 'settings'));
+    }
+
     public function index()
     {
         return view('admin.pages.student.index');
