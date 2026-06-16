@@ -52,13 +52,15 @@
 
                         <form wire:submit.prevent="confirmPayment">
                             <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">رقم الإيصال الوزاري</label>
-                                    <input type="text" class="form-control bg-light" value="{{ $ministerialReceiptNumber }}" disabled>
-                                    <small class="text-muted">يتم التوليد تلقائياً من الإعدادات</small>
-                                </div>
+                                @if($ticket->fee_type === 'registration')
+                                    <div class="col-md-6">
+                                        <label class="form-label">رقم الإيصال الوزاري</label>
+                                        <input type="text" class="form-control bg-light" value="{{ $ministerialReceiptNumber }}" disabled>
+                                        <small class="text-muted">يتم التوليد تلقائياً من الإعدادات</small>
+                                    </div>
+                                @endif
 
-                                <div class="col-md-6">
+                                <div class="col-md-{{ $ticket->fee_type === 'registration' ? '6' : '12' }}">
                                     <label class="form-label">نوع السداد</label>
                                     <select wire:model.live="paymentMethod" class="form-select">
                                         <option value="cash">كاش</option>

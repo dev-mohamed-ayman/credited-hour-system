@@ -77,28 +77,37 @@ class FeePayment extends Component
 
         $settings = Setting::first();
         $next = $settings->ministerial_receipt_current + 1;
+        $isRegistrationFee = $this->ticket->fee_type === 'registration';
 
-        if ($next > $settings->ministerial_receipt_end) {
+        if ($isRegistrationFee && $next > $settings->ministerial_receipt_end) {
             $this->dispatch('alert', ['type' => 'error', 'message' => 'لا يمكن السداد، لقد وصلت لنهاية مدى الأرقام الوزارية']);
 
             return;
         }
 
-        DB::transaction(function () use ($settings, $next) {
-            $this->ticket->update([
+        DB::transaction(function () use ($settings, $next, $isRegistrationFee) {
+            $updateData = [
                 'status' => 'paid',
-                'ministerial_receipt_number' => $next,
                 'payment_method' => $this->paymentMethod,
                 'visa_last_four' => $this->visaLastFour,
                 'paid_at' => now(),
-            ]);
+            ];
 
-            $settings->update([
-                'ministerial_receipt_current' => $next,
-            ]);
+            if ($isRegistrationFee) {
+                $updateData['ministerial_receipt_number'] = $next;
+                $settings->update([
+                    'ministerial_receipt_current' => $next,
+                ]);
+            }
+
+            $this->ticket->update($updateData);
         });
 
-        $this->dispatch('alert', ['type' => 'success', 'message' => 'تم سداد الحافظة بنجاح برقم إيصال وزاري: '.$next]);
+        $message = $isRegistrationFee
+            ? 'تم سداد الحافظة بنجاح برقم إيصال وزاري: '.$next
+            : 'تم سداد الحافظة بنجاح';
+
+        $this->dispatch('alert', ['type' => 'success', 'message' => $message]);
         $this->reset(['ticketNumber', 'ticket', 'showForm', 'visaLastFour', 'paymentMethod']);
         $this->generateNextReceiptNumber();
     }
