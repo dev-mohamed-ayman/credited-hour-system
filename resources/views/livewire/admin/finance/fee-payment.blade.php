@@ -29,30 +29,59 @@
             </div>
         </div>
 
-        @if($showForm && $ticket)
+        @if($showForm && count($tickets) > 0)
+            @php
+                $firstTicket = $tickets[0];
+                $hasRegistrationFees = collect($tickets)->contains(fn($t) => $t->fee_type === 'registration');
+                $totalAmount = collect($tickets)->sum('amount');
+            @endphp
             <div class="col-md-12">
                 <div class="card mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">تفاصيل الحافظة والسداد</h5>
-                        <span class="badge bg-label-info">رقم الحافظة: {{ $ticket->ticket_number }}</span>
+                        <h5 class="mb-0">تفاصيل الحوافظ والسداد</h5>
+                        <span class="badge bg-label-info">{{ count($tickets) }} حافظة</span>
                     </div>
                     <div class="card-body">
                         <div class="row mb-4">
                             <div class="col-md-6">
-                                <p><strong>اسم الطالب:</strong> {{ $ticket->student->name }}</p>
-                                <p><strong>كود الطالب:</strong> {{ $ticket->student->username }}</p>
+                                <p><strong>اسم الطالب:</strong> {{ $firstTicket->student->name }}</p>
+                                <p><strong>كود الطالب:</strong> {{ $firstTicket->student->username }}</p>
                             </div>
                             <div class="col-md-6 text-md-end">
-                                <p><strong>نوع الرسوم:</strong> {{ $ticket->fee_type === 'additional' ? 'رسوم إضافية' : 'رسوم تسجيل' }}</p>
-                                <h4 class="text-primary"><strong>المبلغ:</strong> {{ number_format($ticket->amount, 2) }} ج.م</h4>
+                                <h4 class="text-primary"><strong>المبلغ الإجمالي:</strong> {{ number_format($totalAmount, 2) }} ج.م</h4>
                             </div>
                         </div>
+
+                        <table class="table table-bordered mb-4">
+                            <thead>
+                                <tr>
+                                    <th>رقم الحافظة</th>
+                                    <th>نوع الرسوم</th>
+                                    <th>المبلغ</th>
+                                    <th>الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($tickets as $ticket)
+                                    <tr>
+                                        <td>{{ $ticket->ticket_number }}</td>
+                                        <td>{{ $ticket->fee_type === 'additional' ? 'رسوم إضافية' : 'رسوم تسجيل' }}</td>
+                                        <td>{{ number_format($ticket->amount, 2) }} ج.م</td>
+                                        <td>
+                                            <span class="badge {{ $ticket->status === 'paid' ? 'bg-success' : 'bg-warning' }}">
+                                                {{ $ticket->status === 'paid' ? 'مدفوع' : 'غير مدفوع' }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
 
                         <hr class="my-4">
 
                         <form wire:submit.prevent="confirmPayment">
                             <div class="row g-3">
-                                @if($ticket->fee_type === 'registration')
+                                @if($hasRegistrationFees)
                                     <div class="col-md-6">
                                         <label class="form-label">رقم الإيصال الوزاري</label>
                                         <input type="text" class="form-control bg-light" value="{{ $ministerialReceiptNumber }}" disabled>
@@ -60,7 +89,7 @@
                                     </div>
                                 @endif
 
-                                <div class="col-md-{{ $ticket->fee_type === 'registration' ? '6' : '12' }}">
+                                <div class="col-md-{{ $hasRegistrationFees ? '6' : '12' }}">
                                     <label class="form-label">نوع السداد</label>
                                     <select wire:model.live="paymentMethod" class="form-select">
                                         <option value="cash">كاش</option>
@@ -79,7 +108,7 @@
 
                                 <div class="col-12 mt-4">
                                     <button type="submit" class="btn btn-success w-100">
-                                        <i class="ti tabler-check me-1"></i> تأكيد السداد
+                                        <i class="ti tabler-check me-1"></i> تأكيد سداد {{ count($tickets) }} حافظة
                                     </button>
                                 </div>
                             </div>

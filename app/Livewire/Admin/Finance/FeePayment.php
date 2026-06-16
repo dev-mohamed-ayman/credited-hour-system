@@ -11,6 +11,8 @@ class FeePayment extends Component
 {
     public $ticketNumber;
 
+    public $tickets = [];
+
     public $ticket;
 
     public $ministerialReceiptNumber;
@@ -47,24 +49,78 @@ class FeePayment extends Component
             'ticketNumber' => 'required|string',
         ]);
 
-        $this->ticket = StudentFeeTicket::where('ticket_number', $this->ticketNumber)
-            ->with(['student'])
-            ->first();
+        // Parse the ticket number input
+        $parts = explode(',', $this->ticketNumber);
 
-        if (! $this->ticket) {
-            $this->dispatch('alert', ['type' => 'error', 'message' => 'لم يتم العثور على حافظة بهذا الرقم']);
-            $this->showForm = false;
+        if (count($parts) === 1) {
+            // Single ticket
+            $ticket = StudentFeeTicket::where('ticket_number', $parts[0])
+                ->with(['student'])
+                ->first();
 
-            return;
+            if (! $ticket) {
+                $this->dispatch('alert', ['type' => 'error', 'message' => 'لم يتم العثور على حافظة بهذا الرقم']);
+                $this->showForm = false;
+                $this->tickets = [];
+
+                return;
+            }
+
+            $this->tickets = [$ticket];
+        } else {
+            // Range of tickets: first part is full number, second part is last seconds
+            $firstTicketNumber = $parts[0];
+            $lastSeconds = str_pad(trim($parts[1]), 2, '0', STR_PAD_LEFT);
+
+            // Extract base ticket number parts
+            $basePrefix = substr($firstTicketNumber, 0, 10); // up to and including minutes
+            $firstSeconds = substr($firstTicketNumber, 10, 2);
+            $studentCode = substr($firstTicketNumber, 12);
+
+            // Find all tickets between first and last seconds
+            $foundTickets = [];
+            $startSec = (int) $firstSeconds;
+            $endSec = (int) $lastSeconds;
+
+            // Determine the range (handle wrap-around if needed)
+            $range = [];
+            if ($endSec >= $startSec) {
+                $range = range($startSec, $endSec);
+            } else {
+                // Wrap around (though unlikely in our case since tickets are sequential)
+                $range = array_merge(range($startSec, 59), range(0, $endSec));
+            }
+
+            foreach ($range as $sec) {
+                $secStr = str_pad($sec, 2, '0', STR_PAD_LEFT);
+                $ticketNum = $basePrefix.$secStr.$studentCode;
+                $ticket = StudentFeeTicket::where('ticket_number', $ticketNum)
+                    ->with(['student'])
+                    ->first();
+
+                if ($ticket) {
+                    $foundTickets[] = $ticket;
+                }
+            }
+
+            if (empty($foundTickets)) {
+                $this->dispatch('alert', ['type' => 'error', 'message' => 'لم يتم العثور على حوافظ بهذه الأرقام']);
+                $this->showForm = false;
+                $this->tickets = [];
+
+                return;
+            }
+
+            $this->tickets = $foundTickets;
         }
 
-        if ($this->ticket->status === 'paid') {
-            $this->dispatch('alert', ['type' => 'warning', 'message' => 'هذه الحافظة مدفوعة بالفعل']);
-            $this->showForm = false;
-
-            return;
+        // Check if any of the tickets are already paid
+        $paidTickets = array_filter($this->tickets, fn ($t) => $t->status === 'paid');
+        if (! empty($paidTickets)) {
+            $this->dispatch('alert', ['type' => 'warning', 'message' => 'بعض الحوافظ مدفوعة بالفعل']);
         }
 
+        $this->ticket = $this->tickets[0] ?? null;
         $this->showForm = true;
     }
 
@@ -77,38 +133,45 @@ class FeePayment extends Component
 
         $settings = Setting::first();
         $next = $settings->ministerial_receipt_current + 1;
-        $isRegistrationFee = $this->ticket->fee_type === 'registration';
+        $registrationFeesCount = count(array_filter($this->tickets, fn ($t) => $t->fee_type === 'registration'));
 
-        if ($isRegistrationFee && $next > $settings->ministerial_receipt_end) {
+        if ($registrationFeesCount > 0 && $next > $settings->ministerial_receipt_end) {
             $this->dispatch('alert', ['type' => 'error', 'message' => 'لا يمكن السداد، لقد وصلت لنهاية مدى الأرقام الوزارية']);
 
             return;
         }
 
-        DB::transaction(function () use ($settings, $next, $isRegistrationFee) {
-            $updateData = [
-                'status' => 'paid',
-                'payment_method' => $this->paymentMethod,
-                'visa_last_four' => $this->visaLastFour,
-                'paid_at' => now(),
-            ];
+        DB::transaction(function () use ($settings, $next, $registrationFeesCount) {
+            $currentReceiptNumber = $next;
 
-            if ($isRegistrationFee) {
-                $updateData['ministerial_receipt_number'] = $next;
-                $settings->update([
-                    'ministerial_receipt_current' => $next,
-                ]);
+            foreach ($this->tickets as $ticket) {
+                $updateData = [
+                    'status' => 'paid',
+                    'payment_method' => $this->paymentMethod,
+                    'visa_last_four' => $this->visaLastFour,
+                    'paid_at' => now(),
+                ];
+
+                if ($ticket->fee_type === 'registration') {
+                    $updateData['ministerial_receipt_number'] = $currentReceiptNumber;
+                    $currentReceiptNumber++;
+                }
+
+                $ticket->update($updateData);
             }
 
-            $this->ticket->update($updateData);
+            if ($registrationFeesCount > 0) {
+                $settings->update([
+                    'ministerial_receipt_current' => $currentReceiptNumber - 1,
+                ]);
+            }
         });
 
-        $message = $isRegistrationFee
-            ? 'تم سداد الحافظة بنجاح برقم إيصال وزاري: '.$next
-            : 'تم سداد الحافظة بنجاح';
+        $totalAmount = array_sum(array_column($this->tickets, 'amount'));
+        $message = 'تم سداد '.count($this->tickets).' حافظة بنجاح بمبلغ إجمالي: '.number_format($totalAmount, 2).' ج.م';
 
         $this->dispatch('alert', ['type' => 'success', 'message' => $message]);
-        $this->reset(['ticketNumber', 'ticket', 'showForm', 'visaLastFour', 'paymentMethod']);
+        $this->reset(['ticketNumber', 'tickets', 'showForm', 'visaLastFour', 'paymentMethod']);
         $this->generateNextReceiptNumber();
     }
 
