@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
@@ -36,7 +37,7 @@ return new class extends Migration {
             $table->string('guardian_phone_2')->nullable();
             $table->enum('gender', ['male', 'female'])->nullable();
             $table->string('status')->nullable();
-            $table->text('status_notes')->nullable()->after('status');
+            $table->text('status_notes')->nullable();
             $table->foreignId('section_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('level_id')->nullable()->constrained()->cascadeOnDelete();
             $table->string('study_status')->nullable();

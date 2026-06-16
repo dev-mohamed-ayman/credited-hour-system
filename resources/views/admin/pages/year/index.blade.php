@@ -4,9 +4,14 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">قائمة السنوات الدراسية</h5>
-            <a class="btn btn-primary waves-effect waves-light" href="{{ route('years.create') }}">
-                <i class="fa-solid fa-plus me-1"></i> إضافة سنة
-            </a>
+            <div class="d-flex gap-2">
+                <a class="btn btn-label-primary waves-effect waves-light" href="{{ route('year-settings.index') }}">
+                    <i class="fa-solid fa-gear me-1"></i> إعدادات السنوات
+                </a>
+                <a class="btn btn-primary waves-effect waves-light" href="{{ route('years.create') }}">
+                    <i class="fa-solid fa-plus me-1"></i> إضافة سنة
+                </a>
+            </div>
         </div>
 
         <div class="table-responsive text-nowrap">
@@ -15,6 +20,8 @@
                     <tr>
                         <th class="text-center" style="width: 50px;">#</th>
                         <th>السنة الدراسية</th>
+                        <th>الترم الحالي</th>
+                        <th>إرشاد الأكاديمي</th>
                         <th class="text-center">الإجراءات</th>
                     </tr>
                 </thead>
@@ -25,7 +32,22 @@
                             <td>
                                 <span class="fw-bold text-primary">{{ $year->year }}</span>
                             </td>
+                            <td>
+                                @if($year->getCurrentSemester())
+                                    <span class="badge bg-primary">{{ $year->getCurrentSemester()->label() }} - {{ $year->getSemesterStatus($year->getCurrentSemester())->label() }}</span>
+                                @else
+                                    <span class="badge bg-secondary">لا يوجد</span>
+                                @endif
+                            </td>
+                            <td>
+                                <span class="badge {{ $year->academic_advising_status->value == 'open' ? 'bg-success' : 'bg-secondary' }}">
+                                    {{ $year->academic_advising_status->label() }}
+                                </span>
+                            </td>
                             <td class="text-center">
+                                <a class="btn btn-sm btn-info" href="{{ route('year-settings.index') }}">
+                                    <i class="fa-solid fa-sliders"></i>
+                                </a>
                                 <a class="btn btn-sm btn-success" href="{{ route('years.edit', $year->id) }}">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </a>
@@ -70,7 +92,7 @@
                         </div>
                     @empty
                         <tr>
-                            <td colspan="3" class="text-center py-5">
+                            <td colspan="5" class="text-center py-5">
                                 <div class="text-muted">لا توجد سنوات دراسية مضافة حالياً</div>
                             </td>
                         </tr>
