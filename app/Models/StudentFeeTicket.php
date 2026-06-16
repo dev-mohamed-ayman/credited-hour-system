@@ -11,6 +11,7 @@ class StudentFeeTicket extends Model
         'student_id',
         'fee_type',
         'fee_id',
+        'fee_name',
         'amount',
         'status',
         'ministerial_receipt_number',

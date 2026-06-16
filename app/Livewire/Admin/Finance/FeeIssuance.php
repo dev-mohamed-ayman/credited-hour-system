@@ -146,12 +146,15 @@ class FeeIssuance extends Component
                 [$type, $id] = explode('-', $feeKey);
 
                 $amount = 0;
+                $feeName = '';
                 if ($type === 'additional') {
                     $fee = AdditionalFee::find($id);
                     $amount = $fee->amount;
+                    $feeName = $fee->name;
                 } else {
                     $fee = RegistrationFee::find($id);
-                    $amount = $fee->total_student_payment; // Or whatever column stores the total
+                    $amount = $fee->total_student_payment;
+                    $feeName = 'مصاريف تسجيل - '.$fee->department->name.' - '.$fee->level->name;
                 }
 
                 // Generate unique ticket number: YearLastTwoDigitsMonthDayHourMinuteSecondStudentCode
@@ -168,6 +171,7 @@ class FeeIssuance extends Component
                     'student_id' => $this->student->id,
                     'fee_type' => $type,
                     'fee_id' => $id,
+                    'fee_name' => $feeName,
                     'amount' => $amount,
                     'status' => 'pending',
                     'notes' => $this->notes,

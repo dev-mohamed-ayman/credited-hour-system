@@ -86,7 +86,7 @@
                                             @endif
                                         </td>
                                         <td>{{ $ticket->ticket_number }}</td>
-                                        <td>{{ $ticket->fee_type === 'additional' ? 'رسوم إضافية' : 'رسوم تسجيل' }}</td>
+                                        <td>{{ $ticket->fee_name ?? ($ticket->fee_type === 'additional' ? 'رسوم إضافية' : 'رسوم تسجيل') }}</td>
                                         <td>{{ number_format($ticket->amount, 2) }} ج.م</td>
                                         <td>
                                             <span class="badge {{ $ticket->status === 'paid' ? 'bg-success' : 'bg-warning' }}">

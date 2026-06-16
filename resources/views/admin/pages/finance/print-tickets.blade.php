@@ -38,7 +38,7 @@
         </div>
 
         @php
-            $typeLabel = $tickets->pluck('fee_type')->unique()->map(fn($t) => $t == 'additional' ? 'إدارية' : 'تسجيل')->implode(' / ');
+            $typeLabel = $tickets->pluck('fee_name')->unique()->implode(' / ');
         @endphp
 
         @for ($i = 0; $i < 2; $i++)
