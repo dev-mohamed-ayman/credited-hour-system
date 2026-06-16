@@ -154,13 +154,13 @@ class FeeIssuance extends Component
                     $amount = $fee->total_student_payment; // Or whatever column stores the total
                 }
 
-                // Generate unique ticket number: DayMonthMinuteSecondStudentCode
-                $ticketNumber = date('dmis').$this->student->username;
+                // Generate unique ticket number: YearLastTwoDigitsMonthDayHourMinuteSecondStudentCode
+                $ticketNumber = date('ymdHis').$this->student->username;
 
                 // Ensure uniqueness (unlikely but safe)
                 while (StudentFeeTicket::where('ticket_number', $ticketNumber)->exists()) {
                     sleep(1);
-                    $ticketNumber = date('dmis').$this->student->username;
+                    $ticketNumber = date('ymdHis').$this->student->username;
                 }
 
                 StudentFeeTicket::create([
