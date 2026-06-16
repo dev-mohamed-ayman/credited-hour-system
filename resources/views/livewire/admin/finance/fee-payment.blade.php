@@ -32,8 +32,9 @@
         @if($showForm && count($tickets) > 0)
             @php
                 $firstTicket = $tickets[0];
-                $hasRegistrationFees = collect($tickets)->contains(fn($t) => $t->fee_type === 'registration');
-                $totalAmount = collect($tickets)->sum('amount');
+                $hasRegistrationFees = collect($tickets)
+                    ->filter(fn($t) => in_array($t->id, $selectedTickets) && $t->status !== 'paid')
+                    ->contains(fn($t) => $t->fee_type === 'registration');
             @endphp
             <div class="col-md-12">
                 <div class="card mb-4">
@@ -42,19 +43,32 @@
                         <span class="badge bg-label-info">{{ count($tickets) }} حافظة</span>
                     </div>
                     <div class="card-body">
+                        @php
+                            $selectedAmount = collect($tickets)
+                                ->filter(fn($t) => in_array($t->id, $selectedTickets) && $t->status !== 'paid')
+                                ->sum('amount');
+                        @endphp
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <p><strong>اسم الطالب:</strong> {{ $firstTicket->student->name }}</p>
                                 <p><strong>كود الطالب:</strong> {{ $firstTicket->student->username }}</p>
                             </div>
                             <div class="col-md-6 text-md-end">
-                                <h4 class="text-primary"><strong>المبلغ الإجمالي:</strong> {{ number_format($totalAmount, 2) }} ج.م</h4>
+                                <h4 class="text-primary"><strong>المبلغ المحدد:</strong> {{ number_format($selectedAmount, 2) }} ج.م</h4>
                             </div>
                         </div>
 
                         <table class="table table-bordered mb-4">
                             <thead>
                                 <tr>
+                                    <th>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" wire:model.live="selectAll" id="selectAllTickets">
+                                            <label class="form-check-label" for="selectAllTickets">
+                                                تحديد الكل
+                                            </label>
+                                        </div>
+                                    </th>
                                     <th>رقم الحافظة</th>
                                     <th>نوع الرسوم</th>
                                     <th>المبلغ</th>
@@ -64,6 +78,13 @@
                             <tbody>
                                 @foreach($tickets as $ticket)
                                     <tr>
+                                        <td>
+                                            @if($ticket->status !== 'paid')
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" wire:model.live="selectedTickets" value="{{ $ticket->id }}" id="ticket-{{ $ticket->id }}">
+                                                </div>
+                                            @endif
+                                        </td>
                                         <td>{{ $ticket->ticket_number }}</td>
                                         <td>{{ $ticket->fee_type === 'additional' ? 'رسوم إضافية' : 'رسوم تسجيل' }}</td>
                                         <td>{{ number_format($ticket->amount, 2) }} ج.م</td>

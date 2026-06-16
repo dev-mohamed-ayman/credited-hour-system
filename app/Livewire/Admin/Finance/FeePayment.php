@@ -15,6 +15,10 @@ class FeePayment extends Component
 
     public $ticket;
 
+    public $selectedTickets = [];
+
+    public $selectAll = true;
+
     public $ministerialReceiptNumber;
 
     public $paymentMethod = 'cash'; // 'cash', 'credit', 'both'
@@ -22,6 +26,28 @@ class FeePayment extends Component
     public $visaLastFour;
 
     public $showForm = false;
+
+    public function updatedSelectAll($value)
+    {
+        if ($value) {
+            $this->selectedTickets = collect($this->tickets)
+                ->filter(fn ($t) => $t->status !== 'paid')
+                ->pluck('id')
+                ->toArray();
+        } else {
+            $this->selectedTickets = [];
+        }
+    }
+
+    public function updatedSelectedTickets()
+    {
+        $unpaidTicketIds = collect($this->tickets)
+            ->filter(fn ($t) => $t->status !== 'paid')
+            ->pluck('id')
+            ->toArray();
+
+        $this->selectAll = empty(array_diff($unpaidTicketIds, $this->selectedTickets));
+    }
 
     public function mount()
     {
@@ -120,6 +146,12 @@ class FeePayment extends Component
             $this->dispatch('alert', ['type' => 'warning', 'message' => 'بعض الحوافظ مدفوعة بالفعل']);
         }
 
+        // Select all unpaid tickets by default
+        $this->selectedTickets = collect($this->tickets)
+            ->filter(fn ($t) => $t->status !== 'paid')
+            ->pluck('id')
+            ->toArray();
+
         $this->ticket = $this->tickets[0] ?? null;
         $this->showForm = true;
     }
@@ -129,11 +161,18 @@ class FeePayment extends Component
         $this->validate([
             'paymentMethod' => 'required|in:cash,credit,both',
             'visaLastFour' => $this->paymentMethod !== 'cash' ? 'required|digits:4' : 'nullable',
+            'selectedTickets' => 'required|array|min:1',
+        ], [
+            'selectedTickets.min' => 'يجب تحديد حافظة واحدة على الأقل للسداد',
         ]);
+
+        $selectedTicketModels = collect($this->tickets)
+            ->filter(fn ($t) => in_array($t->id, $this->selectedTickets) && $t->status !== 'paid')
+            ->values();
 
         $settings = Setting::first();
         $next = $settings->ministerial_receipt_current + 1;
-        $registrationFeesCount = count(array_filter($this->tickets, fn ($t) => $t->fee_type === 'registration'));
+        $registrationFeesCount = $selectedTicketModels->filter(fn ($t) => $t->fee_type === 'registration')->count();
 
         if ($registrationFeesCount > 0 && $next > $settings->ministerial_receipt_end) {
             $this->dispatch('alert', ['type' => 'error', 'message' => 'لا يمكن السداد، لقد وصلت لنهاية مدى الأرقام الوزارية']);
@@ -141,10 +180,10 @@ class FeePayment extends Component
             return;
         }
 
-        DB::transaction(function () use ($settings, $next, $registrationFeesCount) {
+        DB::transaction(function () use ($settings, $next, $registrationFeesCount, $selectedTicketModels) {
             $currentReceiptNumber = $next;
 
-            foreach ($this->tickets as $ticket) {
+            foreach ($selectedTicketModels as $ticket) {
                 $updateData = [
                     'status' => 'paid',
                     'payment_method' => $this->paymentMethod,
@@ -167,11 +206,11 @@ class FeePayment extends Component
             }
         });
 
-        $totalAmount = array_sum(array_column($this->tickets, 'amount'));
-        $message = 'تم سداد '.count($this->tickets).' حافظة بنجاح بمبلغ إجمالي: '.number_format($totalAmount, 2).' ج.م';
+        $totalAmount = $selectedTicketModels->sum('amount');
+        $message = 'تم سداد '.$selectedTicketModels->count().' حافظة بنجاح بمبلغ إجمالي: '.number_format($totalAmount, 2).' ج.م';
 
         $this->dispatch('alert', ['type' => 'success', 'message' => $message]);
-        $this->reset(['ticketNumber', 'tickets', 'showForm', 'visaLastFour', 'paymentMethod']);
+        $this->reset(['ticketNumber', 'tickets', 'showForm', 'visaLastFour', 'paymentMethod', 'selectedTickets', 'selectAll']);
         $this->generateNextReceiptNumber();
     }
 
