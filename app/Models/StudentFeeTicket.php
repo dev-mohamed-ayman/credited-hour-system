@@ -22,6 +22,11 @@ class StudentFeeTicket extends Model
         'notes',
         'year_id',
         'semester',
+        'department_id',
+        'level_id',
+        'section_id',
+        'gender',
+        'fee_details',
     ];
 
     protected function casts(): array
@@ -29,12 +34,28 @@ class StudentFeeTicket extends Model
         return [
             'paid_at' => 'datetime',
             'semester' => Semester::class,
+            'fee_details' => 'array',
         ];
     }
 
     public function year()
     {
         return $this->belongsTo(Year::class);
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function level()
+    {
+        return $this->belongsTo(Level::class);
+    }
+
+    public function section()
+    {
+        return $this->belongsTo(Section::class);
     }
 
     public function student()

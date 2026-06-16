@@ -166,14 +166,57 @@ class FeeIssuance extends Component
 
                 $amount = 0;
                 $feeName = '';
+                $departmentId = null;
+                $levelId = null;
+                $sectionId = null;
+                $gender = null;
+                $feeDetails = [];
+
                 if ($type === 'additional') {
-                    $fee = AdditionalFee::find($id);
+                    $fee = AdditionalFee::with('items', 'departments', 'levels', 'sections', 'year')->find($id);
                     $amount = $fee->amount;
                     $feeName = $fee->name;
+                    $departmentId = $this->student->section->department_id;
+                    $levelId = $this->student->level_id;
+                    $sectionId = $this->student->section_id;
+                    $gender = $fee->gender;
+                    $feeDetails = [
+                        'name' => $fee->name,
+                        'gender' => $fee->gender,
+                        'amount' => $fee->amount,
+                        'is_one_time' => $fee->is_one_time,
+                        'year_id' => $fee->year_id,
+                        'year_name' => $fee->year?->year,
+                        'semester' => $fee->semester?->value,
+                        'semester_label' => $fee->semester?->label(),
+                        'items' => $fee->items->map(fn ($item) => [
+                            'name' => $item->name,
+                            'amount' => $item->amount,
+                        ])->toArray(),
+                        'departments' => $fee->departments->map(fn ($d) => ['id' => $d->id, 'name' => $d->name])->toArray(),
+                        'levels' => $fee->levels->map(fn ($l) => ['id' => $l->id, 'name' => $l->name])->toArray(),
+                        'sections' => $fee->sections->map(fn ($s) => ['id' => $s->id, 'name' => $s->name])->toArray(),
+                    ];
                 } else {
-                    $fee = RegistrationFee::find($id);
+                    $fee = RegistrationFee::with('department', 'level')->find($id);
                     $amount = $fee->total_student_payment;
                     $feeName = 'مصاريف تسجيل - '.$fee->department->name.' - '.$fee->level->name;
+                    $departmentId = $fee->department_id;
+                    $levelId = $fee->level_id;
+                    $sectionId = $this->student->section_id;
+                    $feeDetails = [
+                        'department_id' => $fee->department_id,
+                        'department_name' => $fee->department->name,
+                        'level_id' => $fee->level_id,
+                        'level_name' => $fee->level->name,
+                        'hour_payment' => $fee->hour_payment,
+                        'ministerial_payment' => $fee->ministerial_payment,
+                        'hour_payment_remaining' => $fee->hour_payment_remaining,
+                        'ministerial_payment_remaining' => $fee->ministerial_payment_remaining,
+                        'total_student_payment' => $fee->total_student_payment,
+                        'student_registration_hour' => $fee->student_registration_hour,
+                        'number_of_students_per_section' => $fee->number_of_students_per_section,
+                    ];
                 }
 
                 // Generate unique ticket number: YearLastTwoDigitsMonthDayHourMinuteSecondStudentCode
@@ -196,6 +239,11 @@ class FeeIssuance extends Component
                     'notes' => $this->notes,
                     'year_id' => $currentYear?->id,
                     'semester' => $currentSemester,
+                    'department_id' => $departmentId,
+                    'level_id' => $levelId,
+                    'section_id' => $sectionId,
+                    'gender' => $gender,
+                    'fee_details' => $feeDetails,
                 ]);
 
                 $ticketNumbers[] = $ticketNumber;
