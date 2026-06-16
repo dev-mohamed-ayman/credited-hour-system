@@ -10,7 +10,7 @@
                 <div class="card-body">
                     <form wire:submit.prevent="searchStudent">
                         <div class="row align-items-end g-3">
-                            <div class="col-md-8">
+                            <div class="col-md-10">
                                 <label class="form-label" for="studentCode">كود الطالب</label>
                                 <div class="input-group input-group-merge">
                                     <span class="input-group-text"><i class="ti tabler-search"></i></span>
@@ -18,9 +18,9 @@
                                         placeholder="أدخل كود الطالب هنا..." autofocus>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-2">
                                 <button type="submit" class="btn btn-primary w-100">
-                                    <i class="ti tabler-search me-1"></i> بحث عن الطالب
+                                    <i class="ti tabler-search me-1"></i> بحث
                                 </button>
                             </div>
                         </div>
@@ -100,6 +100,7 @@
                                                     <tr>
                                                         <th width="50">#</th>
                                                         <th>اسم المصروف</th>
+                                                        <th>السنة/الترم</th>
                                                         <th class="text-center">المبلغ</th>
                                                         <th width="100" class="text-center">تحديد</th>
                                                     </tr>
@@ -109,6 +110,14 @@
                                                         <tr>
                                                             <td>{{ $loop->iteration }}</td>
                                                             <td>{{ $fee->name }}</td>
+                                                            <td>
+                                                                @if($fee->year)
+                                                                    <span class="badge bg-label-primary">{{ $fee->year->year }}</span>
+                                                                @endif
+                                                                @if($fee->semester)
+                                                                    <span class="badge bg-label-info">{{ $fee->semester->label() }}</span>
+                                                                @endif
+                                                            </td>
                                                             <td class="text-center fw-bold">{{ number_format($fee->amount, 2) }} ج.م
                                                             </td>
                                                             <td class="text-center">
@@ -191,6 +200,7 @@
                                         <tr>
                                             <th>رقم الحافظة</th>
                                             <th>نوع الرسوم</th>
+                                            <th>السنة/الترم</th>
                                             <th>المبلغ</th>
                                             <th>تاريخ الإصدار</th>
                                             <th class="text-center">إجراءات</th>
@@ -201,6 +211,14 @@
                                             <tr>
                                                 <td class="fw-bold">{{ $ticket->ticket_number }}</td>
                                                 <td>{{ $ticket->fee_type === 'additional' ? 'رسوم إضافية' : 'رسوم تسجيل' }}</td>
+                                                <td>
+                                                    @if($ticket->year)
+                                                        <span class="badge bg-label-primary">{{ $ticket->year->year }}</span>
+                                                    @endif
+                                                    @if($ticket->semester)
+                                                        <span class="badge bg-label-info">{{ $ticket->semester->label() }}</span>
+                                                    @endif
+                                                </td>
                                                 <td class="text-success fw-bold">{{ number_format($ticket->amount, 2) }} ج.م</td>
                                                 <td>{{ $ticket->created_at->format('Y-m-d H:i') }}</td>
                                                 <td class="text-center">

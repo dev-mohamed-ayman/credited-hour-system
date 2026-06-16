@@ -92,6 +92,8 @@ class Index extends Component
         ['key' => 'is_foreign', 'label' => 'طالب وافد'],
         ['key' => 'status_notes', 'label' => 'بيانات اخري'],
         ['key' => 'military_education_passed', 'label' => 'التربية العسكرية'],
+        ['key' => 'year', 'label' => 'السنة الدراسية'],
+        ['key' => 'semester', 'label' => 'الترم'],
     ];
 
     public $showFilters = false;
@@ -222,7 +224,7 @@ class Index extends Component
             ->when($this->academic_advisor_id, function ($query) {
                 $query->where('academic_advisor_id', $this->academic_advisor_id);
             })
-            ->with(['level', 'section.department', 'academicAdvisor', 'country', 'city', 'nationality', 'certificateType', 'scores.requirement'])
+            ->with(['level', 'section.department', 'academicAdvisor', 'country', 'city', 'nationality', 'certificateType', 'scores.requirement', 'year'])
             ->latest()
             ->paginate($this->perPage);
 

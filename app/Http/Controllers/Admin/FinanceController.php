@@ -11,7 +11,7 @@ class FinanceController extends Controller
     public function printTickets(Request $request)
     {
         $ticketNumbers = explode(',', $request->tickets);
-        $tickets = StudentFeeTicket::with('student.level', 'student.section.department')
+        $tickets = StudentFeeTicket::with('student.level', 'student.section.department', 'year')
             ->whereIn('ticket_number', $ticketNumbers)
             ->orderBy('ticket_number')
             ->get();

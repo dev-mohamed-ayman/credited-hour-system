@@ -311,6 +311,12 @@
                     @if(in_array('military_education_passed', $selectedColumns))
                         <td>{!! $student->military_education_passed ? '<span class="badge bg-label-success">نعم</span>' : '<span class="badge bg-label-danger">لا</span>' !!}</td>
                     @endif
+                    @if(in_array('year', $selectedColumns))
+                        <td>{{ $student->year?->year ?? '-' }}</td>
+                    @endif
+                    @if(in_array('semester', $selectedColumns))
+                        <td>{{ $student->semester?->label() ?? '-' }}</td>
+                    @endif
                     <td class="text-center">
                         <div class="d-inline-block">
                             <a href="javascript:;" class="btn btn-sm btn-icon dropdown-toggle hide-arrow"

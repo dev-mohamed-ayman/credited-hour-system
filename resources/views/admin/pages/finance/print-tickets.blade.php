@@ -86,9 +86,15 @@
                                         </div>
                                     </div>
                                     <div class="form-group row">
-                                        <label class="col-4 control-label">الفصل الدراسي</label>
+                                        <label class="col-4 control-label">السنة الدراسية</label>
                                         <div class="col-8">
-                                            <h5>{{ $tickets->first()->created_at->format('Y') }}</h5>
+                                            <h5>{{ $tickets->first()->year?->year ?? $tickets->first()->created_at->format('Y') }}</h5>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 control-label">الترم الدراسي</label>
+                                        <div class="col-8">
+                                            <h5>{{ $tickets->first()->semester?->label() ?? '................................' }}</h5>
                                         </div>
                                     </div>
                                 </div>

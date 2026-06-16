@@ -2,10 +2,12 @@
 
 namespace App\Livewire\Admin\AdditionalFee;
 
+use App\Enums\Semester;
 use App\Models\AdditionalFee;
 use App\Models\Department;
 use App\Models\Level;
 use App\Models\Section;
+use App\Models\Year;
 use Livewire\Component;
 
 class Index extends Component
@@ -26,6 +28,8 @@ class Index extends Component
 
     public $selectedSections = [];
 
+    public $semester = null;
+
     public $editingFeeId = null;
 
     public $showForm = false;
@@ -40,6 +44,7 @@ class Index extends Component
         'selectedDepartments' => 'array',
         'selectedLevels' => 'array',
         'selectedSections' => 'array',
+        'semester' => 'nullable|in:first,second,summer',
     ];
 
     public function mount()
@@ -54,6 +59,7 @@ class Index extends Component
         $this->gender = 'both';
         $this->is_one_time = true;
         $this->items = [];
+        $this->semester = null;
 
         // Default to all selected
         $this->selectedDepartments = Department::pluck('id')->map(fn ($id) => (string) $id)->toArray();
@@ -104,6 +110,7 @@ class Index extends Component
         $this->amount = $fee->amount;
         $this->gender = $fee->gender;
         $this->is_one_time = $fee->is_one_time;
+        $this->semester = $fee->semester?->value;
         $this->items = $fee->items->map(fn ($item) => [
             'id' => $item->id,
             'name' => $item->name,
@@ -122,11 +129,14 @@ class Index extends Component
         $this->calculateTotal();
         $this->validate();
 
+        $currentYear = Year::current();
         $data = [
             'name' => $this->name,
             'amount' => $this->amount,
             'gender' => $this->gender,
             'is_one_time' => $this->is_one_time,
+            'year_id' => $currentYear?->id,
+            'semester' => $this->semester,
         ];
 
         if ($this->editingFeeId) {
@@ -195,11 +205,13 @@ class Index extends Component
     public function render()
     {
         return view('livewire.admin.additional-fee.index', [
-            'additionalFees' => AdditionalFee::with(['items', 'departments', 'levels', 'sections'])
+            'additionalFees' => AdditionalFee::with(['items', 'departments', 'levels', 'sections', 'year'])
                 ->get(),
             'departments' => Department::all(),
             'levels' => Level::all(),
             'sections' => Section::all(),
+            'years' => Year::all(),
+            'semesters' => Semester::cases(),
         ])->extends('admin.layouts.app')->section('content');
     }
 }

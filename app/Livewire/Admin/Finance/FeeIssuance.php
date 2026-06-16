@@ -6,6 +6,7 @@ use App\Models\AdditionalFee;
 use App\Models\RegistrationFee;
 use App\Models\Student;
 use App\Models\StudentFeeTicket;
+use App\Models\Year;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
@@ -24,6 +25,11 @@ class FeeIssuance extends Component
     public $pendingTickets = [];
 
     public $notes;
+
+    public function mount()
+    {
+        //
+    }
 
     public function searchStudent()
     {
@@ -53,6 +59,7 @@ class FeeIssuance extends Component
 
         $this->pendingTickets = StudentFeeTicket::where('student_id', $this->student->id)
             ->where('status', 'pending')
+            ->with('year')
             ->get();
     }
 
@@ -80,14 +87,22 @@ class FeeIssuance extends Component
             return;
         }
 
-        // 1. Fetch Additional Fees applicable to the student
-        // These are fees targeting the student's department, level, section, and gender
+        $currentYear = Year::current();
+        $currentSemester = Year::currentSemester();
+
+        // 1. Fetch Additional Fees applicable to the student for current year/semester, not yet invoiced
         $this->additionalFees = AdditionalFee::where(function ($q) {
             $q->where('gender', 'both')->orWhere('gender', $this->student->gender);
         })
             ->whereHas('departments', fn ($q) => $q->where('departments.id', $this->student->section->department_id))
             ->whereHas('levels', fn ($q) => $q->where('levels.id', $this->student->level_id))
             ->whereHas('sections', fn ($q) => $q->where('sections.id', $this->student->section_id))
+            ->when($currentYear, function ($q) use ($currentYear) {
+                $q->where('year_id', $currentYear->id);
+            })
+            ->when($currentSemester, function ($q) use ($currentSemester) {
+                $q->where('semester', $currentSemester);
+            })
             ->get()
             ->filter(function ($fee) {
                 // Exclude if already invoiced (pending or paid)
@@ -102,11 +117,13 @@ class FeeIssuance extends Component
         $this->registrationFees = RegistrationFee::where('department_id', $this->student->section->department_id)
             ->where('level_id', $this->student->level_id)
             ->get()
-            ->filter(function ($fee) {
-                // Exclude if already invoiced (pending or paid)
+            ->filter(function ($fee) use ($currentYear, $currentSemester) {
+                // Check if already invoiced for current year/semester
                 return ! StudentFeeTicket::where('student_id', $this->student->id)
                     ->where('fee_type', 'registration')
                     ->where('fee_id', $fee->id)
+                    ->where('year_id', $currentYear?->id)
+                    ->where('semester', $currentSemester)
                     ->whereIn('status', ['pending', 'paid'])
                     ->exists();
             });
@@ -142,6 +159,8 @@ class FeeIssuance extends Component
         $ticketNumbers = [];
 
         DB::transaction(function () use (&$ticketNumbers) {
+            $currentYear = Year::current();
+            $currentSemester = Year::currentSemester();
             foreach ($this->selectedFees as $feeKey) {
                 [$type, $id] = explode('-', $feeKey);
 
@@ -175,6 +194,8 @@ class FeeIssuance extends Component
                     'amount' => $amount,
                     'status' => 'pending',
                     'notes' => $this->notes,
+                    'year_id' => $currentYear?->id,
+                    'semester' => $currentSemester,
                 ]);
 
                 $ticketNumbers[] = $ticketNumber;

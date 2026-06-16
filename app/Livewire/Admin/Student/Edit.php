@@ -2,9 +2,8 @@
 
 namespace App\Livewire\Admin\Student;
 
-use App\Enums\Student\ApplicationCategory;
-use App\Enums\Student\StudentStatus;
-use App\Enums\Student\StudyStatus;
+use App\Enums\Semester;
+use App\Models\AcademicAdvisor;
 use App\Models\CertificateType;
 use App\Models\City;
 use App\Models\Country;
@@ -14,10 +13,7 @@ use App\Models\Nationality;
 use App\Models\Section;
 use App\Models\Student;
 use App\Models\StudentScore;
-use App\Models\AcademicAdvisor;
-use App\Models\AcademicAdvisorAssignment;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use App\Models\Year;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -30,42 +26,76 @@ class Edit extends Component
 
     // Student Basic Info
     public $name = '';
+
     public $religion = 'مسلم';
+
     public $gender = 'male';
+
     public $image;
+
     public $existing_image;
+
     public $birth_date;
+
     public $country_id;
+
     public $city_id;
+
     public $nationality_id;
+
     public $address = '';
+
     public $is_foreign = false;
+
     public $national_id = '';
+
     public $national_id_place = '';
+
     public $email = '';
+
     public $phone = '';
+
     public $landline_phone = '';
+
     public $guardian_job = '';
+
     public $guardian_phone_1 = '';
+
     public $guardian_phone_2 = '';
 
     // Certificate Info
     public $certificate_type_id;
+
     public $graduation_date;
+
     public $seat_number = '';
+
     public $score;
+
     public $requirements = [];
 
     // Application Info
     public $application_category;
+
     public $status;
+
     public $status_notes = '';
+
     public $department_id;
+
     public $section_id;
+
     public $level_id;
+
     public $study_status;
+
     public $username = '';
+
     public $password = '';
+
+    public $year_id;
+
+    public $semester;
 
     public $showFullForm = false;
 
@@ -108,6 +138,8 @@ class Edit extends Component
         $this->level_id = $student->level_id;
         $this->study_status = $student->study_status?->value;
         $this->username = $student->username;
+        $this->year_id = $student->year_id;
+        $this->semester = $student->semester?->value;
 
         if ($this->section_id) {
             $section = Section::find($this->section_id);
@@ -128,6 +160,18 @@ class Edit extends Component
         } else {
             $this->showFullForm = false;
         }
+    }
+
+    #[Computed]
+    public function years()
+    {
+        return Year::all();
+    }
+
+    #[Computed]
+    public function semesters()
+    {
+        return Semester::cases();
     }
 
     #[Computed]
@@ -278,33 +322,33 @@ class Edit extends Component
             'seat_number' => 'nullable|string',
         ]);
 
-//        if ($this->showFullForm) {
-//            $rules = array_merge($rules, [
-//                'religion' => 'required|string',
-//                'image' => 'nullable|image|max:1024',
-//                'birth_date' => 'required|date',
-//                'country_id' => 'required|exists:countries,id',
-//                'city_id' => 'required|exists:cities,id',
-//                'nationality_id' => 'required|exists:nationalities,id',
-//                'address' => 'required|string|max:500',
-//                'national_id_place' => 'required|string|max:255',
-//                'graduation_date' => 'required|date',
-//                'seat_number' => 'required|string',
-//            ]);
-//        } else {
-//            $rules = array_merge($rules, [
-//                'religion' => 'nullable|string',
-//                'image' => 'nullable|image|max:1024',
-//                'birth_date' => 'nullable|date',
-//                'country_id' => 'nullable|exists:countries,id',
-//                'city_id' => 'nullable|exists:cities,id',
-//                'nationality_id' => 'nullable|exists:nationalities,id',
-//                'address' => 'nullable|string|max:500',
-//                'national_id_place' => 'nullable|string|max:255',
-//                'graduation_date' => 'nullable|date',
-//                'seat_number' => 'nullable|string',
-//            ]);
-//        }
+        //        if ($this->showFullForm) {
+        //            $rules = array_merge($rules, [
+        //                'religion' => 'required|string',
+        //                'image' => 'nullable|image|max:1024',
+        //                'birth_date' => 'required|date',
+        //                'country_id' => 'required|exists:countries,id',
+        //                'city_id' => 'required|exists:cities,id',
+        //                'nationality_id' => 'required|exists:nationalities,id',
+        //                'address' => 'required|string|max:500',
+        //                'national_id_place' => 'required|string|max:255',
+        //                'graduation_date' => 'required|date',
+        //                'seat_number' => 'required|string',
+        //            ]);
+        //        } else {
+        //            $rules = array_merge($rules, [
+        //                'religion' => 'nullable|string',
+        //                'image' => 'nullable|image|max:1024',
+        //                'birth_date' => 'nullable|date',
+        //                'country_id' => 'nullable|exists:countries,id',
+        //                'city_id' => 'nullable|exists:cities,id',
+        //                'nationality_id' => 'nullable|exists:nationalities,id',
+        //                'address' => 'nullable|string|max:500',
+        //                'national_id_place' => 'nullable|string|max:255',
+        //                'graduation_date' => 'nullable|date',
+        //                'seat_number' => 'nullable|string',
+        //            ]);
+        //        }
 
         // Common fields with default validation
         $rules = array_merge($rules, [
@@ -324,7 +368,7 @@ class Edit extends Component
         $validated = $this->validate($rules);
 
         // Convert empty strings to null
-        $validated = array_map(fn($value) => $value === '' ? null : $value, $validated);
+        $validated = array_map(fn ($value) => $value === '' ? null : $value, $validated);
 
         if ($this->image) {
             $validated['image'] = $this->image->store('students', 'public');

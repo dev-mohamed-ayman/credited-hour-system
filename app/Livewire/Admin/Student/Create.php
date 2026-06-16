@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Admin\Student;
 
+use App\Enums\Semester;
 use App\Enums\Student\ApplicationCategory;
 use App\Enums\Student\StudentStatus;
 use App\Enums\Student\StudyStatus;
+use App\Models\AcademicAdvisor;
 use App\Models\CertificateType;
 use App\Models\City;
 use App\Models\Country;
@@ -14,8 +16,7 @@ use App\Models\Nationality;
 use App\Models\Section;
 use App\Models\Student;
 use App\Models\StudentScore;
-use App\Models\AcademicAdvisor;
-use App\Models\AcademicAdvisorAssignment;
+use App\Models\Year;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -93,11 +94,15 @@ class Create extends Component
 
     public $password;
 
+    public $year_id;
+
+    public $semester;
+
     public $showFullForm = false;
 
     public function toggleFullForm()
     {
-        $this->showFullForm = !$this->showFullForm;
+        $this->showFullForm = ! $this->showFullForm;
     }
 
     public function mount()
@@ -106,6 +111,22 @@ class Create extends Component
         $this->application_category = ApplicationCategory::DIRECT->value;
         $this->status = StudentStatus::REGISTERED->value;
         $this->study_status = StudyStatus::FRESHMAN->value;
+
+        $currentYear = Year::current();
+        $this->year_id = $currentYear?->id;
+        $this->semester = Year::currentSemester()?->value;
+    }
+
+    #[Computed]
+    public function years()
+    {
+        return Year::all();
+    }
+
+    #[Computed]
+    public function semesters()
+    {
+        return Semester::cases();
     }
 
     #[Computed]
@@ -156,7 +177,7 @@ class Create extends Component
     #[Computed]
     public function levels()
     {
-        return $this->section_id ? Level::whereHas('sections', fn($q) => $q->where('section_id', $this->section_id))->get() : collect();
+        return $this->section_id ? Level::whereHas('sections', fn ($q) => $q->where('section_id', $this->section_id))->get() : collect();
     }
 
     #[Computed]
@@ -169,7 +190,7 @@ class Create extends Component
     public function percentageScore()
     {
         if ($this->selectedCertificateType && $this->score) {
-            return number_format(($this->score / $this->selectedCertificateType->total_score) * 100, 2) . '%';
+            return number_format(($this->score / $this->selectedCertificateType->total_score) * 100, 2).'%';
         }
 
         return '0%';
@@ -178,7 +199,7 @@ class Create extends Component
     #[Computed]
     public function departmentRequirements()
     {
-        if (!$this->selectedCertificateType || !$this->department_id) {
+        if (! $this->selectedCertificateType || ! $this->department_id) {
             return collect();
         }
 
@@ -218,7 +239,7 @@ class Create extends Component
         $this->dispatch('section-updated');
 
         if ($value) {
-            $levels = Level::whereHas('sections', fn($q) => $q->where('section_id', $value))->get(['id', 'name'])->toArray();
+            $levels = Level::whereHas('sections', fn ($q) => $q->where('section_id', $value))->get(['id', 'name'])->toArray();
             $this->dispatch('levels-loaded', levels: $levels);
         } else {
             $this->dispatch('levels-loaded', levels: []);
@@ -295,7 +316,7 @@ class Create extends Component
         $validated = $this->validate($rules);
 
         // Convert empty strings to null
-        $validated = array_map(fn($value) => $value === '' ? null : $value, $validated);
+        $validated = array_map(fn ($value) => $value === '' ? null : $value, $validated);
 
         if ($this->image) {
             $validated['image'] = $this->image->store('students', 'public');
@@ -313,7 +334,7 @@ class Create extends Component
         $advisor = AcademicAdvisor::query()
             ->where('is_active', true)
             ->whereHas('assignments', function ($query) use ($validated) {
-                $query->where(function ($q) use ($validated) {
+                $query->where(function ($q) {
                     $q->where('department_id', $this->department_id)
                         ->orWhereNull('department_id');
                 })->where(function ($q) use ($validated) {
@@ -334,6 +355,7 @@ class Create extends Component
         } else {
             session()->flash('error', 'لا يوجد مرشد أكاديمي متاح لهذا القسم والشعبة والمستوى. يرجى التواصل مع الإدارة.');
             $this->addError('department_id', 'لا يوجد مرشد أكاديمي متاح لهذا القسم والشعبة والمستوى. يرجى التواصل مع الإدارة.');
+
             return;
         }
 

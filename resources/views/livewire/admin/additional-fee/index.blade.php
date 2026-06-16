@@ -67,7 +67,7 @@
                                     @error('gender') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
 
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <label class="form-label">تكرار الدفع</label>
                                     <div class="d-flex gap-3 mt-2">
                                         <div class="form-check">
@@ -83,6 +83,16 @@
                                     </div>
                                     @error('is_one_time') <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">الترم</label>
+                                    <select class="form-select @error('semester') is-invalid @enderror" wire:model="semester">
+                                        <option value="">اختر الترم</option>
+                                        @foreach($semesters as $semester)
+                                            <option value="{{ $semester->value }}">{{ $semester->label() }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('semester') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
 
                                 {{-- Fee Items Section --}}
@@ -300,6 +310,7 @@
                                 <th>المبلغ</th>
                                 <th>الجنس</th>
                                 <th>تكرار الدفع</th>
+                                <th>السنة/الترم</th>
                                 <th>التخصيص</th>
                                 <th width="150">الإجراءات</th>
                             </tr>
@@ -325,6 +336,14 @@
                                                             {!! $fee->is_one_time
                                 ? '<span class="text-success"><i class="ti tabler-check me-1"></i>مرة واحدة</span>'
                                 : '<span class="text-warning"><i class="ti tabler-refresh me-1"></i>متكرر</span>' !!}
+                                                        </td>
+                                                        <td>
+                                                            @if($fee->year)
+                                                                <span class="badge bg-label-primary">{{ $fee->year->year }}</span>
+                                                            @endif
+                                                            @if($fee->semester)
+                                                                <span class="badge bg-label-info">{{ $fee->semester->label() }}</span>
+                                                            @endif
                                                         </td>
                                                         <td>
                                                             <small class="text-muted">
@@ -354,12 +373,12 @@
                                                                                 {{ $item->name }}
                                                                             </td>
                                                                             <td>{{ number_format($item->amount, 2) }} LE</td>
-                                                                            <td colspan="4"></td>
+                                                                            <td colspan="5"></td>
                                                                         </tr>
                                                     @endforeach
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center py-4 text-muted">لا يوجد مصاريف مضافة حالياً.</td>
+                                    <td colspan="7" class="text-center py-4 text-muted">لا يوجد مصاريف مضافة حالياً.</td>
                                 </tr>
                             @endforelse
                         </tbody>

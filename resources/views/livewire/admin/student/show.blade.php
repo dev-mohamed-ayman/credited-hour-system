@@ -262,6 +262,18 @@
                                         <span class="fw-bold text-heading">{{ $student->graduation_date ? \Carbon\Carbon::parse($student->graduation_date)->format('Y') : '-' }}</span>
                                     </div>
                                 </div>
+                                <div class="col-md-3">
+                                    <div class="p-3 bg-light rounded border-start border-warning border-4">
+                                        <small class="text-muted d-block">السنة الدراسية الحالية</small>
+                                        <span class="fw-bold text-heading">{{ $student->year?->year ?? '-' }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-3 bg-light rounded border-start border-info border-4">
+                                        <small class="text-muted d-block">الترم الحالي</small>
+                                        <span class="fw-bold text-heading">{{ $student->semester?->label() ?? '-' }}</span>
+                                    </div>
+                                </div>
                             </div>
 
                             <h6 class="text-muted text-uppercase small fw-bold mb-3">بيانات ولي الأمر</h6>

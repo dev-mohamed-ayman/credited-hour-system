@@ -81,7 +81,7 @@ class FeePayment extends Component
         if (count($parts) === 1) {
             // Single ticket
             $ticket = StudentFeeTicket::where('ticket_number', $parts[0])
-                ->with(['student'])
+                ->with(['student', 'year'])
                 ->first();
 
             if (! $ticket) {
@@ -121,7 +121,7 @@ class FeePayment extends Component
                 $secStr = str_pad($sec, 2, '0', STR_PAD_LEFT);
                 $ticketNum = $basePrefix.$secStr.$studentCode;
                 $ticket = StudentFeeTicket::where('ticket_number', $ticketNum)
-                    ->with(['student'])
+                    ->with(['student', 'year'])
                     ->first();
 
                 if ($ticket) {

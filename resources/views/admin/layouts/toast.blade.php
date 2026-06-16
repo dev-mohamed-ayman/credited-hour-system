@@ -50,9 +50,36 @@
     @endif
 
     document.addEventListener('livewire:init', () => {
+        // Handle toast event
         Livewire.on('toast', (data) => {
             const toastData = Array.isArray(data) ? data[0] : data;
             window.toast(toastData.type || 'success', toastData.message || '');
+        });
+
+        // Handle alert event
+        Livewire.on('alert', (data) => {
+            const toastData = Array.isArray(data) ? data[0] : data;
+            window.toast(toastData.type || 'info', toastData.message || '');
+        });
+
+        // Handle success event
+        Livewire.on('success', (message) => {
+            window.toast('success', Array.isArray(message) ? message[0] : message);
+        });
+
+        // Handle error event
+        Livewire.on('error', (message) => {
+            window.toast('error', Array.isArray(message) ? message[0] : message);
+        });
+
+        // Handle warning event
+        Livewire.on('warning', (message) => {
+            window.toast('warning', Array.isArray(message) ? message[0] : message);
+        });
+
+        // Handle info event
+        Livewire.on('info', (message) => {
+            window.toast('info', Array.isArray(message) ? message[0] : message);
         });
     });
 </script>

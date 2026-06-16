@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Semester;
 use Illuminate\Database\Eloquent\Model;
 
 class StudentFeeTicket extends Model
@@ -19,13 +20,21 @@ class StudentFeeTicket extends Model
         'visa_last_four',
         'paid_at',
         'notes',
+        'year_id',
+        'semester',
     ];
 
     protected function casts(): array
     {
         return [
             'paid_at' => 'datetime',
+            'semester' => Semester::class,
         ];
+    }
+
+    public function year()
+    {
+        return $this->belongsTo(Year::class);
     }
 
     public function student()

@@ -71,6 +71,7 @@
                                     </th>
                                     <th>رقم الحافظة</th>
                                     <th>نوع الرسوم</th>
+                                    <th>السنة/الترم</th>
                                     <th>المبلغ</th>
                                     <th>الحالة</th>
                                 </tr>
@@ -87,6 +88,14 @@
                                         </td>
                                         <td>{{ $ticket->ticket_number }}</td>
                                         <td>{{ $ticket->fee_name ?? ($ticket->fee_type === 'additional' ? 'رسوم إضافية' : 'رسوم تسجيل') }}</td>
+                                        <td>
+                                            @if($ticket->year)
+                                                <span class="badge bg-label-primary">{{ $ticket->year->year }}</span>
+                                            @endif
+                                            @if($ticket->semester)
+                                                <span class="badge bg-label-info">{{ $ticket->semester->label() }}</span>
+                                            @endif
+                                        </td>
                                         <td>{{ number_format($ticket->amount, 2) }} ج.م</td>
                                         <td>
                                             <span class="badge {{ $ticket->status === 'paid' ? 'bg-success' : 'bg-warning' }}">

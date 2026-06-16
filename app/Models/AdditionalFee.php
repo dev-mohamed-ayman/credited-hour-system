@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Semester;
 use Illuminate\Database\Eloquent\Model;
 
 class AdditionalFee extends Model
@@ -11,7 +12,21 @@ class AdditionalFee extends Model
         'gender',
         'amount',
         'is_one_time',
+        'year_id',
+        'semester',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'semester' => Semester::class,
+        ];
+    }
+
+    public function year()
+    {
+        return $this->belongsTo(Year::class);
+    }
 
     public function items()
     {
