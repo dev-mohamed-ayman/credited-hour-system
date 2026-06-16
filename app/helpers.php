@@ -1,14 +1,18 @@
 <?php
 
 if (! function_exists('isActiveRoute')) {
-    function isActiveRoute(string|array $routeName, bool $isOpenOutput = false): string
+    function isActiveRoute(string|array $routeName, string|bool $type = 'active'): string
     {
-        $output = 'active';
-        if (request()->routeIs($routeName)) {
-            return $isOpenOutput ? $output.' open' : $output;
+        if (! request()->routeIs($routeName)) {
+            return '';
         }
 
-        return '';
+        return match ($type) {
+            'open' => 'open',
+            'active' => 'active',
+            'both', true => 'active open',
+            default => '',
+        };
     }
 }
 

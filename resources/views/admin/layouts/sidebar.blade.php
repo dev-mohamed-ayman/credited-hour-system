@@ -178,7 +178,7 @@
                 <div data-i18n="Admin">Admin</div>
             </a>
             <ul class="menu-sub">
-                <li class="menu-item {{isActiveRoute(['registration-fees.*', 'additional-fees.*', 'years.*'])}}">
+                <li class="menu-item {{isActiveRoute(['registration-fees.*', 'additional-fees.*', 'years.*'], true)}}">
                     <a href="javascript:void(0)" class="menu-link menu-toggle">
                         <div data-i18n="Site Configuration">Site Configuration</div>
                     </a>
