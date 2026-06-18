@@ -75,3 +75,7 @@ Route::get('student-search', \App\Livewire\Admin\StudentSearch::class)->name('st
 
 // Academic Advisor Routes
 Route::resource('academic-advisors', AcademicAdvisorController::class)->except(['show']);
+
+// Military Education Courses Routes
+Route::get('military-education-courses', \App\Livewire\Admin\MilitaryEducationCourses\Index::class)->name('military-education-courses.index');
+Route::get('military-education-courses/{militaryEducationCourse}', \App\Livewire\Admin\MilitaryEducationCourses\Show::class)->name('military-education-courses.show');

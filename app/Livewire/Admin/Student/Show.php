@@ -11,7 +11,7 @@ class Show extends Component
 
     public function mount(Student $student)
     {
-        $this->student = $student->load(['section', 'level', 'country', 'city', 'scores', 'year']);
+        $this->student = $student->load(['section', 'level', 'country', 'city', 'scores', 'year', 'militaryEducationEnrollments.course', 'militaryEducationEnrollments.year']);
     }
 
     public function render()

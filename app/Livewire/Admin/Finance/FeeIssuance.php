@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin\Finance;
 
 use App\Models\AdditionalFee;
+use App\Models\MilitaryEducationEnrollment;
 use App\Models\RegistrationFee;
 use App\Models\Student;
 use App\Models\StudentFeeTicket;
@@ -19,6 +20,8 @@ class FeeIssuance extends Component
     public $additionalFees = [];
 
     public $registrationFees = [];
+
+    public $militaryEducationFees = [];
 
     public $selectedFees = []; // Array of 'type-id'
 
@@ -128,6 +131,19 @@ class FeeIssuance extends Component
                     ->exists();
             });
 
+        // 3. Fetch Military Education Course Enrollments in active courses that don't have a ticket yet
+        $this->militaryEducationFees = MilitaryEducationEnrollment::where('student_id', $this->student->id)
+            ->whereHas('course', fn ($q) => $q->where('status', 'active'))
+            ->with('course')
+            ->get()
+            ->filter(function ($enrollment) {
+                return ! StudentFeeTicket::where('student_id', $this->student->id)
+                    ->where('fee_type', 'military_education')
+                    ->where('fee_id', $enrollment->course_id)
+                    ->whereIn('status', ['pending', 'paid'])
+                    ->exists();
+            });
+
         $this->selectedFees = [];
     }
 
@@ -171,6 +187,8 @@ class FeeIssuance extends Component
                 $sectionId = null;
                 $gender = null;
                 $feeDetails = [];
+                $yearId = $currentYear?->id;
+                $semester = $currentSemester;
 
                 if ($type === 'additional') {
                     $fee = AdditionalFee::with('items', 'departments', 'levels', 'sections', 'year')->find($id);
@@ -196,6 +214,23 @@ class FeeIssuance extends Component
                         'departments' => $fee->departments->map(fn ($d) => ['id' => $d->id, 'name' => $d->name])->toArray(),
                         'levels' => $fee->levels->map(fn ($l) => ['id' => $l->id, 'name' => $l->name])->toArray(),
                         'sections' => $fee->sections->map(fn ($s) => ['id' => $s->id, 'name' => $s->name])->toArray(),
+                    ];
+                } elseif ($type === 'military_education') {
+                    $enrollment = MilitaryEducationEnrollment::with('course', 'year')->find($id);
+                    $course = $enrollment->course;
+                    $amount = $course->fee_amount;
+                    $feeName = 'مصاريف تربيه عسكريه - '.$course->name;
+                    $departmentId = $this->student->section->department_id;
+                    $levelId = $this->student->level_id;
+                    $sectionId = $this->student->section_id;
+                    $gender = $course->gender;
+                    $yearId = $enrollment->year_id;
+                    $semester = $enrollment->semester;
+                    $feeDetails = [
+                        'course_id' => $course->id,
+                        'course_name' => $course->name,
+                        'enrollment_id' => $enrollment->id,
+                        'amount' => $course->fee_amount,
                     ];
                 } else {
                     $fee = RegistrationFee::with('department', 'level')->find($id);
@@ -237,8 +272,8 @@ class FeeIssuance extends Component
                     'amount' => $amount,
                     'status' => 'pending',
                     'notes' => $this->notes,
-                    'year_id' => $currentYear?->id,
-                    'semester' => $currentSemester,
+                    'year_id' => $yearId,
+                    'semester' => $semester,
                     'department_id' => $departmentId,
                     'level_id' => $levelId,
                     'section_id' => $sectionId,

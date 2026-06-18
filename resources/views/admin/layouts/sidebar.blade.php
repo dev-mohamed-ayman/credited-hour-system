@@ -107,6 +107,12 @@
                 <div data-i18n="المرشدين الأكاديميين">المرشدين الأكاديميين</div>
             </a>
         </li>
+        <li class="menu-item {{isActiveRoute('military-education-courses.*')}}">
+            <a href="{{route('military-education-courses.index')}}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-shield-star"></i>
+                <div data-i18n="دورات التربية العسكرية">دورات التربية العسكرية</div>
+            </a>
+        </li>
 
         <li
             class="menu-item {{isActiveRoute(['students.*', 'print.student.cards.*', 'print.seat.numbers.*', 'print.certificates.*', 'student-warnings.*', 'student-search.*', 'admin.finance.fee-issuance'], true)}}">

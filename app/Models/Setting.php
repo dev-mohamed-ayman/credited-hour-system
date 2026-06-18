@@ -35,6 +35,7 @@ class Setting extends Model
             'cert_show_cgpa' => 'boolean',
             'cert_show_semester' => 'boolean',
             'cert_show_extra' => 'boolean',
+            'military_education_default_fee' => 'decimal:2',
         ];
     }
 }

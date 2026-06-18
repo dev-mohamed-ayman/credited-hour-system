@@ -7,6 +7,7 @@ use App\Enums\Student\ApplicationCategory;
 use App\Enums\Student\StudentStatus;
 use App\Enums\Student\StudyStatus;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Student extends Model
@@ -90,5 +91,20 @@ class Student extends Model
     public function warnings()
     {
         return $this->hasMany(StudentWarning::class);
+    }
+
+    public function militaryEducationEnrollments(): HasMany
+    {
+        return $this->hasMany(MilitaryEducationEnrollment::class);
+    }
+
+    public function hasPassedMilitaryEducation(): bool
+    {
+        return $this->military_education_passed || $this->militaryEducationEnrollments()->where('status', 'passed')->exists();
+    }
+
+    public function lastMilitaryEducationEnrollment()
+    {
+        return $this->militaryEducationEnrollments()->latest()->first();
     }
 }

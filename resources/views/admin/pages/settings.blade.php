@@ -203,6 +203,18 @@
                 </div>
             </div>
 
+            <hr class="my-4">
+
+            <h5 class="mb-3">إعدادات التربية العسكرية</h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="military_education_default_fee">المصاريف الافتراضية للدورة</label>
+                        <input type="number" step="0.01" min="0" class="form-control" id="military_education_default_fee" name="military_education_default_fee" value="{{ optional($settings)->military_education_default_fee ?? 0 }}">
+                    </div>
+                </div>
+            </div>
+
         </div>
         <div class="card-footer">
             <button type="submit" class="btn btn-primary btn-sm">حفظ التعديلات</button>

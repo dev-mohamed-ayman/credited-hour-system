@@ -17,7 +17,8 @@
     window.toast = function (type = 'success', message = '', opts = {}) {
         const Toast = Swal.mixin({
             toast: true,
-            position: opts.position || 'bottom-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}',
+            // position: opts.position || 'bottom-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}',
+            position: opts.position || 'bottom-left',
             showConfirmButton: false,
             timer: opts.timer || 2500,
             timerProgressBar: true,

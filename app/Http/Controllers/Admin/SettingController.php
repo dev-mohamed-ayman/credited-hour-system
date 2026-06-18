@@ -50,6 +50,7 @@ class SettingController extends Controller
             'ministerial_receipt_start' => $request->ministerial_receipt_start,
             'ministerial_receipt_end' => $request->ministerial_receipt_end,
             'ministerial_receipt_current' => $request->ministerial_receipt_current,
+            'military_education_default_fee' => $request->military_education_default_fee,
         ]);
 
         return redirect()->back()->with('success', 'تم التحديث بنجاح');

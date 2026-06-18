@@ -83,7 +83,7 @@
                         <span class="badge bg-label-info">حدد المصاريف المراد إصدار حافظة لها</span>
                     </div>
                     <div class="card-body">
-                        @if($additionalFees->isEmpty() && $registrationFees->isEmpty())
+                        @if($additionalFees->isEmpty() && $registrationFees->isEmpty() && $militaryEducationFees->isEmpty())
                             <div class="alert alert-success text-center py-4">
                                 <i class="ti tabler-circle-check fs-1 mb-2"></i>
                                 <h5>لا توجد مصاريف مستحقة على هذا الطالب حالياً</h5>
@@ -165,6 +165,47 @@
                                     </div>
                                 @endif
 
+                                {{-- Military Education Fees Section --}}
+                                @if($militaryEducationFees->isNotEmpty())
+                                    <div class="mb-4">
+                                        <h6 class="text-uppercase text-muted small fw-bold mb-3">3. مصاريف التربية العسكرية</h6>
+                                        <div class="table-responsive border rounded">
+                                            <table class="table table-hover mb-0">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th width="50">#</th>
+                                                        <th>اسم الدورة</th>
+                                                        <th>السنة/الترم</th>
+                                                        <th class="text-center">المبلغ</th>
+                                                        <th width="100" class="text-center">تحديد</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($militaryEducationFees as $enrollment)
+                                                        <tr>
+                                                            <td>{{ $loop->iteration }}</td>
+                                                            <td>{{ $enrollment->course->name }}</td>
+                                                            <td>
+                                                                @if($enrollment->year)
+                                                                    <span class="badge bg-label-primary">{{ $enrollment->year->year }}</span>
+                                                                @endif
+                                                                @if($enrollment->semester)
+                                                                    <span class="badge bg-label-info">{{ $enrollment->semester->label() }}</span>
+                                                                @endif
+                                                            </td>
+                                                            <td class="text-center fw-bold">{{ number_format($enrollment->course->fee_amount, 2) }} ج.م</td>
+                                                            <td class="text-center">
+                                                                <input type="checkbox" wire:model="selectedFees"
+                                                                    value="military_education-{{ $enrollment->id }}" class="form-check-input">
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                @endif
+
                                 <div class="mb-4">
                                     <label for="notes" class="form-label">ملاحظات إضافية (تظهر في الوصل)</label>
                                     <textarea wire:model="notes" id="notes" class="form-control" rows="2"
@@ -210,7 +251,15 @@
                                         @foreach($pendingTickets as $ticket)
                                             <tr>
                                                 <td class="fw-bold">{{ $ticket->ticket_number }}</td>
-                                                <td>{{ $ticket->fee_type === 'additional' ? 'رسوم إضافية' : 'رسوم تسجيل' }}</td>
+                                                <td>
+                                                    @if($ticket->fee_type === 'additional')
+                                                        رسوم إضافية
+                                                    @elseif($ticket->fee_type === 'military_education')
+                                                        مصاريف التربية العسكرية
+                                                    @else
+                                                        رسوم تسجيل
+                                                    @endif
+                                                </td>
                                                 <td>
                                                     @if($ticket->year)
                                                         <span class="badge bg-label-primary">{{ $ticket->year->year }}</span>

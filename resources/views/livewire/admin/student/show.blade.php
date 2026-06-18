@@ -152,6 +152,11 @@
                         <i class="ti tabler-list-numbers ti-xs me-1"></i> سجل الدرجات
                     </button>
                 </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="military-tab" data-bs-toggle="tab" data-bs-target="#military" type="button" role="tab">
+                        <i class="ti tabler-shield-star ti-xs me-1"></i> التربية العسكرية
+                    </button>
+                </li>
             </ul>
 
             <!-- Tab content -->
@@ -336,6 +341,106 @@
                             </table>
                         </div>
                     </div>
+                </div>
+
+                <!-- Military Education Tab -->
+                <div class="tab-pane fade" id="military" role="tabpanel">
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header border-bottom">
+                            <h5 class="card-title mb-0">الحالة الحالية في التربية العسكرية</h5>
+                        </div>
+                        <div class="card-body pt-4">
+                            @php
+                                // Determine if military education is required
+                                $isRequired = false;
+                                if ($student->level) {
+                                    if ($student->gender == 'male' && $student->level->military_required_for_males) {
+                                        $isRequired = true;
+                                    } elseif ($student->gender == 'female' && $student->level->military_required_for_females) {
+                                        $isRequired = true;
+                                    }
+                                }
+
+                                // Check if passed
+                                $hasPassed = $student->military_education_passed || $student->militaryEducationEnrollments()->where('status', \App\Enums\MilitaryEducationEnrollmentStatus::PASSED)->exists();
+
+                                // Get latest enrollment
+                                $latestEnrollment = $student->militaryEducationEnrollments()->latest()->first();
+                            @endphp
+
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="avatar flex-shrink-0">
+                                            <div class="avatar-initial bg-label-secondary rounded">
+                                                <i class="ti ti-clipboard-check"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted d-block">مطلوبة؟</small>
+                                            <span class="fw-medium text-heading">{{ $isRequired ? 'نعم' : 'لا' }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="avatar flex-shrink-0">
+                                            <div class="avatar-initial {{ $hasPassed ? 'bg-label-success' : 'bg-label-warning' }} rounded">
+                                                <i class="ti ti-circle-check"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted d-block">الحالة</small>
+                                            <span class="fw-medium text-heading">{{ $hasPassed ? 'ناجح' : ($latestEnrollment ? $latestEnrollment->status?->label() ?? 'غير محدد' : 'لم يسجل بعد') }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Enrollments History -->
+                    @if($student->militaryEducationEnrollments->count() > 0)
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header border-bottom">
+                                <h5 class="card-title mb-0">سجل الدورات</h5>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>الدورة</th>
+                                            <th>السنة الدراسية</th>
+                                            <th>الترم</th>
+                                            <th class="text-center">الحالة</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($student->militaryEducationEnrollments as $enrollment)
+                                            <tr>
+                                                <td>
+                                                    <a href="{{ route('military-education-courses.show', $enrollment->course) }}" class="text-heading fw-medium text-decoration-none hover-primary">{{ $enrollment->course->name }}</a>
+                                                </td>
+                                                <td>{{ $enrollment->year?->year ?? '-' }}</td>
+                                                <td>{{ $enrollment->semester?->label() ?? '-' }}</td>
+                                                <td class="text-center">
+                                                    @php
+                                                        $statusClass = match($enrollment->status?->value) {
+                                                            'registered' => 'bg-label-info',
+                                                            'passed' => 'bg-label-success',
+                                                            'failed' => 'bg-label-danger',
+                                                            default => 'bg-label-secondary'
+                                                        };
+                                                    @endphp
+                                                    <span class="badge {{ $statusClass }}">{{ $enrollment->status?->label() ?? 'غير محدد' }}</span>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
