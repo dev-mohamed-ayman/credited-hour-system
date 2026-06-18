@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\HasDeletionGuards;
 use Illuminate\Database\Eloquent\Model;
 
 class Department extends Model
 {
+    use HasDeletionGuards;
+
     protected $fillable = ['name', 'code'];
+    protected $blockingRelations = ['sections', 'requirements'];
 
     public function requirements()
     {

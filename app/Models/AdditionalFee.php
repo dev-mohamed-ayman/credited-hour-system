@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use App\Enums\Semester;
+use App\Traits\HasDeletionGuards;
 use Illuminate\Database\Eloquent\Model;
 
 class AdditionalFee extends Model
 {
+    use HasDeletionGuards;
+
     protected $fillable = [
         'name',
         'gender',
@@ -15,6 +18,8 @@ class AdditionalFee extends Model
         'year_id',
         'semester',
     ];
+
+    protected $blockingRelations = ['items'];
 
     protected function casts(): array
     {

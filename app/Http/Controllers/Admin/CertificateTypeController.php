@@ -56,6 +56,10 @@ class CertificateTypeController extends Controller
 
     public function destroy(CertificateType $certificateType)
     {
+        if ($certificateType->hasBlockingRelations()) {
+            return back()->with('error', $certificateType->getBlockingRelationsMessage());
+        }
+
         $certificateType->delete();
 
         return back()->with('success', 'تم حذف الشهادة بنجاح');

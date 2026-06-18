@@ -142,8 +142,10 @@ class Index extends Component
         if ($this->editingFeeId) {
             $fee = AdditionalFee::findOrFail($this->editingFeeId);
             $fee->update($data);
+            $this->dispatch('success', 'تم تحديث المصروف بنجاح.');
         } else {
             $fee = AdditionalFee::create($data);
+            $this->dispatch('success', 'تم إضافة المصروف بنجاح.');
         }
 
         // Handle items
@@ -159,14 +161,20 @@ class Index extends Component
         $fee->levels()->sync($this->selectedLevels);
         $fee->sections()->sync($this->selectedSections);
 
-        session()->flash('message', $this->editingFeeId ? 'تم تحديث المصروف بنجاح.' : 'تم إضافة المصروف بنجاح.');
         $this->resetForm();
     }
 
     public function delete($id)
     {
-        AdditionalFee::findOrFail($id)->delete();
-        session()->flash('message', 'تم حذف المصروف بنجاح.');
+        $fee = AdditionalFee::findOrFail($id);
+
+        if ($fee->hasBlockingRelations()) {
+            $this->dispatch('error', $fee->getBlockingRelationsMessage());
+            return;
+        }
+
+        $fee->delete();
+        $this->dispatch('success', 'تم حذف المصروف بنجاح.');
     }
 
     public function selectAllDepartments()

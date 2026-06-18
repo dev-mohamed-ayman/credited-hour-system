@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\HasDeletionGuards;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Course extends Model
 {
+    use HasDeletionGuards;
+
     protected $fillable = [
         'code',
         'name',
@@ -22,6 +25,8 @@ class Course extends Model
         'is_selected' => 'boolean',
         'is_active' => 'boolean',
     ];
+
+    protected $blockingRelations = ['sections'];
 
     public function department(): BelongsTo
     {

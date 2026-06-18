@@ -47,6 +47,10 @@ class SectionController extends Controller
 
     public function destroy(Section $section)
     {
+        if ($section->hasBlockingRelations()) {
+            return back()->with('error', $section->getBlockingRelationsMessage());
+        }
+
         $section->delete();
 
         return back()->with('success', 'تم حذف الشعبة بنجاح');

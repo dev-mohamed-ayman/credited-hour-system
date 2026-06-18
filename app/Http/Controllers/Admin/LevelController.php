@@ -49,6 +49,10 @@ class LevelController extends Controller
 
     public function destroy(Level $level)
     {
+        if ($level->hasBlockingRelations()) {
+            return back()->with('error', $level->getBlockingRelationsMessage());
+        }
+
         $level->delete();
 
         return back()->with('success', 'تم حذف الفرقة الدراسية بنجاح');

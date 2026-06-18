@@ -95,9 +95,9 @@
                         $(this).slideDown();
                     },
                     hide: function (deleteElement) {
-                        if (confirm('هل أنت متأكد من حذف هذا المتطلب؟')) {
+                        confirmAction('حذف المتطلب', 'هل أنت متأكد من حذف هذا المتطلب؟', () => {
                             $(this).slideUp(deleteElement);
-                        }
+                        });
                     }
                 });
             }

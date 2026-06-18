@@ -34,6 +34,23 @@
         });
         return Toast.fire({icon: type, title: message});
     };
+
+    window.confirmAction = function (title, text, onConfirm, isDanger = true) {
+        Swal.fire({
+            title: title,
+            text: text,
+            icon: isDanger ? 'warning' : 'question',
+            showCancelButton: true,
+            confirmButtonColor: isDanger ? '#d33' : '#3085d6',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'تأكيد',
+            cancelButtonText: 'إلغاء'
+        }).then((result) => {
+            if (result.isConfirmed && typeof onConfirm === 'function') {
+                onConfirm();
+            }
+        });
+    };
     @if (session('success'))
     window.toast('success', @json(session('success')));
     @endif

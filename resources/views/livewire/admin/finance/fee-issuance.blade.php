@@ -296,8 +296,7 @@
     <script>
         $wire.on('alert', (data) => {
             const [payload] = data;
-            // You can use Toastr or SweetAlert2 here if available in the project
-            alert(payload.message);
+            window.toast(payload.type || 'info', payload.message);
         });
     </script>
     @endscript

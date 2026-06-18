@@ -31,7 +31,14 @@ class Index extends Component
 
     public function delete($id): void
     {
-        AcademicAdvisor::findOrFail($id)->delete();
+        $advisor = AcademicAdvisor::findOrFail($id);
+
+        if ($advisor->hasBlockingRelations()) {
+            $this->dispatch('toast', ['message' => $advisor->getBlockingRelationsMessage(), 'type' => 'error']);
+            return;
+        }
+
+        $advisor->delete();
         $this->dispatch('toast', ['message' => 'تم حذف المرشد الأكاديمي بنجاح', 'type' => 'success']);
     }
 

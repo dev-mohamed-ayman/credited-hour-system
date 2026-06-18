@@ -17,15 +17,7 @@
         @endif
     </div>
 
-    @if (session()->has('message'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <div class="d-flex align-items-center">
-                <i class="ti tabler-circle-check me-2"></i>
-                {{ session('message') }}
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
+
 
     <div class="row">
         @if($showForm)
@@ -359,8 +351,7 @@
                                                                     <i class="ti tabler-edit"></i>
                                                                 </button>
                                                                 <button class="btn btn-sm btn-icon delete-record text-danger"
-                                                                    onclick="confirm('هل أنت متأكد من الحذف؟') || event.stopImmediatePropagation()"
-                                                                    wire:click="delete({{ $fee->id }})">
+                                                                    onclick="confirmAction('حذف المصروف', 'هل أنت متأكد من الحذف؟', () => @this.call('delete', {{ $fee->id }}))">
                                                                     <i class="ti tabler-trash"></i>
                                                                 </button>
                                                             </div>

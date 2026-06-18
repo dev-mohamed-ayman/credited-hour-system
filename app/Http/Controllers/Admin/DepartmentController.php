@@ -85,6 +85,10 @@ class DepartmentController extends Controller
 
     public function destroy(Department $department)
     {
+        if ($department->hasBlockingRelations()) {
+            return back()->with('error', $department->getBlockingRelationsMessage());
+        }
+
         $department->delete();
 
         return back()->with('success', 'تم حذف التخصص بنجاح');

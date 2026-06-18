@@ -47,6 +47,10 @@ class CityController extends Controller
 
     public function destroy(City $city)
     {
+        if ($city->hasBlockingRelations()) {
+            return back()->with('error', $city->getBlockingRelationsMessage());
+        }
+
         $city->delete();
 
         return back()->with('success', 'تم حذف المدينة بنجاح');

@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use App\Enums\MilitaryEducationCourseStatus;
+use App\Traits\HasDeletionGuards;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MilitaryEducationCourse extends Model
 {
+    use HasDeletionGuards;
+
     protected $fillable = [
         'name',
         'gender',
@@ -15,6 +18,8 @@ class MilitaryEducationCourse extends Model
         'fee_amount',
         'status',
     ];
+
+    protected $blockingRelations = ['enrollments'];
 
     protected function casts(): array
     {

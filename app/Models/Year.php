@@ -5,10 +5,14 @@ namespace App\Models;
 use App\Enums\AcademicAdvisingStatus;
 use App\Enums\Semester;
 use App\Enums\SemesterStatus;
+use App\Traits\HasDeletionGuards;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Year extends Model
 {
+    use HasDeletionGuards;
+
     protected $fillable = [
         'year',
         'first_semester_status',
@@ -16,6 +20,7 @@ class Year extends Model
         'summer_semester_status',
         'academic_advising_status',
     ];
+    protected $blockingRelations = ['students', 'additionalFees'];
 
     protected function casts(): array
     {
@@ -81,5 +86,15 @@ class Year extends Model
         $year = static::current();
 
         return $year?->getCurrentSemester();
+    }
+
+    public function students(): HasMany
+    {
+        return $this->hasMany(Student::class);
+    }
+
+    public function additionalFees(): HasMany
+    {
+        return $this->hasMany(AdditionalFee::class);
     }
 }

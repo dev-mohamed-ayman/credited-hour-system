@@ -42,6 +42,10 @@ class CountryController extends Controller
 
     public function destroy(Country $country)
     {
+        if ($country->hasBlockingRelations()) {
+            return back()->with('error', $country->getBlockingRelationsMessage());
+        }
+
         $country->delete();
 
         return back()->with('success', 'تم حذف الدولة بنجاح');

@@ -27,6 +27,10 @@ class CourseController extends Controller
 
     public function destroy(Course $course): RedirectResponse
     {
+        if ($course->hasBlockingRelations()) {
+            return back()->with('error', $course->getBlockingRelationsMessage());
+        }
+
         $course->delete();
         return back()->with('success', 'تم حذف المادة بنجاح');
     }

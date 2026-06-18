@@ -17,7 +17,7 @@
             </div>
         </div>
         @if($course->status?->value === 'active')
-            <button type="button" wire:click="closeCourse" class="btn btn-warning shadow-sm" onclick="return confirm('هل أنت متأكد من إغلاق هذه الدورة؟')">
+            <button type="button" class="btn btn-warning shadow-sm" onclick="confirmAction('إغلاق الدورة', 'هل أنت متأكد من إغلاق هذه الدورة؟', () => @this.call('closeCourse'))">
                 <i class="ti tabler-lock me-1"></i> إغلاق الدورة
             </button>
         @endif

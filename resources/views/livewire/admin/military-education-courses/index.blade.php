@@ -91,7 +91,7 @@
                                         <i class="ti tabler-eye"></i>
                                     </a>
                                     @if($course->status?->value === 'active')
-                                        <button type="button" wire:click="closeCourse({{ $course->id }})" class="btn btn-sm btn-icon btn-label-warning ms-1" onclick="return confirm('هل أنت متأكد من إغلاق هذه الدورة؟')">
+                                        <button type="button" class="btn btn-sm btn-icon btn-label-warning ms-1" onclick="confirmAction('إغلاق الدورة', 'هل أنت متأكد من إغلاق هذه الدورة؟', () => @this.call('closeCourse', {{ $course->id }}))">
                                             <i class="ti tabler-lock"></i>
                                         </button>
                                     @endif

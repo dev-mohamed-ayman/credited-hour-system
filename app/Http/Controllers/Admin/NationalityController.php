@@ -42,6 +42,10 @@ class NationalityController extends Controller
 
     public function destroy(Nationality $nationality)
     {
+        if ($nationality->hasBlockingRelations()) {
+            return back()->with('error', $nationality->getBlockingRelationsMessage());
+        }
+
         $nationality->delete();
 
         return back()->with('success', 'تم حذف الجنسية بنجاح');

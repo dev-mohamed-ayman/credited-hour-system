@@ -80,7 +80,7 @@
                                 </td>
                                 <td>
                                     @if($warning->is_active)
-                                        <button wire:click="cancelWarning({{ $warning->id }})" class="btn btn-sm btn-outline-danger" onclick="confirm('هل أنت متأكد من إلغاء هذا التنبيه؟') || event.stopImmediatePropagation()">
+                                        <button class="btn btn-sm btn-outline-danger" onclick="confirmAction('إلغاء التنبيه', 'هل أنت متأكد من إلغاء هذا التنبيه؟', () => @this.call('cancelWarning', {{ $warning->id }}))">
                                             إلغاء التنبيه
                                         </button>
                                     @else

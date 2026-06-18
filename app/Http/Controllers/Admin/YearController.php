@@ -41,6 +41,10 @@ class YearController extends Controller
 
     public function destroy(Year $year): RedirectResponse
     {
+        if ($year->hasBlockingRelations()) {
+            return back()->with('error', $year->getBlockingRelationsMessage());
+        }
+
         $year->delete();
         return back()->with('success', 'تم حذف السنة الدراسية بنجاح');
     }
