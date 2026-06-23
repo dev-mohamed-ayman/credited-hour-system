@@ -39,140 +39,9 @@
         </li>
         @endcan
 
-        @can('settings.view')
-        <li class="menu-item {{isActiveRoute('setting.*')}}">
-            <a href="{{route('setting.index')}}" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-settings"></i>
-                <div data-i18n="الإعدادات">الإعدادات</div>
-            </a>
+        <li class="menu-header small text-uppercase">
+            <span class="menu-header-text">الطلاب والأكاديميا</span>
         </li>
-        @endcan
-
-        @can('departments.view')
-        <li class="menu-item {{isActiveRoute('departments.*')}}">
-            <a href="{{route('departments.index')}}" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-layout-grid"></i>
-                <div data-i18n="التخصصات">التخصصات</div>
-            </a>
-        </li>
-        @endcan
-
-        @can('sections.view')
-        <li class="menu-item {{isActiveRoute('sections.*')}}">
-            <a href="{{route('sections.index')}}" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-subtask"></i>
-                <div data-i18n="الشعب">الشعب</div>
-            </a>
-        </li>
-        @endcan
-
-        @can('levels.view')
-        <li class="menu-item {{isActiveRoute('levels.*')}}">
-            <a href="{{route('levels.index')}}" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-stairs"></i>
-                <div data-i18n="الفرق الدراسية">الفرق الدراسية</div>
-            </a>
-        </li>
-        @endcan
-
-        @can('courses.view')
-        <li class="menu-item {{isActiveRoute('courses.*')}}">
-            <a href="{{route('courses.index')}}" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-book"></i>
-                <div data-i18n="المواد الدراسية">المواد الدراسية</div>
-            </a>
-        </li>
-        @endcan
-
-        @can('grades.view')
-        <li class="menu-item {{isActiveRoute('grades.*')}}">
-            <a href="{{route('grades.index')}}" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-chart-bar"></i>
-                <div data-i18n="التقييمات">التقييمات</div>
-            </a>
-        </li>
-        @endcan
-
-        @can('course_registration_settings.view')
-        <li class="menu-item {{isActiveRoute('course-registration-settings.*')}}">
-            <a href="{{route('course-registration-settings.index')}}" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-adjustments"></i>
-                <div data-i18n="إعدادات تسجيل المواد">إعدادات تسجيل المواد</div>
-            </a>
-        </li>
-        @endcan
-
-        @can('course_registrations.view')
-        <li class="menu-item {{isActiveRoute('course-registrations.*')}}">
-            <a href="{{route('course-registrations.index')}}" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-clipboard-list"></i>
-                <div data-i18n="تسجيل المواد">تسجيل المواد</div>
-            </a>
-        </li>
-        @endcan
-
-        @can('course_registrations.view')
-        <li class="menu-item {{isActiveRoute('registration-records.*')}}">
-            <a href="{{route('registration-records.index')}}" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-history"></i>
-                <div data-i18n="سجلات التسجيل">سجلات التسجيل</div>
-            </a>
-        </li>
-        @endcan
-
-        @can('certificate_types.view')
-        <li class="menu-item {{isActiveRoute('certificate-types.*')}}">
-            <a href="{{route('certificate-types.index')}}" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-certificate"></i>
-                <div data-i18n="الشهادات">الشهادات</div>
-            </a>
-        </li>
-        @endcan
-
-        @can('countries.view')
-        <li class="menu-item {{isActiveRoute('countries.*')}}">
-            <a href="{{route('countries.index')}}" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-world"></i>
-                <div data-i18n="الدول">الدول</div>
-            </a>
-        </li>
-        @endcan
-
-        @can('cities.view')
-        <li class="menu-item {{isActiveRoute('cities.*')}}">
-            <a href="{{route('cities.index')}}" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-map-pin"></i>
-                <div data-i18n="المدن">المدن</div>
-            </a>
-        </li>
-        @endcan
-
-        @can('nationalities.view')
-        <li class="menu-item {{isActiveRoute('nationalities.*')}}">
-            <a href="{{route('nationalities.index')}}" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-flag"></i>
-                <div data-i18n="الجنسيات">الجنسيات</div>
-            </a>
-        </li>
-        @endcan
-
-        @can('academic_advisors.view')
-        <li class="menu-item {{isActiveRoute('academic-advisors.*')}}">
-            <a href="{{route('academic-advisors.index')}}" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-flag"></i>
-                <div data-i18n="المرشدين الأكاديميين">المرشدين الأكاديميين</div>
-            </a>
-        </li>
-        @endcan
-
-        @can('military_education.view')
-        <li class="menu-item {{isActiveRoute('military-education-courses.*')}}">
-            <a href="{{route('military-education-courses.index')}}" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-shield-star"></i>
-                <div data-i18n="دورات التربية العسكرية">دورات التربية العسكرية</div>
-            </a>
-        </li>
-        @endcan
 
         @canany(['students.view', 'students.create', 'student_warnings.view', 'finance.view'])
         <li
@@ -237,11 +106,70 @@
         </li>
         @endcanany
 
+        @canany(['course_registrations.view', 'courses.view', 'grades.view', 'academic_advisors.view', 'military_education.view'])
+        <li class="menu-item {{isActiveRoute(['course-registrations.*', 'registration-records.*', 'courses.*', 'grades.*', 'academic-advisors.*', 'military-education-courses.*'], true)}}">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon icon-base ti tabler-book"></i>
+                <div data-i18n="الشئون الأكاديمية">الشئون الأكاديمية</div>
+            </a>
+            <ul class="menu-sub">
+                @can('course_registrations.view')
+                <li class="menu-item {{isActiveRoute('course-registrations.*')}}">
+                    <a href="{{route('course-registrations.index')}}" class="menu-link">
+                        <div data-i18n="تسجيل المواد">تسجيل المواد</div>
+                    </a>
+                </li>
+                <li class="menu-item {{isActiveRoute('registration-records.*')}}">
+                    <a href="{{route('registration-records.index')}}" class="menu-link">
+                        <div data-i18n="سجلات التسجيل">سجلات التسجيل</div>
+                    </a>
+                </li>
+                @endcan
+                
+                @can('courses.view')
+                <li class="menu-item {{isActiveRoute('courses.*')}}">
+                    <a href="{{route('courses.index')}}" class="menu-link">
+                        <div data-i18n="المواد الدراسية">المواد الدراسية</div>
+                    </a>
+                </li>
+                @endcan
+
+                @can('grades.view')
+                <li class="menu-item {{isActiveRoute('grades.*')}}">
+                    <a href="{{route('grades.index')}}" class="menu-link">
+                        <div data-i18n="التقييمات">التقييمات</div>
+                    </a>
+                </li>
+                @endcan
+
+                @can('academic_advisors.view')
+                <li class="menu-item {{isActiveRoute('academic-advisors.*')}}">
+                    <a href="{{route('academic-advisors.index')}}" class="menu-link">
+                        <div data-i18n="المرشدين الأكاديميين">المرشدين الأكاديميين</div>
+                    </a>
+                </li>
+                @endcan
+
+                @can('military_education.view')
+                <li class="menu-item {{isActiveRoute('military-education-courses.*')}}">
+                    <a href="{{route('military-education-courses.index')}}" class="menu-link">
+                        <div data-i18n="التربية العسكرية">التربية العسكرية</div>
+                    </a>
+                </li>
+                @endcan
+            </ul>
+        </li>
+        @endcanany
+
+        <li class="menu-header small text-uppercase">
+            <span class="menu-header-text">الإدارة المالية</span>
+        </li>
+
         @can('finance.view')
         <li class="menu-item {{isActiveRoute('admin.finance.fee-payment')}}">
             <a href="javascript:void(0)" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base ti tabler-currency-dollar"></i>
-                <div data-i18n="خيارات المالية">خيارات المالية</div>
+                <div data-i18n="المالية">المالية</div>
             </a>
             <ul class="menu-sub">
                 <li class="menu-item {{isActiveRoute('admin.finance.fee-payment')}}">
@@ -253,30 +181,118 @@
         </li>
         @endcan
 
-        @canany(['registration_fees.view', 'additional_fees.view', 'years.view', 'users.view'])
-        <li class="menu-item {{isActiveRoute(['registration-fees.*', 'additional-fees.*', 'years.*', 'users.*'], true)}}">
-            <a href="javascript:void(0)" class="menu-link menu-toggle">
-                <i class="menu-icon icon-base ti tabler-user-shield"></i>
-                <div data-i18n="Admin">Admin</div>
+        <li class="menu-header small text-uppercase">
+            <span class="menu-header-text">إعدادات النظام</span>
+        </li>
+
+        @canany(['departments.view', 'sections.view', 'levels.view', 'certificate_types.view', 'countries.view', 'cities.view', 'nationalities.view'])
+        <li class="menu-item {{isActiveRoute(['departments.*', 'sections.*', 'levels.*', 'certificate-types.*', 'countries.*', 'cities.*', 'nationalities.*'], true)}}">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon icon-base ti tabler-database"></i>
+                <div data-i18n="البيانات الأساسية">البيانات الأساسية</div>
             </a>
             <ul class="menu-sub">
+                @can('departments.view')
+                <li class="menu-item {{isActiveRoute('departments.*')}}">
+                    <a href="{{route('departments.index')}}" class="menu-link">
+                        <div data-i18n="التخصصات">التخصصات</div>
+                    </a>
+                </li>
+                @endcan
+                @can('sections.view')
+                <li class="menu-item {{isActiveRoute('sections.*')}}">
+                    <a href="{{route('sections.index')}}" class="menu-link">
+                        <div data-i18n="الشعب">الشعب</div>
+                    </a>
+                </li>
+                @endcan
+                @can('levels.view')
+                <li class="menu-item {{isActiveRoute('levels.*')}}">
+                    <a href="{{route('levels.index')}}" class="menu-link">
+                        <div data-i18n="الفرق الدراسية">الفرق الدراسية</div>
+                    </a>
+                </li>
+                @endcan
+                @can('certificate_types.view')
+                <li class="menu-item {{isActiveRoute('certificate-types.*')}}">
+                    <a href="{{route('certificate-types.index')}}" class="menu-link">
+                        <div data-i18n="الشهادات">الشهادات</div>
+                    </a>
+                </li>
+                @endcan
+                @can('countries.view')
+                <li class="menu-item {{isActiveRoute('countries.*')}}">
+                    <a href="{{route('countries.index')}}" class="menu-link">
+                        <div data-i18n="الدول">الدول</div>
+                    </a>
+                </li>
+                @endcan
+                @can('cities.view')
+                <li class="menu-item {{isActiveRoute('cities.*')}}">
+                    <a href="{{route('cities.index')}}" class="menu-link">
+                        <div data-i18n="المدن">المدن</div>
+                    </a>
+                </li>
+                @endcan
+                @can('nationalities.view')
+                <li class="menu-item {{isActiveRoute('nationalities.*')}}">
+                    <a href="{{route('nationalities.index')}}" class="menu-link">
+                        <div data-i18n="الجنسيات">الجنسيات</div>
+                    </a>
+                </li>
+                @endcan
+            </ul>
+        </li>
+        @endcanany
+
+        @canany(['registration_fees.view', 'additional_fees.view', 'years.view', 'users.view', 'settings.view', 'course_registration_settings.view'])
+        <li class="menu-item {{isActiveRoute(['registration-fees.*', 'additional-fees.*', 'years.*', 'users.*', 'setting.*', 'course-registration-settings.*'], true)}}">
+            <a href="javascript:void(0)" class="menu-link menu-toggle">
+                <i class="menu-icon icon-base ti tabler-settings"></i>
+                <div data-i18n="الإعدادات المتقدمة">الإعدادات المتقدمة</div>
+            </a>
+            <ul class="menu-sub">
+                @can('settings.view')
+                <li class="menu-item {{isActiveRoute('setting.*')}}">
+                    <a href="{{route('setting.index')}}" class="menu-link">
+                        <div data-i18n="الإعدادات العامة">الإعدادات العامة</div>
+                    </a>
+                </li>
+                @endcan
+
+                @can('course_registration_settings.view')
+                <li class="menu-item {{isActiveRoute('course-registration-settings.*')}}">
+                    <a href="{{route('course-registration-settings.index')}}" class="menu-link">
+                        <div data-i18n="إعدادات تسجيل المواد">إعدادات تسجيل المواد</div>
+                    </a>
+                </li>
+                @endcan
+
+                @can('users.view')
+                <li class="menu-item {{isActiveRoute('users.*')}}">
+                    <a href="{{route('users.index')}}" class="menu-link">
+                        <div data-i18n="إدارة المستخدمين">إدارة المستخدمين</div>
+                    </a>
+                </li>
+                @endcan
+
                 @canany(['registration_fees.view', 'additional_fees.view', 'years.view'])
                 <li class="menu-item {{isActiveRoute(['registration-fees.*', 'additional-fees.*', 'years.*'], true)}}">
                     <a href="javascript:void(0)" class="menu-link menu-toggle">
-                        <div data-i18n="Site Configuration">Site Configuration</div>
+                        <div data-i18n="إعدادات النظام">إعدادات النظام</div>
                     </a>
                     <ul class="menu-sub">
                         @can('registration_fees.view')
                         <li class="menu-item {{isActiveRoute('registration-fees.*')}}">
                             <a href="{{route('registration-fees.index')}}" class="menu-link">
-                                <div data-i18n="Student Registration">Student Registration</div>
+                                <div data-i18n="مصروفات التسجيل">مصروفات التسجيل</div>
                             </a>
                         </li>
                         @endcan
                         @can('additional_fees.view')
                         <li class="menu-item {{isActiveRoute('additional-fees.*')}}">
                             <a href="{{route('additional-fees.index')}}" class="menu-link">
-                                <div data-i18n="Additional Fees">Additional Fees</div>
+                                <div data-i18n="رسوم إضافية">رسوم إضافية</div>
                             </a>
                         </li>
                         @endcan
@@ -290,14 +306,6 @@
                     </ul>
                 </li>
                 @endcanany
-
-                @can('users.view')
-                <li class="menu-item {{isActiveRoute('users.*')}}">
-                    <a href="{{route('users.index')}}" class="menu-link">
-                        <div data-i18n="المستخدمين">المستخدمين</div>
-                    </a>
-                </li>
-                @endcan
             </ul>
         </li>
         @endcanany
