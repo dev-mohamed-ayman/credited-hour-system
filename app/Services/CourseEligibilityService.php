@@ -35,11 +35,16 @@ class CourseEligibilityService
         Student $student,
         Year $year,
         Semester $registrationSemester,
-        ?Registration $currentRegistration = null
+        ?Registration $currentRegistration = null,
+        bool $isHistorical = false
     ): array {
         $student->loadMissing(['level', 'section']);
 
-        $attempts = $this->getStudentAttempts($student);
+        $historicalSequence = $isHistorical 
+            ? ($year->id * 100) + CourseSemesterMapper::sequence($registrationSemester) 
+            : null;
+
+        $attempts = $this->getStudentAttempts($student, $historicalSequence);
         $registeredInSessionIds = $currentRegistration
             ? $currentRegistration->courses()->pluck('course_id')
             : collect();
@@ -198,12 +203,22 @@ class CourseEligibilityService
     /**
      * @return Collection<int, RegistrationCourse>
      */
-    public function getStudentAttempts(Student $student): Collection
+    public function getStudentAttempts(Student $student, ?int $upToHistoricalSequence = null): Collection
     {
-        return RegistrationCourse::query()
+        $attempts = RegistrationCourse::query()
             ->with(['registration.year', 'grade'])
             ->whereHas('registration', fn ($query) => $query->where('student_id', $student->id))
             ->get();
+
+        if ($upToHistoricalSequence !== null) {
+            $attempts = $attempts->filter(function (RegistrationCourse $attempt) use ($upToHistoricalSequence) {
+                $attemptSequence = ($attempt->registration->year_id * 100) + CourseSemesterMapper::sequence($attempt->registration->semester);
+
+                return $attemptSequence < $upToHistoricalSequence;
+            });
+        }
+
+        return $attempts->values();
     }
 
     /**
@@ -260,5 +275,54 @@ class CourseEligibilityService
         $this->failingGradeIds = null;
         $this->improvementGradeIds = null;
         $this->pendingGradeId = null;
+    }
+
+    /**
+     * Validates if a registration course can be deleted based on historical prerequisites.
+     *
+     * @return array{allowed: bool, blocking_courses: array<string>}
+     */
+    public function canDeleteRegistrationCourse(RegistrationCourse $registrationCourse): array
+    {
+        $course = $registrationCourse->course;
+        $gradeId = $registrationCourse->grade_id;
+        $registration = $registrationCourse->registration;
+
+        // 1. Is grade successful? If not, deletion is always allowed.
+        if (! $this->isSatisfactoryGrade($gradeId)) {
+            return ['allowed' => true, 'blocking_courses' => []];
+        }
+
+        $student = $registration->student;
+        $attempts = $this->getStudentAttempts($student);
+
+        $currentSequence = ($registration->year_id * 100) + CourseSemesterMapper::sequence($registration->semester);
+
+        // 2. Find all attempts in subsequent registrations
+        $laterAttempts = $attempts->filter(function (RegistrationCourse $attempt) use ($currentSequence) {
+            $attemptSequence = ($attempt->registration->year_id * 100) + CourseSemesterMapper::sequence($attempt->registration->semester);
+
+            return $attemptSequence > $currentSequence;
+        });
+
+        $blockingCourses = [];
+
+        // 3. Check if any subsequent course requires this course as a prerequisite
+        foreach ($laterAttempts as $laterAttempt) {
+            $laterCourse = $laterAttempt->course;
+
+            if ($laterCourse->prerequisites()->where('prerequisite_course_id', $course->id)->exists()) {
+                $blockingCourses[] = $laterCourse->name;
+            }
+        }
+
+        if (count($blockingCourses) > 0) {
+            return [
+                'allowed' => false,
+                'blocking_courses' => array_values(array_unique($blockingCourses)),
+            ];
+        }
+
+        return ['allowed' => true, 'blocking_courses' => []];
     }
 }

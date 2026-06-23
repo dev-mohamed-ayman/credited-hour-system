@@ -111,6 +111,15 @@
         </li>
         @endcan
 
+        @can('course_registrations.view')
+        <li class="menu-item {{isActiveRoute('registration-records.*')}}">
+            <a href="{{route('registration-records.index')}}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-history"></i>
+                <div data-i18n="سجلات التسجيل">سجلات التسجيل</div>
+            </a>
+        </li>
+        @endcan
+
         @can('certificate_types.view')
         <li class="menu-item {{isActiveRoute('certificate-types.*')}}">
             <a href="{{route('certificate-types.index')}}" class="menu-link">
