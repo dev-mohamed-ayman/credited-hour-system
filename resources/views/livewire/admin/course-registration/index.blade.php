@@ -57,50 +57,84 @@
             <span>لا يوجد تسجيل مواد في الترم الصيفي.</span>
         </div>
     @elseif($student && $registrationAvailable)
-        @if($maxOptionalCourses !== null)
-            <div class="alert alert-info py-2 mb-4">
-                المواد الاختيارية المختارة:
-                <strong>{{ $this->selectedOptionalCount }} من {{ $maxOptionalCourses }}</strong>
-            </div>
-        @endif
+        <div class="d-flex flex-column flex-md-row justify-content-end align-items-md-center mb-3 gap-3">
+            @if($maxOptionalCourses !== null)
+                <div class="badge bg-label-info p-2 px-3 fs-6 d-flex align-items-center rounded-pill">
+                    <i class="ti tabler-info-circle me-1"></i>
+                    <span>المواد الاختيارية المختارة: <strong class="ms-1">{{ $this->selectedOptionalCount }} / {{ $maxOptionalCourses }}</strong></span>
+                </div>
+            @endif
+        </div>
 
         <div class="row g-4">
             @foreach([
-                'retake' => ['title' => 'مواد راسب فيها', 'courses' => $retakeCourses, 'model' => 'selectedRetake', 'color' => 'danger'],
-                'improvement' => ['title' => 'مواد تحسين', 'courses' => $improvementCourses, 'model' => 'selectedImprovement', 'color' => 'warning'],
-                'due' => ['title' => 'مواد الترم الحالي', 'courses' => $dueCourses, 'model' => 'selectedDue', 'color' => 'primary'],
+                'retake' => ['title' => 'مواد راسب فيها', 'courses' => $retakeCourses, 'model' => 'selectedRetake', 'color' => 'danger', 'icon' => 'ti tabler-reload'],
+                'improvement' => ['title' => 'مواد تحسين', 'courses' => $improvementCourses, 'model' => 'selectedImprovement', 'color' => 'warning', 'icon' => 'ti tabler-trending-up'],
+                'due' => ['title' => 'مواد الترم الحالي', 'courses' => $dueCourses, 'model' => 'selectedDue', 'color' => 'primary', 'icon' => 'ti tabler-book'],
             ] as $key => $section)
                 <div class="col-12">
                     <div class="card">
-                        <div class="card-header bg-label-{{ $section['color'] }}">
-                            <h5 class="mb-0">{{ $section['title'] }} ({{ $section['courses']->count() }})</h5>
+                        <div class="card-header bg-label-{{ $section['color'] }} d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 d-flex align-items-center">
+                                <i class="{{ $section['icon'] }} me-2"></i>
+                                {{ $section['title'] }}
+                            </h5>
+                            <span class="badge bg-white text-{{ $section['color'] }} fs-6">{{ $section['courses']->count() }}</span>
                         </div>
-                        <div class="card-body">
-                            @forelse($section['courses'] as $course)
-                                @php
-                                    $wireModel = $section['model'];
-                                    $isChecked = in_array($course->id, $this->{$wireModel});
-                                    $isDisabled = $this->isOptionalDisabled($course->id);
-                                @endphp
-                                <div class="form-check mb-3 {{ $isDisabled ? 'opacity-50' : '' }}" wire:key="course-{{ $key }}-{{ $course->id }}">
-                                    <input class="form-check-input" type="checkbox"
-                                           wire:model.live="{{ $wireModel }}"
-                                           value="{{ $course->id }}"
-                                           id="course_{{ $key }}_{{ $course->id }}"
-                                           @disabled($isDisabled)>
-                                    <label class="form-check-label d-flex align-items-center gap-2 flex-wrap" for="course_{{ $key }}_{{ $course->id }}">
-                                        <span class="fw-medium">{{ $course->name }}</span>
-                                        <span class="badge bg-label-secondary">{{ $course->hours }} ساعة</span>
-                                        @if($course->is_selected)
-                                            <span class="badge bg-label-info">اختياري</span>
-                                        @else
-                                            <span class="badge bg-label-success">إجباري</span>
-                                        @endif
-                                    </label>
-                                </div>
-                            @empty
-                                <p class="text-muted mb-0">لا توجد مواد متاحة في هذا القسم.</p>
-                            @endforelse
+                        <div class="table-responsive text-nowrap">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 50px;" class="text-center">اختيار</th>
+                                        <th>اسم المادة</th>
+                                        <th class="text-center">الساعات</th>
+                                        <th class="text-center">النوع</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="table-border-bottom-0">
+                                    @forelse($section['courses'] as $course)
+                                        @php
+                                            $wireModel = $section['model'];
+                                            $isDisabled = $this->isOptionalDisabled($course->id);
+                                        @endphp
+                                        <tr class="{{ $isDisabled ? 'opacity-50' : '' }}" wire:key="course-{{ $key }}-{{ $course->id }}">
+                                            <td class="text-center">
+                                                <div class="form-check d-flex justify-content-center m-0">
+                                                    <input class="form-check-input" type="checkbox"
+                                                           wire:model.live="{{ $wireModel }}"
+                                                           value="{{ $course->id }}"
+                                                           id="course_{{ $key }}_{{ $course->id }}"
+                                                           @disabled($isDisabled)>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <label class="form-check-label fw-medium d-block w-100 cursor-pointer" for="course_{{ $key }}_{{ $course->id }}">
+                                                    {{ $course->name }}
+                                                </label>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-label-secondary">{{ $course->hours }} ساعة</span>
+                                            </td>
+                                            <td class="text-center">
+                                                @if($course->is_selected)
+                                                    <span class="badge bg-label-info">اختياري</span>
+                                                @else
+                                                    <span class="badge bg-label-success">إجباري</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="4" class="text-center py-5 text-muted">
+                                                <div class="d-flex flex-column align-items-center">
+                                                    <i class="ti tabler-book-off d-block mb-2" style="font-size: 3rem;"></i>
+                                                    لا توجد مواد متاحة في هذا القسم
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -115,7 +149,10 @@
                     <span wire:loading.remove wire:target="save">
                         <i class="ti tabler-device-floppy me-1"></i> حفظ التسجيل
                     </span>
-                    <span wire:loading wire:target="save">جاري الحفظ...</span>
+                    <span wire:loading wire:target="save">
+                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                        جاري الحفظ...
+                    </span>
                 </button>
             </div>
         @endcan

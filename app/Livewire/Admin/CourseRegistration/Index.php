@@ -43,15 +43,11 @@ class Index extends Component
 
     public ?int $maxOptionalCourses = null;
 
-    public function boot(): void
+    public function mount(): void
     {
         $this->retakeCourses = collect();
         $this->improvementCourses = collect();
         $this->dueCourses = collect();
-    }
-
-    public function mount(): void
-    {
         $this->currentYear = Year::current();
         $this->currentSemester = Year::currentSemester();
 
@@ -271,6 +267,10 @@ class Index extends Component
     public function render()
     {
         abort_unless(auth()->user()->can('course_registrations.view'), 403);
+
+        if ($this->searched && $this->student && $this->registrationAvailable) {
+            $this->loadBuckets();
+        }
 
         return view('livewire.admin.course-registration.index')
             ->extends('admin.layouts.app')

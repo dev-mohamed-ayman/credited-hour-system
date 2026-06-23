@@ -75,26 +75,25 @@
             <div class="form-group col-12 mb-4">
                 <label class="form-label fw-bold">المتطلبات السابقة</label>
                 @if($department_id)
-                    <div class="row g-2">
-                        @forelse($availablePrerequisites as $prerequisite)
-                            <div class="col-md-4 col-sm-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" wire:model="prerequisite_ids"
-                                           value="{{ $prerequisite->id }}" id="prerequisite_{{ $prerequisite->id }}">
-                                    <label class="form-check-label" for="prerequisite_{{ $prerequisite->id }}">
-                                        {{ $prerequisite->name }}
-                                    </label>
-                                </div>
-                            </div>
-                        @empty
-                            <div class="col-12 text-muted">لا توجد مواد متاحة كمتطلبات سابقة.</div>
-                        @endforelse
+                    <div wire:ignore>
+                        <select wire:model="prerequisite_ids" id="prerequisite_ids" 
+                                class="form-select select2 @error('prerequisite_ids') is-invalid @enderror" 
+                                multiple data-placeholder="اختر المتطلبات السابقة (اختياري)">
+                            @foreach($availablePrerequisites as $prerequisite)
+                                <option value="{{ $prerequisite->id }}">{{ $prerequisite->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
                     @error('prerequisite_ids')
-                    <div class="text-danger small mt-2">{{ $message }}</div>
+                    <div class="text-danger small mt-1">{{ $message }}</div>
                     @enderror
                 @else
-                    <div class="alert alert-info mb-0">برجاء اختيار التخصص أولاً لعرض المواد المتاحة.</div>
+                    <div class="alert alert-info d-flex align-items-center mb-0" role="alert">
+                        <span class="alert-icon text-info me-2">
+                            <i class="ti tabler-info-circle ti-xs"></i>
+                        </span>
+                        برجاء اختيار التخصص أولاً لعرض المواد المتاحة كمتطلبات سابقة
+                    </div>
                 @endif
             </div>
 
@@ -171,4 +170,42 @@
             </button>
         </div>
     </form>
+
+    @script
+    <script>
+        const initSelect2 = () => {
+            const select = $('#prerequisite_ids');
+            if (select.length) {
+                select.select2({
+                    dropdownParent: select.parent(),
+                    placeholder: select.data('placeholder') || 'اختر',
+                    allowClear: true
+                }).on('change', function (e) {
+                    let data = $(this).val();
+                    $wire.set('prerequisite_ids', data);
+                });
+            }
+        };
+
+        initSelect2();
+
+        document.addEventListener('livewire:navigated', () => {
+            initSelect2();
+        });
+
+        $wire.on('department-updated', () => {
+            setTimeout(() => {
+                initSelect2();
+            }, 100);
+        });
+    </script>
+    @endscript
 </div>
+
+@push('vendor-styles')
+    <link rel="stylesheet" href="{{asset('assets/vendor/libs/select2/select2.css')}}" />
+@endpush
+
+@push('vendor-scripts')
+    <script src="{{asset('assets/vendor/libs/select2/select2.js')}}"></script>
+@endpush

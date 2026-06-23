@@ -6,7 +6,7 @@
             <h5 class="mb-0">قائمة التقييمات</h5>
             @can('grades.create')
                 <a class="btn btn-primary waves-effect waves-light" href="{{ route('grades.create') }}">
-                    <i class="fa-solid fa-plus me-1"></i> إضافة تقييم
+                    <i class="ti tabler-plus me-1"></i> إضافة تقييم
                 </a>
             @endcan
         </div>
@@ -36,17 +36,25 @@
                                 @endif
                             </td>
                             <td class="text-center">
-                                @can('grades.edit')
-                                    <a class="btn btn-sm btn-success" href="{{ route('grades.edit', $grade->id) }}">
-                                        <i class="fa-solid fa-pen-to-square"></i>
+                                <div class="d-inline-block">
+                                    <a href="javascript:;" class="btn btn-sm btn-icon dropdown-toggle hide-arrow"
+                                       data-bs-toggle="dropdown">
+                                        <i class="ti tabler-dots-vertical"></i>
                                     </a>
-                                @endcan
-                                @can('grades.delete')
-                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal"
-                                        data-bs-target="#deleteModal{{ $grade->id }}">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                @endcan
+                                    <div class="dropdown-menu dropdown-menu-end">
+                                        @can('grades.edit')
+                                            <a class="dropdown-item" href="{{ route('grades.edit', $grade->id) }}">
+                                                <i class="ti tabler-edit me-1"></i> تعديل
+                                            </a>
+                                        @endcan
+                                        @can('grades.delete')
+                                            <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal"
+                                                data-bs-target="#deleteModal{{ $grade->id }}">
+                                                <i class="ti tabler-trash me-1"></i> حذف
+                                            </button>
+                                        @endcan
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                         @can('grades.delete')

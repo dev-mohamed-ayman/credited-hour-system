@@ -21,15 +21,22 @@
                            class="form-control @error('order') is-invalid @enderror" min="0">
                     @error('order')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
-                <div class="form-check form-switch">
+                <div class="form-check form-switch mb-3">
                     <input class="form-check-input" type="checkbox" name="is_pending_default" id="is_pending_default" value="1"
                            {{ old('is_pending_default', $grade->is_pending_default) ? 'checked' : '' }}>
-                    <label class="form-check-label" for="is_pending_default">تقييم افتراضي (Pending)</label>
+                    <label class="form-check-label fw-medium" for="is_pending_default">تقييم افتراضي (Pending)</label>
+                    <small class="text-muted d-block mt-1">
+                        <i class="ti tabler-info-circle ti-xs me-1"></i> تفعيل ده هيلغي التفعيل من أي تقييم تاني
+                    </small>
                 </div>
             </div>
-            <div class="card-footer">
-                <button type="submit" class="btn btn-primary">حفظ</button>
-                <a href="{{ route('grades.index') }}" class="btn btn-label-secondary">إلغاء</a>
+            <div class="card-footer d-flex justify-content-end gap-2 border-top pt-4">
+                <a href="{{ route('grades.index') }}" class="btn btn-label-secondary waves-effect">
+                    <i class="ti tabler-arrow-left me-1"></i> إلغاء
+                </a>
+                <button type="submit" class="btn btn-primary waves-effect waves-light">
+                    <i class="ti tabler-device-floppy me-1"></i> حفظ
+                </button>
             </div>
         </form>
     </div>

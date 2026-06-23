@@ -24,7 +24,7 @@
                             <option value="{{ $grade->id }}">{{ $grade->name }}</option>
                         @endforeach
                     </select>
-                    <small class="text-muted">التقييمات التي تستوجب إعادة تسجيل المادة</small>
+                    <small class="text-muted mt-1 d-block"><i class="ti tabler-info-circle ti-xs me-1"></i>التقييمات التي تستوجب إعادة تسجيل المادة</small>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-bold">تقييمات التحسين</label>
@@ -33,18 +33,23 @@
                             <option value="{{ $grade->id }}">{{ $grade->name }}</option>
                         @endforeach
                     </select>
-                    <small class="text-muted">التقييمات التي تستوجب تحسين المادة</small>
+                    <small class="text-muted mt-1 d-block"><i class="ti tabler-info-circle ti-xs me-1"></i>التقييمات التي تستوجب تحسين المادة</small>
                 </div>
             </div>
-            @can('course_registration_settings.edit')
-                <div class="mt-3">
-                    <button type="button" class="btn btn-primary" wire:click="saveGradeLists" wire:loading.attr="disabled">
-                        <span wire:loading.remove wire:target="saveGradeLists">حفظ قوائم التقييمات</span>
-                        <span wire:loading wire:target="saveGradeLists">جاري الحفظ...</span>
-                    </button>
-                </div>
-            @endcan
         </div>
+        @can('course_registration_settings.edit')
+            <div class="card-footer d-flex justify-content-end border-top pt-3">
+                <button type="button" class="btn btn-primary" wire:click="saveGradeLists" wire:loading.attr="disabled">
+                    <span wire:loading.remove wire:target="saveGradeLists">
+                        <i class="ti tabler-device-floppy me-1"></i> حفظ قوائم التقييمات
+                    </span>
+                    <span wire:loading wire:target="saveGradeLists">
+                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                        جاري الحفظ...
+                    </span>
+                </button>
+            </div>
+        @endcan
     </div>
 
     <div class="card">
@@ -79,12 +84,19 @@
                     </tbody>
                 </table>
             </div>
-            @can('course_registration_settings.edit')
-                <button type="button" class="btn btn-primary" wire:click="saveMaxOptionalSettings" wire:loading.attr="disabled">
-                    <span wire:loading.remove wire:target="saveMaxOptionalSettings">حفظ حدود الاختياري</span>
-                    <span wire:loading wire:target="saveMaxOptionalSettings">جاري الحفظ...</span>
-                </button>
-            @endcan
         </div>
+        @can('course_registration_settings.edit')
+            <div class="card-footer d-flex justify-content-end border-top pt-3">
+                <button type="button" class="btn btn-primary" wire:click="saveMaxOptionalSettings" wire:loading.attr="disabled">
+                    <span wire:loading.remove wire:target="saveMaxOptionalSettings">
+                        <i class="ti tabler-device-floppy me-1"></i> حفظ حدود الاختياري
+                    </span>
+                    <span wire:loading wire:target="saveMaxOptionalSettings">
+                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                        جاري الحفظ...
+                    </span>
+                </button>
+            </div>
+        @endcan
     </div>
 </div>
