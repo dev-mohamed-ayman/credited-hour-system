@@ -10,6 +10,8 @@ class FinanceController extends Controller
 {
     public function printTickets(Request $request)
     {
+        abort_unless(auth()->user()->can('finance.view'), 403);
+
         $ticketNumbers = explode(',', $request->tickets);
         $tickets = StudentFeeTicket::with('student.level', 'student.section.department', 'year')
             ->whereIn('ticket_number', $ticketNumbers)

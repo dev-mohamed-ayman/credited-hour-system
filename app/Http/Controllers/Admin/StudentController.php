@@ -14,6 +14,8 @@ class StudentController extends Controller
 {
     public function printCardsIndex()
     {
+        abort_unless(auth()->user()->can('students.view'), 403);
+
         $students = Student::orderBy('name')->get(['id', 'username', 'name']);
         $departments = Department::all();
         $sections = Section::all();
@@ -24,6 +26,8 @@ class StudentController extends Controller
 
     public function printCards(Request $request)
     {
+        abort_unless(auth()->user()->can('students.view'), 403);
+
         $query = Student::query();
 
         if ($request->has('student_ids') && count($request->student_ids) > 0) {
@@ -50,6 +54,8 @@ class StudentController extends Controller
 
     public function printSeatNumbersIndex()
     {
+        abort_unless(auth()->user()->can('students.view'), 403);
+
         $students = Student::orderBy('name')->get(['id', 'username', 'name']);
         $departments = Department::all();
         $sections = Section::all();
@@ -60,6 +66,8 @@ class StudentController extends Controller
 
     public function printSeatNumbers(Request $request)
     {
+        abort_unless(auth()->user()->can('students.view'), 403);
+
         $query = Student::query();
 
         if ($request->has('student_ids') && count($request->student_ids) > 0) {
@@ -85,6 +93,8 @@ class StudentController extends Controller
 
     public function printCertificatesIndex(): \Illuminate\View\View
     {
+        abort_unless(auth()->user()->can('students.view'), 403);
+
         $students = Student::orderBy('name')->get(['id', 'username', 'name', 'seat_number']);
         $departments = Department::all();
         $sections = Section::all();
@@ -95,6 +105,8 @@ class StudentController extends Controller
 
     public function printCertificates(Request $request): \Illuminate\View\View
     {
+        abort_unless(auth()->user()->can('students.view'), 403);
+
         $query = Student::with(['section.department', 'level']);
 
         if ($request->has('student_ids') && count($request->student_ids) > 0) {
@@ -126,6 +138,8 @@ class StudentController extends Controller
 
     public function printReport(Student $student): \Illuminate\View\View
     {
+        abort_unless(auth()->user()->can('students.view'), 403);
+
         $student->load(['level', 'section.department', 'academicAdvisor', 'warnings']);
         $settings = Setting::query()->firstOrCreate();
 
@@ -134,31 +148,43 @@ class StudentController extends Controller
 
     public function index()
     {
+        abort_unless(auth()->user()->can('students.view'), 403);
+
         return view('admin.pages.student.index');
     }
 
     public function create()
     {
+        abort_unless(auth()->user()->can('students.create'), 403);
+
         return view('admin.pages.student.create');
     }
 
     public function edit(Student $student)
     {
+        abort_unless(auth()->user()->can('students.edit'), 403);
+
         return view('admin.pages.student.edit', compact('student'));
     }
 
     public function show(Student $student)
     {
+        abort_unless(auth()->user()->can('students.view'), 403);
+
         return view('admin.pages.student.show', compact('student'));
     }
 
     public function update(Request $request, Student $student)
     {
+        abort_unless(auth()->user()->can('students.edit'), 403);
+
         return $request;
     }
 
     public function searchIndex()
     {
+        abort_unless(auth()->user()->can('students.view'), 403);
+
         return view('admin.pages.student.search');
     }
 }

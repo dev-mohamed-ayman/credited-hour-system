@@ -10,6 +10,8 @@ class DepartmentController extends Controller
 {
     public function index()
     {
+        abort_unless(auth()->user()->can('departments.view'), 403);
+
         $departments = Department::with('requirements')->latest()->get();
 
         return view('admin.pages.department.index', compact('departments'));
@@ -17,11 +19,15 @@ class DepartmentController extends Controller
 
     public function create()
     {
+        abort_unless(auth()->user()->can('departments.create'), 403);
+
         return view('admin.pages.department.create');
     }
 
     public function store(Request $request)
     {
+        abort_unless(auth()->user()->can('departments.create'), 403);
+
         $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:departments,code',
@@ -49,6 +55,8 @@ class DepartmentController extends Controller
 
     public function edit(Department $department)
     {
+        abort_unless(auth()->user()->can('departments.edit'), 403);
+
         $department->load('requirements');
 
         return view('admin.pages.department.edit', compact('department'));
@@ -56,6 +64,8 @@ class DepartmentController extends Controller
 
     public function update(Request $request, Department $department)
     {
+        abort_unless(auth()->user()->can('departments.edit'), 403);
+
         $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:departments,code,'.$department->id,
@@ -85,6 +95,8 @@ class DepartmentController extends Controller
 
     public function destroy(Department $department)
     {
+        abort_unless(auth()->user()->can('departments.delete'), 403);
+
         if ($department->hasBlockingRelations()) {
             return back()->with('error', $department->getBlockingRelationsMessage());
         }

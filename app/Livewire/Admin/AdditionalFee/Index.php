@@ -126,6 +126,12 @@ class Index extends Component
 
     public function save()
     {
+        if ($this->editingFeeId) {
+            abort_unless(auth()->user()->can('additional_fees.edit'), 403);
+        } else {
+            abort_unless(auth()->user()->can('additional_fees.create'), 403);
+        }
+
         $this->calculateTotal();
         $this->validate();
 
@@ -166,10 +172,13 @@ class Index extends Component
 
     public function delete($id)
     {
+        abort_unless(auth()->user()->can('additional_fees.delete'), 403);
+
         $fee = AdditionalFee::findOrFail($id);
 
         if ($fee->hasBlockingRelations()) {
             $this->dispatch('error', $fee->getBlockingRelationsMessage());
+
             return;
         }
 

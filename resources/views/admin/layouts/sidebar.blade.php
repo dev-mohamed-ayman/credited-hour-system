@@ -30,90 +30,115 @@
 
     <ul class="menu-inner py-1">
 
+        @can('dashboard.view')
         <li class="menu-item {{isActiveRoute('dashboard')}}">
             <a href="{{route('dashboard')}}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-smart-home"></i>
                 <div data-i18n="الصفحة الرئيسية">الصفحة الرئيسية</div>
             </a>
         </li>
+        @endcan
 
-
+        @can('settings.view')
         <li class="menu-item {{isActiveRoute('setting.*')}}">
             <a href="{{route('setting.index')}}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-settings"></i>
                 <div data-i18n="الإعدادات">الإعدادات</div>
             </a>
         </li>
+        @endcan
 
+        @can('departments.view')
         <li class="menu-item {{isActiveRoute('departments.*')}}">
             <a href="{{route('departments.index')}}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-layout-grid"></i>
                 <div data-i18n="التخصصات">التخصصات</div>
             </a>
         </li>
+        @endcan
 
+        @can('sections.view')
         <li class="menu-item {{isActiveRoute('sections.*')}}">
             <a href="{{route('sections.index')}}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-subtask"></i>
                 <div data-i18n="الشعب">الشعب</div>
             </a>
         </li>
+        @endcan
 
+        @can('levels.view')
         <li class="menu-item {{isActiveRoute('levels.*')}}">
             <a href="{{route('levels.index')}}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-stairs"></i>
                 <div data-i18n="الفرق الدراسية">الفرق الدراسية</div>
             </a>
         </li>
+        @endcan
 
+        @can('courses.view')
         <li class="menu-item {{isActiveRoute('courses.*')}}">
             <a href="{{route('courses.index')}}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-book"></i>
                 <div data-i18n="المواد الدراسية">المواد الدراسية</div>
             </a>
         </li>
+        @endcan
 
+        @can('certificate_types.view')
         <li class="menu-item {{isActiveRoute('certificate-types.*')}}">
             <a href="{{route('certificate-types.index')}}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-certificate"></i>
                 <div data-i18n="الشهادات">الشهادات</div>
             </a>
         </li>
+        @endcan
 
+        @can('countries.view')
         <li class="menu-item {{isActiveRoute('countries.*')}}">
             <a href="{{route('countries.index')}}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-world"></i>
                 <div data-i18n="الدول">الدول</div>
             </a>
         </li>
+        @endcan
 
+        @can('cities.view')
         <li class="menu-item {{isActiveRoute('cities.*')}}">
             <a href="{{route('cities.index')}}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-map-pin"></i>
                 <div data-i18n="المدن">المدن</div>
             </a>
         </li>
+        @endcan
 
+        @can('nationalities.view')
         <li class="menu-item {{isActiveRoute('nationalities.*')}}">
             <a href="{{route('nationalities.index')}}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-flag"></i>
                 <div data-i18n="الجنسيات">الجنسيات</div>
             </a>
         </li>
+        @endcan
 
+        @can('academic_advisors.view')
         <li class="menu-item {{isActiveRoute('academic-advisors.*')}}">
             <a href="{{route('academic-advisors.index')}}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-flag"></i>
                 <div data-i18n="المرشدين الأكاديميين">المرشدين الأكاديميين</div>
             </a>
         </li>
+        @endcan
+
+        @can('military_education.view')
         <li class="menu-item {{isActiveRoute('military-education-courses.*')}}">
             <a href="{{route('military-education-courses.index')}}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-shield-star"></i>
                 <div data-i18n="دورات التربية العسكرية">دورات التربية العسكرية</div>
             </a>
         </li>
+        @endcan
 
+        @canany(['students.view', 'students.create', 'student_warnings.view', 'finance.view'])
         <li
             class="menu-item {{isActiveRoute(['students.*', 'print.student.cards.*', 'print.seat.numbers.*', 'print.certificates.*', 'student-warnings.*', 'student-search.*', 'admin.finance.fee-issuance'], true)}}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
@@ -121,11 +146,14 @@
                 <div data-i18n="شئون الطلبه">شئون الطلبه</div>
             </a>
             <ul class="menu-sub">
+                @can('students.create')
                 <li class="menu-item {{isActiveRoute('students.create')}}">
                     <a href="{{route('students.create')}}" class="menu-link">
                         <div data-i18n="اضافه طالب">اضافه طالب</div>
                     </a>
                 </li>
+                @endcan
+                @can('students.view')
                 <li class="menu-item {{isActiveRoute('students.index')}}">
                     <a href="{{route('students.index')}}" class="menu-link">
                         <div data-i18n="قائمة الطلاب">قائمة الطلاب</div>
@@ -136,12 +164,16 @@
                         <div data-i18n="البحث عن طالب">البحث عن طالب</div>
                     </a>
                 </li>
+                @endcan
+                @can('finance.view')
                 <li class="menu-item {{isActiveRoute('admin.finance.fee-issuance')}}">
                     <a href="{{route('admin.finance.fee-issuance')}}" class="menu-link">
                         <div data-i18n="إصدار حافظة مصاريف">إصدار حافظة مصاريف</div>
                     </a>
                 </li>
+                @endcan
 
+                @can('students.view')
                 <li class="menu-item {{isActiveRoute('print.student.cards.index')}}">
                     <a href="{{route('print.student.cards.index')}}" class="menu-link">
                         <div data-i18n="طباعة الكارنيهات">طباعة الكارنيهات</div>
@@ -157,14 +189,19 @@
                         <div data-i18n="طباعة شهادات التخرج">طباعة شهادات التخرج</div>
                     </a>
                 </li>
+                @endcan
+                @can('student_warnings.view')
                 <li class="menu-item {{isActiveRoute('student-warnings.*')}}">
                     <a href="{{route('student-warnings.index')}}" class="menu-link">
                         <div data-i18n="تنبيه الطلاب">تنبيه الطلاب</div>
                     </a>
                 </li>
+                @endcan
             </ul>
         </li>
+        @endcanany
 
+        @can('finance.view')
         <li class="menu-item {{isActiveRoute('admin.finance.fee-payment')}}">
             <a href="javascript:void(0)" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base ti tabler-currency-dollar"></i>
@@ -178,37 +215,56 @@
                 </li>
             </ul>
         </li>
-        <li class="menu-item {{isActiveRoute(['registration-fees.*', 'additional-fees.*', 'years.*'], true)}}">
+        @endcan
+
+        @canany(['registration_fees.view', 'additional_fees.view', 'years.view', 'users.view'])
+        <li class="menu-item {{isActiveRoute(['registration-fees.*', 'additional-fees.*', 'years.*', 'users.*'], true)}}">
             <a href="javascript:void(0)" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base ti tabler-user-shield"></i>
                 <div data-i18n="Admin">Admin</div>
             </a>
             <ul class="menu-sub">
+                @canany(['registration_fees.view', 'additional_fees.view', 'years.view'])
                 <li class="menu-item {{isActiveRoute(['registration-fees.*', 'additional-fees.*', 'years.*'], true)}}">
                     <a href="javascript:void(0)" class="menu-link menu-toggle">
                         <div data-i18n="Site Configuration">Site Configuration</div>
                     </a>
                     <ul class="menu-sub">
+                        @can('registration_fees.view')
                         <li class="menu-item {{isActiveRoute('registration-fees.*')}}">
                             <a href="{{route('registration-fees.index')}}" class="menu-link">
                                 <div data-i18n="Student Registration">Student Registration</div>
                             </a>
                         </li>
+                        @endcan
+                        @can('additional_fees.view')
                         <li class="menu-item {{isActiveRoute('additional-fees.*')}}">
                             <a href="{{route('additional-fees.index')}}" class="menu-link">
                                 <div data-i18n="Additional Fees">Additional Fees</div>
                             </a>
                         </li>
-
+                        @endcan
+                        @can('years.view')
                         <li class="menu-item {{isActiveRoute('years.*')}}">
                             <a href="{{route('years.index')}}" class="menu-link">
                                 <div data-i18n="السنوات الدراسية">السنوات الدراسية</div>
                             </a>
                         </li>
+                        @endcan
                     </ul>
                 </li>
+                @endcanany
+
+                @can('users.view')
+                <li class="menu-item {{isActiveRoute('users.*')}}">
+                    <a href="{{route('users.index')}}" class="menu-link">
+                        <div data-i18n="المستخدمين">المستخدمين</div>
+                    </a>
+                </li>
+                @endcan
             </ul>
         </li>
+        @endcanany
 
     </ul>
 </aside>

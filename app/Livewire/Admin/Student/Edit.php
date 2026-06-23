@@ -287,6 +287,8 @@ class Edit extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()->can('students.edit'), 403);
+
         $rules = [
             'name' => 'required|string|max:255',
             'national_id' => 'required|string|unique:students,national_id,'.$this->student->id,

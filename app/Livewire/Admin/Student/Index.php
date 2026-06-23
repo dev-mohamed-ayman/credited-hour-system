@@ -235,6 +235,8 @@ class Index extends Component
 
     public function delete($id): void
     {
+        abort_unless(auth()->user()->can('students.delete'), 403);
+
         $student = Student::findOrFail($id);
         if ($student->academicAdvisor) {
             $student->academicAdvisor->decrement('current_students');

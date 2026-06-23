@@ -11,7 +11,9 @@ use Livewire\Component;
 class Create extends Component
 {
     public $student_codes = '';
+
     public $type = 'warning';
+
     public $reason = '';
 
     protected $rules = [
@@ -27,6 +29,8 @@ class Create extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()->can('student_warnings.create'), 403);
+
         $this->validate();
 
         // Parse student codes (split by comma, space, or newline)
@@ -62,11 +66,12 @@ class Create extends Component
         if ($studentsFound > 0) {
             $message = "تم إضافة التنبيه لـ {$studentsFound} طالب بنجاح.";
             if (count($studentsNotFound) > 0) {
-                $message .= " لم يتم العثور على الأكواد التالية: " . implode(', ', $studentsNotFound);
+                $message .= ' لم يتم العثور على الأكواد التالية: '.implode(', ', $studentsNotFound);
                 $this->dispatch('success', $message);
             } else {
                 $this->dispatch('success', 'تم إضافة التنبيهات بنجاح.');
             }
+
             return redirect()->route('student-warnings.index');
         } else {
             $this->dispatch('error', 'لم يتم العثور على أي من أكواد الطلاب المدخلة.');

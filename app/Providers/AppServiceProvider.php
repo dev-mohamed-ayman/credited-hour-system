@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\MilitaryEducationCourse;
 use App\Observers\MilitaryEducationCourseObserver;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,5 +23,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         MilitaryEducationCourse::observe(MilitaryEducationCourseObserver::class);
+
+        Gate::before(function ($user, $ability) {
+            return $user->is_super_admin ? true : null;
+        });
     }
 }

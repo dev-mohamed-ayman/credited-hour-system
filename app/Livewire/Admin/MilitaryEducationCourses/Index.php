@@ -74,6 +74,8 @@ class Index extends Component
 
     public function createCourse(MilitaryEducationService $service)
     {
+        abort_unless(auth()->user()->can('military_education.create'), 403);
+
         $this->validate();
 
         // Check if there's already an active course for this gender
@@ -110,6 +112,8 @@ class Index extends Component
 
     public function closeCourse($courseId)
     {
+        abort_unless(auth()->user()->can('military_education.edit'), 403);
+
         $course = MilitaryEducationCourse::findOrFail($courseId);
         $course->update(['status' => MilitaryEducationCourseStatus::CLOSED]);
         $this->dispatch('toast', ['message' => 'تم إغلاق الدورة بنجاح', 'type' => 'success']);

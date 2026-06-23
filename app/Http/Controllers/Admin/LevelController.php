@@ -12,6 +12,8 @@ class LevelController extends Controller
 {
     public function index()
     {
+        abort_unless(auth()->user()->can('levels.view'), 403);
+
         $levels = Level::with('sections')->latest()->get();
 
         return view('admin.pages.level.index', compact('levels'));
@@ -19,6 +21,8 @@ class LevelController extends Controller
 
     public function create()
     {
+        abort_unless(auth()->user()->can('levels.create'), 403);
+
         $sections = Section::with('department')->get();
 
         return view('admin.pages.level.create', compact('sections'));
@@ -26,6 +30,8 @@ class LevelController extends Controller
 
     public function store(StoreLevelRequest $request)
     {
+        abort_unless(auth()->user()->can('levels.create'), 403);
+
         $level = Level::create($request->validated());
         $level->sections()->sync($request->input('section_ids', []));
 
@@ -34,6 +40,8 @@ class LevelController extends Controller
 
     public function edit(Level $level)
     {
+        abort_unless(auth()->user()->can('levels.edit'), 403);
+
         $sections = Section::with('department')->get();
 
         return view('admin.pages.level.edit', compact('level', 'sections'));
@@ -41,6 +49,8 @@ class LevelController extends Controller
 
     public function update(UpdateLevelRequest $request, Level $level)
     {
+        abort_unless(auth()->user()->can('levels.edit'), 403);
+
         $level->update($request->validated());
         $level->sections()->sync($request->input('section_ids', []));
 
@@ -49,6 +59,8 @@ class LevelController extends Controller
 
     public function destroy(Level $level)
     {
+        abort_unless(auth()->user()->can('levels.delete'), 403);
+
         if ($level->hasBlockingRelations()) {
             return back()->with('error', $level->getBlockingRelationsMessage());
         }

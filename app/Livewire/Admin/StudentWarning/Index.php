@@ -11,7 +11,9 @@ use Livewire\Component;
 class Index extends Component
 {
     public $searchCode = '';
+
     public $student = null;
+
     public $warnings = [];
 
     public function search()
@@ -39,9 +41,11 @@ class Index extends Component
 
     public function cancelWarning($id)
     {
+        abort_unless(auth()->user()->can('student_warnings.delete'), 403);
+
         $warning = StudentWarning::findOrFail($id);
-        
-        if (!$warning->is_active) {
+
+        if (! $warning->is_active) {
             return;
         }
 
@@ -50,13 +54,13 @@ class Index extends Component
         // If it's a danger warning, check if we need to reactivate the student
         if ($warning->type === StudentWarningType::DANGER) {
             $student = $warning->student;
-            
+
             $hasOtherDangerWarnings = $student->warnings()
                 ->where('type', StudentWarningType::DANGER->value)
                 ->where('is_active', true)
                 ->exists();
 
-            if (!$hasOtherDangerWarnings) {
+            if (! $hasOtherDangerWarnings) {
                 // Assuming REGISTERED is the active status. We could also just let the admin manually reactivate
                 // But following the plan to automatically reactivate if no other dangers exist.
                 $student->update([

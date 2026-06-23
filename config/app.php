@@ -123,4 +123,18 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Default Admin Credentials
+    |--------------------------------------------------------------------------
+    |
+    | These credentials are used by the DefaultAdminSeeder to create
+    | the initial super admin user for the application.
+    |
+    */
+
+    'default_admin_email' => env('DEFAULT_ADMIN_EMAIL', 'admin@admin.com'),
+
+    'default_admin_password' => env('DEFAULT_ADMIN_PASSWORD', 'password'),
+
 ];

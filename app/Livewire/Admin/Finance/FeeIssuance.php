@@ -68,6 +68,8 @@ class FeeIssuance extends Component
 
     public function deleteTicket($ticketId)
     {
+        abort_unless(auth()->user()->can('finance.delete'), 403);
+
         $ticket = StudentFeeTicket::find($ticketId);
         if ($ticket && $ticket->status === 'pending') {
             $ticket->delete();
@@ -149,6 +151,8 @@ class FeeIssuance extends Component
 
     public function generateTickets()
     {
+        abort_unless(auth()->user()->can('finance.create'), 403);
+
         if (empty($this->selectedFees)) {
             $this->dispatch('alert', ['type' => 'error', 'message' => 'برجاء اختيار مصروف واحد على الأقل']);
 

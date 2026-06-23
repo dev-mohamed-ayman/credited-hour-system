@@ -80,6 +80,8 @@ class Index extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()->can('registration_fees.edit'), 403);
+
         $this->validate([
             'hour_payment' => 'required|numeric|min:0',
             'ministerial_payment' => 'required|numeric|min:0',

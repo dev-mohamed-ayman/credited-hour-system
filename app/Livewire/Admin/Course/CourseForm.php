@@ -5,22 +5,29 @@ namespace App\Livewire\Admin\Course;
 use App\Models\Course;
 use App\Models\Department;
 use App\Models\Section;
-use Livewire\Component;
 use Illuminate\Support\Collection;
+use Livewire\Component;
 
 class CourseForm extends Component
 {
     public ?Course $course = null;
-    
+
     public $name = '';
+
     public $hours = '';
+
     public $department_id = '';
+
     public $semester = '';
+
     public $section_ids = [];
+
     public $is_active = true;
+
     public $is_selected = false;
 
     public Collection $departments;
+
     public Collection $sections;
 
     protected function rules()
@@ -61,7 +68,7 @@ class CourseForm extends Component
             $this->is_active = $course->is_active;
             $this->is_selected = $course->is_selected;
             $this->section_ids = $course->sections->pluck('id')->toArray();
-            
+
             $this->updatedDepartmentId($this->department_id);
         }
     }
@@ -78,40 +85,60 @@ class CourseForm extends Component
 
     public function save()
     {
+        if ($this->course) {
+            abort_unless(auth()->user()->can('courses.edit'), 403);
+        } else {
+            abort_unless(auth()->user()->can('courses.create'), 403);
+        }
+
         $validatedData = $this->validate();
 
         if ($this->course) {
             // Update existing course
             if ($this->course->department_id != $this->department_id) {
                 $department = Department::findOrFail($this->department_id);
-                $prefix = strtoupper(substr($department->code, 0, 1));
-                do {
-                    $code = $prefix . str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
-                } while (Course::where('code', $code)->exists());
-                $validatedData['code'] = $code;
+                $validatedData['code'] = $this->generateUniqueCourseCode($department);
             }
-            
+
             $this->course->update($validatedData);
             $this->course->sections()->sync($this->section_ids);
-            
+
             session()->flash('success', 'تم تحديث المادة بنجاح');
         } else {
             // Create new course
             $department = Department::findOrFail($this->department_id);
-            $prefix = strtoupper(substr($department->code, 0, 1));
-            do {
-                $code = $prefix . str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
-            } while (Course::where('code', $code)->exists());
-            
+            $code = $this->generateUniqueCourseCode($department);
             $validatedData['code'] = $code;
-            
+
             $course = Course::create($validatedData);
             $course->sections()->sync($this->section_ids);
-            
-            session()->flash('success', 'تم إضافة المادة بنجاح بكود: ' . $code);
+
+            session()->flash('success', 'تم إضافة المادة بنجاح بكود: '.$code);
         }
 
         return redirect()->route('courses.index');
+    }
+
+    private function generateUniqueCourseCode(Department $department): string
+    {
+        $prefix = $this->extractCodePrefix($department->code);
+
+        do {
+            $code = $prefix.str_pad((string) rand(0, 9999), 4, '0', STR_PAD_LEFT);
+        } while (Course::where('code', $code)->exists());
+
+        return $code;
+    }
+
+    private function extractCodePrefix(string $departmentCode): string
+    {
+        if (preg_match('/[A-Za-z]/', $departmentCode, $matches)) {
+            return strtoupper($matches[0]);
+        }
+
+        $firstCharacter = mb_substr($departmentCode, 0, 1, 'UTF-8');
+
+        return $firstCharacter !== '' ? $firstCharacter : 'C';
     }
 
     public function render()

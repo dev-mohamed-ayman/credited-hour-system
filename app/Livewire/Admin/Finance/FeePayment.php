@@ -158,6 +158,8 @@ class FeePayment extends Component
 
     public function confirmPayment()
     {
+        abort_unless(auth()->user()->can('finance.edit'), 403);
+
         $this->validate([
             'paymentMethod' => 'required|in:cash,credit,both',
             'visaLastFour' => $this->paymentMethod !== 'cash' ? 'required|digits:4' : 'nullable',

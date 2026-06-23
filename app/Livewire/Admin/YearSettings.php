@@ -54,6 +54,8 @@ class YearSettings extends Component
 
     public function updateSemester($semester, $status)
     {
+        abort_unless(auth()->user()->can('years.edit'), 403);
+
         $this->selectedYear->setSemesterStatus(Semester::from($semester), SemesterStatus::from($status));
 
         $this->loadYearData();
@@ -63,6 +65,8 @@ class YearSettings extends Component
 
     public function updateAcademicAdvising($status)
     {
+        abort_unless(auth()->user()->can('years.edit'), 403);
+
         $this->selectedYear->update([
             'academic_advising_status' => AcademicAdvisingStatus::from($status),
         ]);

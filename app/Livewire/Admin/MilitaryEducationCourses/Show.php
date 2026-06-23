@@ -20,6 +20,8 @@ class Show extends Component
 
     public function updateEnrollmentStatus($enrollmentId, $status)
     {
+        abort_unless(auth()->user()->can('military_education.edit'), 403);
+
         $enrollment = MilitaryEducationEnrollment::findOrFail($enrollmentId);
         $statusEnum = $status === 'passed' ? MilitaryEducationEnrollmentStatus::PASSED : MilitaryEducationEnrollmentStatus::FAILED;
         $enrollment->update(['status' => $statusEnum]);
@@ -34,6 +36,8 @@ class Show extends Component
 
     public function closeCourse()
     {
+        abort_unless(auth()->user()->can('military_education.edit'), 403);
+
         $this->course->update(['status' => MilitaryEducationCourseStatus::CLOSED]);
         $this->dispatch('toast', ['message' => 'تم إغلاق الدورة بنجاح', 'type' => 'success']);
         $this->course->refresh();

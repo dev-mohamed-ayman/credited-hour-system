@@ -10,6 +10,8 @@ class SettingController extends Controller
 {
     public function index()
     {
+        abort_unless(auth()->user()->can('settings.view'), 403);
+
         $settings = Setting::query()->first();
 
         return view('admin.pages.settings', compact('settings'));
@@ -17,6 +19,8 @@ class SettingController extends Controller
 
     public function update(Request $request)
     {
+        abort_unless(auth()->user()->can('settings.edit'), 403);
+
         $settings = Setting::query()->firstOrCreate();
 
         $settings->update([

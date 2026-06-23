@@ -248,6 +248,8 @@ class Create extends Component
 
     public function save(Request $request)
     {
+        abort_unless(auth()->user()->can('students.create'), 403);
+
         $rules = [
             'name' => 'required|string|max:255',
             'national_id' => 'required|string|unique:students,national_id',

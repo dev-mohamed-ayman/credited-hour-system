@@ -12,6 +12,8 @@ class CertificateTypeController extends Controller
 {
     public function index()
     {
+        abort_unless(auth()->user()->can('certificate_types.view'), 403);
+
         $certificateTypes = CertificateType::with(['requirements.department', 'sections.department'])->latest()->get();
 
         return view('admin.pages.certificate-type.index', compact('certificateTypes'));
@@ -19,6 +21,8 @@ class CertificateTypeController extends Controller
 
     public function create()
     {
+        abort_unless(auth()->user()->can('certificate_types.create'), 403);
+
         $requirements = \App\Models\DepartmentRequirement::with('department')->get();
         $sections = Section::with('department')->get();
 
@@ -27,6 +31,8 @@ class CertificateTypeController extends Controller
 
     public function store(StoreCertificateTypeRequest $request)
     {
+        abort_unless(auth()->user()->can('certificate_types.create'), 403);
+
         $certificateType = CertificateType::create($request->validated());
 
         $certificateType->requirements()->sync($request->input('requirement_ids', []));
@@ -37,6 +43,8 @@ class CertificateTypeController extends Controller
 
     public function edit(CertificateType $certificateType)
     {
+        abort_unless(auth()->user()->can('certificate_types.edit'), 403);
+
         $certificateType->load(['requirements', 'sections']);
         $requirements = \App\Models\DepartmentRequirement::with('department')->get();
         $sections = Section::with('department')->get();
@@ -46,6 +54,8 @@ class CertificateTypeController extends Controller
 
     public function update(UpdateCertificateTypeRequest $request, CertificateType $certificateType)
     {
+        abort_unless(auth()->user()->can('certificate_types.edit'), 403);
+
         $certificateType->update($request->validated());
 
         $certificateType->requirements()->sync($request->input('requirement_ids', []));
@@ -56,6 +66,8 @@ class CertificateTypeController extends Controller
 
     public function destroy(CertificateType $certificateType)
     {
+        abort_unless(auth()->user()->can('certificate_types.delete'), 403);
+
         if ($certificateType->hasBlockingRelations()) {
             return back()->with('error', $certificateType->getBlockingRelationsMessage());
         }

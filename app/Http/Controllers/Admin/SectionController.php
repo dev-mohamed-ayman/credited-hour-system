@@ -12,6 +12,8 @@ class SectionController extends Controller
 {
     public function index()
     {
+        abort_unless(auth()->user()->can('sections.view'), 403);
+
         $sections = Section::with('department')->latest()->get();
 
         return view('admin.pages.section.index', compact('sections'));
@@ -19,6 +21,8 @@ class SectionController extends Controller
 
     public function create()
     {
+        abort_unless(auth()->user()->can('sections.create'), 403);
+
         $departments = Department::all();
 
         return view('admin.pages.section.create', compact('departments'));
@@ -26,6 +30,8 @@ class SectionController extends Controller
 
     public function store(StoreSectionRequest $request)
     {
+        abort_unless(auth()->user()->can('sections.create'), 403);
+
         Section::create($request->validated());
 
         return redirect()->route('sections.index')->with('success', 'تم إضافة الشعبة بنجاح');
@@ -33,6 +39,8 @@ class SectionController extends Controller
 
     public function edit(Section $section)
     {
+        abort_unless(auth()->user()->can('sections.edit'), 403);
+
         $departments = Department::all();
 
         return view('admin.pages.section.edit', compact('section', 'departments'));
@@ -40,6 +48,8 @@ class SectionController extends Controller
 
     public function update(UpdateSectionRequest $request, Section $section)
     {
+        abort_unless(auth()->user()->can('sections.edit'), 403);
+
         $section->update($request->validated());
 
         return redirect()->route('sections.index')->with('success', 'تم تحديث الشعبة بنجاح');
@@ -47,6 +57,8 @@ class SectionController extends Controller
 
     public function destroy(Section $section)
     {
+        abort_unless(auth()->user()->can('sections.delete'), 403);
+
         if ($section->hasBlockingRelations()) {
             return back()->with('error', $section->getBlockingRelationsMessage());
         }
