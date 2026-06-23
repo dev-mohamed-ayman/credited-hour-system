@@ -19,6 +19,11 @@
                             @error('username') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                         <div class="mb-3">
+                            <label class="form-label" for="advisor-password">كلمة المرور {{ $advisor ? '(اتركه فارغاً لعدم التغيير)' : '' }}</label>
+                            <input type="password" class="form-control @error('password') is-invalid @enderror" id="advisor-password" wire:model="password" placeholder="أدخل كلمة المرور">
+                            @error('password') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label" for="max-students">الحد الأقصى للطلاب</label>
                             <input type="number" class="form-control @error('max_students') is-invalid @enderror" id="max-students" wire:model="max_students">
                             @error('max_students') <div class="invalid-feedback">{{ $message }}</div> @enderror

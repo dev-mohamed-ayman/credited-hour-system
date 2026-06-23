@@ -110,3 +110,25 @@ Route::middleware(['auth'])->group(function () {
     Route::get('users/create', \App\Livewire\Admin\User\Form::class)->name('users.create')->middleware('permission:users.create');
     Route::get('users/{user}/edit', \App\Livewire\Admin\User\Form::class)->name('users.edit')->middleware('permission:users.edit');
 });
+// Advisor Routes
+Route::prefix('advisor')->name('advisor.')->group(function () {
+    Route::middleware('guest:advisor')->group(function () {
+        Route::get('login', \App\Livewire\Advisor\Auth\Login::class)->name('login');
+    });
+
+    Route::middleware('auth:advisor')->group(function () {
+        Route::post('logout', function () {
+            Auth::guard('advisor')->logout();
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
+
+            return redirect()->route('advisor.login');
+        })->name('logout');
+
+        Route::get('', \App\Livewire\Advisor\Dashboard::class)->name('dashboard');
+        
+        Route::get('course-registrations', \App\Livewire\Advisor\CourseRegistration\Index::class)->name('course-registrations.index');
+        Route::get('registration-records', \App\Livewire\Advisor\RegistrationRecord\Index::class)->name('registration-records.index');
+        Route::get('registration-records/{registration}', \App\Livewire\Advisor\RegistrationRecord\Show::class)->name('registration-records.show');
+    });
+});

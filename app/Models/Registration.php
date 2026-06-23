@@ -36,4 +36,14 @@ class Registration extends Model
     {
         return $this->hasMany(RegistrationCourse::class);
     }
+
+    public function createdByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_user_id');
+    }
+
+    public function createdByAdvisor(): BelongsTo
+    {
+        return $this->belongsTo(AcademicAdvisor::class, 'created_by_advisor_id');
+    }
 }

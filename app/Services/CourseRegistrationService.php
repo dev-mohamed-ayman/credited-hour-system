@@ -74,6 +74,15 @@ class CourseRegistrationService
             ]
         );
 
+        if ($registration->wasRecentlyCreated) {
+            if (auth('advisor')->check()) {
+                $registration->created_by_advisor_id = auth('advisor')->id();
+            } elseif (auth('web')->check()) {
+                $registration->created_by_user_id = auth('web')->id();
+            }
+            $registration->save();
+        }
+
         $attempts = $this->eligibilityService->getStudentAttempts($student);
         $buckets = $this->eligibilityService->getBuckets($student, $year, $semester, $registration);
 

@@ -21,6 +21,8 @@ class Form extends Component
     #[Validate('required|string|max:255|unique:academic_advisors,username')]
     public $username = '';
 
+    public $password = '';
+
     #[Validate('required|integer|min:0')]
     public $max_students = 50;
 
@@ -108,6 +110,7 @@ class Form extends Component
         $this->validate([
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:academic_advisors,username,' . ($this->advisor?->id ?? 'NULL'),
+            'password' => $this->advisor ? 'nullable|string|min:6' : 'required|string|min:6',
             'max_students' => 'required|integer|min:0',
             'selectedDepartments' => 'required|array|min:1',
             'selectedSections' => 'required|array|min:1',
@@ -120,6 +123,11 @@ class Form extends Component
             'username' => $this->username,
             'max_students' => $this->max_students,
         ]);
+        
+        if ($this->password) {
+            $advisor->password = \Illuminate\Support\Facades\Hash::make($this->password);
+        }
+        
         $advisor->save();
 
         $advisor->assignments()->delete();

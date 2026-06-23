@@ -4,8 +4,8 @@
             <h4 class="mb-0 fw-bold text-heading">تفاصيل السجل التاريخي للتسجيل</h4>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb breadcrumb-style1 mb-0 small">
-                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">الرئيسية</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('registration-records.index') }}">سجلات التسجيل</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('advisor.dashboard') }}">الرئيسية</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('advisor.registration-records.index') }}">سجلات التسجيل</a></li>
                     <li class="breadcrumb-item active">تفاصيل السجل</li>
                 </ol>
             </nav>
@@ -69,12 +69,10 @@
     <div class="card">
         <div class="card-header border-bottom d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">المواد المسجلة في هذا السجل</h5>
-            @can('course_registrations.create')
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCourseModal">
-                    <i class="ti tabler-plus me-1"></i>
-                    إضافة مادة للسجل
-                </button>
-            @endcan
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCourseModal">
+                <i class="ti tabler-plus me-1"></i>
+                إضافة مادة للسجل
+            </button>
         </div>
         <div class="table-responsive text-nowrap">
             <table class="table table-hover">
@@ -85,7 +83,6 @@
                         <th class="text-center">الساعات</th>
                         <th class="text-center">النوع</th>
                         <th class="text-center">التقدير (الحالي)</th>
-                        <th class="text-center">الإجراءات</th>
                     </tr>
                 </thead>
                 <tbody class="table-border-bottom-0">
@@ -115,14 +112,6 @@
                                 @else
                                     <span class="badge bg-label-secondary">—</span>
                                 @endif
-                            </td>
-                            <td class="text-center">
-                                @can('course_registrations.delete')
-                                    <button type="button" class="btn btn-icon btn-sm btn-label-danger"
-                                            wire:click="$dispatch('confirm-deletion', { id: {{ $registrationCourse->id }}, title: 'هل أنت متأكد من إزالة المادة؟', text: 'إزالة هذه المادة من السجل سيحذف ارتباط الطالب بها في هذا الترم.', method: 'deleteCourse' })" title="إزالة المادة">
-                                        <i class="ti tabler-trash"></i>
-                                    </button>
-                                @endcan
                             </td>
                         </tr>
                     @empty
