@@ -13,7 +13,7 @@ class CourseController extends Controller
     {
         abort_unless(auth()->user()->can('courses.view'), 403);
 
-        $courses = Course::with(['department', 'sections'])->latest()->get();
+        $courses = Course::with(['department', 'level', 'sections'])->latest()->get();
 
         return view('admin.pages.course.index', compact('courses'));
     }
@@ -28,6 +28,8 @@ class CourseController extends Controller
     public function edit(Course $course): View
     {
         abort_unless(auth()->user()->can('courses.edit'), 403);
+
+        $course->load(['prerequisites', 'sections', 'level']);
 
         return view('admin.pages.course.edit', compact('course'));
     }

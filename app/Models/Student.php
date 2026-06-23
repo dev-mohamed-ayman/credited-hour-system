@@ -107,4 +107,14 @@ class Student extends Model
     {
         return $this->militaryEducationEnrollments()->latest()->first();
     }
+
+    public function registrations(): HasMany
+    {
+        return $this->hasMany(Registration::class);
+    }
+
+    public function departmentId(): ?int
+    {
+        return $this->section?->department_id;
+    }
 }

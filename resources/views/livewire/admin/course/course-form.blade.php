@@ -44,6 +44,20 @@
             </div>
 
             <div class="form-group col-md-6 mb-4">
+                <label for="level_id" class="form-label fw-bold">الفرقة الدراسية</label>
+                <select wire:model="level_id" id="level_id"
+                        class="form-select @error('level_id') is-invalid @enderror">
+                    <option value="">اختر الفرقة الدراسية</option>
+                    @foreach($levels as $level)
+                        <option value="{{ $level->id }}">{{ $level->name }}</option>
+                    @endforeach
+                </select>
+                @error('level_id')
+                <div class="text-danger small mt-1">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="form-group col-md-6 mb-4">
                 <label for="semester" class="form-label fw-bold">الفصل الدراسي</label>
                 <select wire:model="semester" id="semester" 
                         class="form-select @error('semester') is-invalid @enderror">
@@ -55,6 +69,33 @@
                 @error('semester')
                 <div class="text-danger small mt-1">{{ $message }}</div>
                 @enderror
+            </div>
+
+            <!-- Prerequisites -->
+            <div class="form-group col-12 mb-4">
+                <label class="form-label fw-bold">المتطلبات السابقة</label>
+                @if($department_id)
+                    <div class="row g-2">
+                        @forelse($availablePrerequisites as $prerequisite)
+                            <div class="col-md-4 col-sm-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" wire:model="prerequisite_ids"
+                                           value="{{ $prerequisite->id }}" id="prerequisite_{{ $prerequisite->id }}">
+                                    <label class="form-check-label" for="prerequisite_{{ $prerequisite->id }}">
+                                        {{ $prerequisite->name }}
+                                    </label>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="col-12 text-muted">لا توجد مواد متاحة كمتطلبات سابقة.</div>
+                        @endforelse
+                    </div>
+                    @error('prerequisite_ids')
+                    <div class="text-danger small mt-2">{{ $message }}</div>
+                    @enderror
+                @else
+                    <div class="alert alert-info mb-0">برجاء اختيار التخصص أولاً لعرض المواد المتاحة.</div>
+                @endif
             </div>
 
             <!-- Sections -->

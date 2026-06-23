@@ -84,6 +84,33 @@
         </li>
         @endcan
 
+        @can('grades.view')
+        <li class="menu-item {{isActiveRoute('grades.*')}}">
+            <a href="{{route('grades.index')}}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-chart-bar"></i>
+                <div data-i18n="التقييمات">التقييمات</div>
+            </a>
+        </li>
+        @endcan
+
+        @can('course_registration_settings.view')
+        <li class="menu-item {{isActiveRoute('course-registration-settings.*')}}">
+            <a href="{{route('course-registration-settings.index')}}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-adjustments"></i>
+                <div data-i18n="إعدادات تسجيل المواد">إعدادات تسجيل المواد</div>
+            </a>
+        </li>
+        @endcan
+
+        @can('course_registrations.view')
+        <li class="menu-item {{isActiveRoute('course-registrations.*')}}">
+            <a href="{{route('course-registrations.index')}}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-clipboard-list"></i>
+                <div data-i18n="تسجيل المواد">تسجيل المواد</div>
+            </a>
+        </li>
+        @endcan
+
         @can('certificate_types.view')
         <li class="menu-item {{isActiveRoute('certificate-types.*')}}">
             <a href="{{route('certificate-types.index')}}" class="menu-link">

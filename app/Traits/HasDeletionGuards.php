@@ -43,7 +43,7 @@ trait HasDeletionGuards
             $messages[] = "$relationName ($count)";
         }
 
-        return 'لا يمكن الحذف لوجود سجلات مرتبطة: ' . implode(', ', $messages);
+        return 'لا يمكن الحذف لوجود سجلات مرتبطة: '.implode(', ', $messages);
     }
 
     protected function getRelationName(string $relation): string
@@ -62,6 +62,8 @@ trait HasDeletionGuards
             'warnings' => 'تنبيهات',
             'feeTickets' => 'إيصالات رسوم',
             'assignments' => 'تعيينات',
+            'registrationCourses' => 'تسجيلات مواد',
+            'dependents' => 'مواد معتمدة على هذه المادة',
         ];
 
         return $names[$relation] ?? $relation;

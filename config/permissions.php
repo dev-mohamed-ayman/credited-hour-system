@@ -25,6 +25,18 @@ return [
         'label' => 'المواد الدراسية',
         'actions' => ['view' => 'عرض', 'create' => 'إنشاء', 'edit' => 'تعديل', 'delete' => 'حذف'],
     ],
+    'grades' => [
+        'label' => 'التقييمات',
+        'actions' => ['view' => 'عرض', 'create' => 'إنشاء', 'edit' => 'تعديل', 'delete' => 'حذف'],
+    ],
+    'course_registration_settings' => [
+        'label' => 'إعدادات تسجيل المواد',
+        'actions' => ['view' => 'عرض', 'edit' => 'تعديل'],
+    ],
+    'course_registrations' => [
+        'label' => 'تسجيل المواد الدراسية',
+        'actions' => ['view' => 'عرض', 'create' => 'إنشاء'],
+    ],
     'certificate_types' => [
         'label' => 'الشهادات',
         'actions' => ['view' => 'عرض', 'create' => 'إنشاء', 'edit' => 'تعديل', 'delete' => 'حذف'],

@@ -73,6 +73,11 @@ Route::middleware(['auth'])->group(function () {
     // Course Routes
     Route::resource('courses', \App\Http\Controllers\Admin\CourseController::class)->except(['show'])->middleware('permission:courses.view');
 
+    // Grades Routes
+    Route::resource('grades', \App\Http\Controllers\Admin\GradeController::class)->except(['show'])->middleware('permission:grades.view');
+    Route::get('course-registration-settings', \App\Livewire\Admin\GradeSettings\Index::class)->name('course-registration-settings.index')->middleware('permission:course_registration_settings.view');
+    Route::get('course-registrations', \App\Livewire\Admin\CourseRegistration\Index::class)->name('course-registrations.index')->middleware('permission:course_registrations.view');
+
     // Student Routes
     Route::get('students/print-cards', [StudentController::class, 'printCardsIndex'])->name('print.student.cards.index')->middleware('permission:students.view');
     Route::post('students/print-cards', [StudentController::class, 'printCards'])->name('print.student.cards.print')->middleware('permission:students.view');
