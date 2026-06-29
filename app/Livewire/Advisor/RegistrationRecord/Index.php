@@ -5,9 +5,7 @@ namespace App\Livewire\Advisor\RegistrationRecord;
 use App\Enums\Semester;
 use App\Models\Registration;
 use App\Models\Year;
-use App\Services\CourseEligibilityService;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -20,6 +18,10 @@ class Index extends Component
     public ?int $searchYear = null;
 
     public ?Semester $searchSemester = null;
+
+    public string $sortField = 'created_at';
+
+    public string $sortDirection = 'desc';
 
     public function updatingSearchStudent(): void
     {
@@ -42,6 +44,16 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function sortBy(string $field): void
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
+    }
+
     public function render(): View
     {
         $registrations = Registration::query()
@@ -51,13 +63,13 @@ class Index extends Component
             ->with(['student.level', 'student.section.department', 'year', 'courses'])
             ->when($this->searchStudent, function ($query) {
                 $query->whereHas('student', function ($q) {
-                    $q->where('name', 'like', '%' . $this->searchStudent . '%')
-                      ->orWhere('username', 'like', '%' . $this->searchStudent . '%');
+                    $q->where('name', 'like', '%'.$this->searchStudent.'%')
+                        ->orWhere('username', 'like', '%'.$this->searchStudent.'%');
                 });
             })
             ->when($this->searchYear, fn ($query) => $query->where('year_id', $this->searchYear))
             ->when($this->searchSemester, fn ($query) => $query->where('semester', $this->searchSemester))
-            ->latest()
+            ->orderBy($this->sortField, $this->sortDirection)
             ->paginate(15);
 
         $years = Year::query()->latest()->get();

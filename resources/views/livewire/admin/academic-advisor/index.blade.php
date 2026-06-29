@@ -13,6 +13,16 @@
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
+                    <select wire:model.live="filterStatus" class="form-select form-select-sm w-auto">
+                        <option value="">كل الحالات</option>
+                        <option value="1">نشط</option>
+                        <option value="0">غير نشط</option>
+                    </select>
+                    @if($search || $filterStatus !== '')
+                        <button wire:click="resetFilters" class="btn btn-sm btn-label-secondary text-nowrap">
+                            <i class="ti tabler-refresh me-1"></i> إعادة تعيين
+                        </button>
+                    @endif
                     <div class="input-group input-group-merge w-100" style="min-width: 300px;">
                         <span class="input-group-text"><i class="ti tabler-search"></i></span>
                         <input type="text" wire:model.live.debounce.300ms="search" class="form-control"
@@ -29,8 +39,18 @@
             <table class="table table-hover">
                 <thead class="table-light">
                 <tr>
-                    <th class="fw-bold">المرشد الأكاديمي</th>
-                    <th class="fw-bold">كود المستخدم</th>
+                    <th class="fw-bold" wire:click="sortBy('name')" style="cursor: pointer;">
+                        المرشد الأكاديمي
+                        @if($sortField === 'name')
+                            <span>{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                        @endif
+                    </th>
+                    <th class="fw-bold" wire:click="sortBy('username')" style="cursor: pointer;">
+                        كود المستخدم
+                        @if($sortField === 'username')
+                            <span>{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                        @endif
+                    </th>
                     <th class="fw-bold">التخصصات</th>
                     <th class="fw-bold">الشعب</th>
                     <th class="fw-bold">الفرق الدراسية</th>

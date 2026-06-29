@@ -19,6 +19,10 @@ class Index extends Component
     #[Url(except: 10)]
     public int $perPage = 10;
 
+    public string $sortField = 'created_at';
+
+    public string $sortDirection = 'desc';
+
     public function updatingSearch(): void
     {
         $this->resetPage();
@@ -61,11 +65,21 @@ class Index extends Component
                 $query->where('name', 'like', '%'.$this->search.'%')
                     ->orWhere('email', 'like', '%'.$this->search.'%');
             })
-            ->latest()
+            ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->perPage);
 
         return view('livewire.admin.user.index', [
             'users' => $users,
         ])->extends('admin.layouts.app')->section('content');
+    }
+
+    public function sortBy(string $field): void
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
     }
 }

@@ -8,10 +8,14 @@ use App\Models\Department;
 use App\Models\Level;
 use App\Models\Section;
 use App\Models\Year;
+use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
+    use WithPagination;
+
     public $name;
 
     public $amount = 0;
@@ -33,6 +37,21 @@ class Index extends Component
     public $editingFeeId = null;
 
     public $showForm = false;
+
+    #[Url(except: '')]
+    public string $search = '';
+
+    #[Url(except: '')]
+    public string $filterGender = '';
+
+    #[Url(except: '')]
+    public string $filterSemester = '';
+
+    public string $sortField = 'created_at';
+
+    public string $sortDirection = 'desc';
+
+    public int $perPage = 10;
 
     protected $rules = [
         'name' => 'required|string|max:255',
@@ -69,6 +88,43 @@ class Index extends Component
         $this->editingFeeId = null;
         $this->showForm = false;
         $this->resetErrorBag();
+    }
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function sortBy(string $field): void
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
+    }
+
+    public function resetSearchFilters(): void
+    {
+        $this->reset(['search', 'filterGender', 'filterSemester']);
+        $this->resetPage();
+    }
+
+    public function toggleBoolean(int $id, string $column): void
+    {
+        abort_unless(auth()->user()->can('additional_fees.edit'), 403);
+
+        $allowedColumns = ['is_one_time'];
+
+        if (! in_array($column, $allowedColumns)) {
+            return;
+        }
+
+        $fee = AdditionalFee::findOrFail($id);
+        $fee->update([$column => ! $fee->{$column}]);
+
+        $this->dispatch('success', 'تم التحديث بنجاح.');
     }
 
     public function addItem()
@@ -223,7 +279,17 @@ class Index extends Component
     {
         return view('livewire.admin.additional-fee.index', [
             'additionalFees' => AdditionalFee::with(['items', 'departments', 'levels', 'sections', 'year'])
-                ->get(),
+                ->when($this->search, function ($query) {
+                    $query->where('name', 'like', '%'.$this->search.'%');
+                })
+                ->when($this->filterGender, function ($query) {
+                    $query->where('gender', $this->filterGender);
+                })
+                ->when($this->filterSemester, function ($query) {
+                    $query->where('semester', $this->filterSemester);
+                })
+                ->orderBy($this->sortField, $this->sortDirection)
+                ->paginate($this->perPage),
             'departments' => Department::all(),
             'levels' => Level::all(),
             'sections' => Section::all(),

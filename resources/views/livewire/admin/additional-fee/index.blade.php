@@ -294,12 +294,56 @@
 
         <div class="col-12">
             <div class="card">
+                {{-- Search & Filter Bar --}}
+                <div class="card-header border-bottom">
+                    <div class="d-flex flex-wrap align-items-center gap-3">
+                        <div class="flex-grow-1" style="min-width: 200px; max-width: 350px;">
+                            <div class="input-group input-group-merge">
+                                <span class="input-group-text"><i class="ti tabler-search"></i></span>
+                                <input type="text" wire:model.live.debounce.300ms="search" class="form-control"
+                                       placeholder="بحث باسم المصروف...">
+                            </div>
+                        </div>
+                        <select wire:model.live="filterGender" class="form-select form-select-sm w-auto">
+                            <option value="">كل الأنواع</option>
+                            <option value="both">الكل</option>
+                            <option value="male">ذكور</option>
+                            <option value="female">إناث</option>
+                        </select>
+                        <select wire:model.live="filterSemester" class="form-select form-select-sm w-auto">
+                            <option value="">كل الترمات</option>
+                            @foreach($semesters as $sem)
+                                <option value="{{ $sem->value }}">{{ $sem->label() }}</option>
+                            @endforeach
+                        </select>
+                        <select wire:model.live="perPage" class="form-select form-select-sm w-auto">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                        @if($search || $filterGender || $filterSemester)
+                            <button wire:click="resetSearchFilters" class="btn btn-sm btn-label-secondary text-nowrap">
+                                <i class="ti tabler-refresh me-1"></i> إعادة تعيين
+                            </button>
+                        @endif
+                    </div>
+                </div>
                 <div class="card-datatable table-responsive">
                     <table class="table table-hover border-top">
                         <thead>
                             <tr>
-                                <th width="30%">المصروف</th>
-                                <th>المبلغ</th>
+                                <th width="30%" wire:click="sortBy('name')" style="cursor: pointer;">
+                                    المصروف
+                                    @if($sortField === 'name')
+                                        <span>{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                                    @endif
+                                </th>
+                                <th wire:click="sortBy('amount')" style="cursor: pointer;">
+                                    المبلغ
+                                    @if($sortField === 'amount')
+                                        <span>{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                                    @endif
+                                </th>
                                 <th>الجنس</th>
                                 <th>تكرار الدفع</th>
                                 <th>السنة/الترم</th>
@@ -325,9 +369,16 @@
                                                             @endif
                                                         </td>
                                                         <td>
-                                                            {!! $fee->is_one_time
-                                ? '<span class="text-success"><i class="ti tabler-check me-1"></i>مرة واحدة</span>'
-                                : '<span class="text-warning"><i class="ti tabler-refresh me-1"></i>متكرر</span>' !!}
+                                                            <div class="form-check form-switch d-inline-block">
+                                                                <input class="form-check-input cursor-pointer" type="checkbox"
+                                                                       wire:click="toggleBoolean({{ $fee->id }}, 'is_one_time')"
+                                                                       wire:loading.attr="disabled"
+                                                                       wire:target="toggleBoolean({{ $fee->id }}, 'is_one_time')"
+                                                                       {{ $fee->is_one_time ? 'checked' : '' }}>
+                                                                <label class="form-check-label small text-muted">
+                                                                    {{ $fee->is_one_time ? 'مرة واحدة' : 'متكرر' }}
+                                                                </label>
+                                                            </div>
                                                         </td>
                                                         <td>
                                                             @if($fee->year)
@@ -375,6 +426,11 @@
                         </tbody>
                     </table>
                 </div>
+                @if($additionalFees->hasPages())
+                    <div class="card-footer border-top d-flex justify-content-center">
+                        {{ $additionalFees->links() }}
+                    </div>
+                @endif
             </div>
         </div>
     </div>

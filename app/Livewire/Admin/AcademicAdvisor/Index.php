@@ -18,6 +18,13 @@ class Index extends Component
     #[Url(except: 10)]
     public $perPage = 10;
 
+    #[Url(except: '')]
+    public string $filterStatus = '';
+
+    public string $sortField = 'created_at';
+
+    public string $sortDirection = 'desc';
+
     public $transferAdvisorId = null;
 
     public $transferMode = 'auto'; // 'auto' or 'specific'
@@ -29,12 +36,34 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatedFilterStatus(): void
+    {
+        $this->resetPage();
+    }
+
+    public function sortBy(string $field): void
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
+    }
+
+    public function resetFilters(): void
+    {
+        $this->reset(['search', 'filterStatus']);
+        $this->resetPage();
+    }
+
     public function delete($id): void
     {
         $advisor = AcademicAdvisor::findOrFail($id);
 
         if ($advisor->hasBlockingRelations()) {
             $this->dispatch('toast', ['message' => $advisor->getBlockingRelationsMessage(), 'type' => 'error']);
+
             return;
         }
 
@@ -170,7 +199,10 @@ class Index extends Component
                 $query->where('name', 'like', '%'.$this->search.'%')
                     ->orWhere('username', 'like', '%'.$this->search.'%');
             })
-            ->latest()
+            ->when($this->filterStatus !== '', function ($query) {
+                $query->where('is_active', $this->filterStatus);
+            })
+            ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->perPage);
 
         return view('livewire.admin.academic-advisor.index', [

@@ -143,7 +143,17 @@
             <tr>
                 @foreach($availableColumns as $col)
                     @if(in_array($col['key'], $selectedColumns))
-                        <th class="fw-bold">{{ $col['label'] }}</th>
+                        @if(in_array($col['key'], ['name', 'username', 'score']))
+                            <th class="fw-bold cursor-pointer select-none" wire:click="sortBy('{{ $col['key'] === 'score' ? 'score' : ($col['key'] === 'username' ? 'username' : 'name') }}')"
+                                style="cursor: pointer;">
+                                {{ $col['label'] }}
+                                @if($sortField === ($col['key'] === 'score' ? 'score' : ($col['key'] === 'username' ? 'username' : 'name')))
+                                    <span>{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                                @endif
+                            </th>
+                        @else
+                            <th class="fw-bold">{{ $col['label'] }}</th>
+                        @endif
                     @endif
                 @endforeach
                 <th class="fw-bold text-center">الإجراءات</th>
@@ -303,13 +313,29 @@
                         <td>{{ $student->section?->department?->name ?? '-' }}</td>
                     @endif
                     @if(in_array('is_foreign', $selectedColumns))
-                        <td>{!! $student->is_foreign ? '<span class="badge bg-label-primary">نعم</span>' : '<span class="badge bg-label-secondary">لا</span>' !!}</td>
+                        <td>
+                            <div class="form-check form-switch d-inline-block">
+                                <input class="form-check-input cursor-pointer" type="checkbox"
+                                       wire:click="toggleBoolean({{ $student->id }}, 'is_foreign')"
+                                       wire:loading.attr="disabled"
+                                       wire:target="toggleBoolean({{ $student->id }}, 'is_foreign')"
+                                       {{ $student->is_foreign ? 'checked' : '' }}>
+                            </div>
+                        </td>
                     @endif
                     @if(in_array('status_notes', $selectedColumns))
                         <td>{{ \Illuminate\Support\Str::limit($student->status_notes, 30, '...') ?: '-' }}</td>
                     @endif
                     @if(in_array('military_education_passed', $selectedColumns))
-                        <td>{!! $student->military_education_passed ? '<span class="badge bg-label-success">نعم</span>' : '<span class="badge bg-label-danger">لا</span>' !!}</td>
+                        <td>
+                            <div class="form-check form-switch d-inline-block">
+                                <input class="form-check-input cursor-pointer" type="checkbox"
+                                       wire:click="toggleBoolean({{ $student->id }}, 'military_education_passed')"
+                                       wire:loading.attr="disabled"
+                                       wire:target="toggleBoolean({{ $student->id }}, 'military_education_passed')"
+                                       {{ $student->military_education_passed ? 'checked' : '' }}>
+                            </div>
+                        </td>
                     @endif
                     @if(in_array('year', $selectedColumns))
                         <td>{{ $student->year?->year ?? '-' }}</td>

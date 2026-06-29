@@ -58,7 +58,12 @@
                         <th>الفرقة</th>
                         <th>السنة / الترم</th>
                         <th class="text-center">عدد المواد</th>
-                        <th class="text-center">تاريخ التسجيل</th>
+                        <th class="text-center" wire:click="sortBy('created_at')" style="cursor: pointer;">
+                            تاريخ التسجيل
+                            @if($sortField === 'created_at')
+                                <span>{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                            @endif
+                        </th>
                         <th class="text-center">الإجراءات</th>
                     </tr>
                 </thead>

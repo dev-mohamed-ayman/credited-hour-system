@@ -13,6 +13,14 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+/**
+ * @property-read \Illuminate\Database\Eloquent\Collection $departments
+ * @property-read \Illuminate\Database\Eloquent\Collection $sections
+ * @property-read \Illuminate\Database\Eloquent\Collection $levels
+ * @property-read \Illuminate\Database\Eloquent\Collection $nationalities
+ * @property-read \Illuminate\Database\Eloquent\Collection $certificateTypes
+ * @property-read \Illuminate\Database\Eloquent\Collection $academicAdvisors
+ */
 class Index extends Component
 {
     use WithPagination;
@@ -52,6 +60,10 @@ class Index extends Component
 
     #[Url(except: '')]
     public $academic_advisor_id = '';
+
+    public string $sortField = 'created_at';
+
+    public string $sortDirection = 'desc';
 
     public array $selectedColumns = ['name', 'username', 'national_id', 'score', 'status'];
 
@@ -225,12 +237,38 @@ class Index extends Component
                 $query->where('academic_advisor_id', $this->academic_advisor_id);
             })
             ->with(['level', 'section.department', 'academicAdvisor', 'country', 'city', 'nationality', 'certificateType', 'scores.requirement', 'year'])
-            ->latest()
+            ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->perPage);
 
         return view('livewire.admin.student.index', [
             'students' => $students,
         ]);
+    }
+
+    public function sortBy(string $field): void
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
+    }
+
+    public function toggleBoolean(int $id, string $column): void
+    {
+        abort_unless(auth()->user()->can('students.edit'), 403);
+
+        $allowedColumns = ['is_foreign', 'military_education_passed'];
+
+        if (! in_array($column, $allowedColumns)) {
+            return;
+        }
+
+        $student = Student::findOrFail($id);
+        $student->update([$column => ! $student->{$column}]);
+
+        $this->dispatch('toast', ['message' => 'تم التحديث بنجاح', 'type' => 'success']);
     }
 
     public function delete($id): void

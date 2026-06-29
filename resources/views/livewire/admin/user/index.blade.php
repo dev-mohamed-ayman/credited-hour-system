@@ -41,13 +41,28 @@
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th>الاسم</th>
-                        <th>البريد الإلكتروني</th>
-                        <th>النوع</th>
-                        <th>عدد الصلاحيات</th>
-                        <th>تاريخ الإنشاء</th>
-                        <th>الإجراءات</th>
-                    </tr>
+                    <th wire:click="sortBy('name')" style="cursor: pointer;">
+                        الاسم
+                        @if($sortField === 'name')
+                            <span>{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                        @endif
+                    </th>
+                    <th wire:click="sortBy('email')" style="cursor: pointer;">
+                        البريد الإلكتروني
+                        @if($sortField === 'email')
+                            <span>{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                        @endif
+                    </th>
+                    <th>النوع</th>
+                    <th>عدد الصلاحيات</th>
+                    <th wire:click="sortBy('created_at')" style="cursor: pointer;">
+                        تاريخ الإنشاء
+                        @if($sortField === 'created_at')
+                            <span>{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                        @endif
+                    </th>
+                    <th>الإجراءات</th>
+                </tr>
                 </thead>
                 <tbody class="table-border-bottom-0">
                     @forelse ($users as $user)
