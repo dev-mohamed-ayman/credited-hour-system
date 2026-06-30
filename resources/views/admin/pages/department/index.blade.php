@@ -15,7 +15,8 @@
                     <tr>
                         <th class="text-center" style="width: 50px;">#</th>
                         <th>اسم التخصص</th>
-                        <th>الكود</th>
+                        <th>كود الطلاب</th>
+                        <th>كود المواد</th>
                         <th>المتطلبات</th>
                         <th class="text-center">الإجراءات</th>
                     </tr>
@@ -29,6 +30,9 @@
                             </td>
                             <td>
                                 <span class="badge bg-label-info">{{ $department->code }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-label-warning">{{ $department->course_code ?? '—' }}</span>
                             </td>
                             <td>
                                 @if($department->requirements->count() > 0)
@@ -89,7 +93,7 @@
                         </div>
                     @empty
                         <tr>
-                            <td colspan="5" class="text-center py-5">
+                            <td colspan="6" class="text-center py-5">
                                 <div class="text-muted">لا توجد تخصصات مضافة حالياً</div>
                             </td>
                         </tr>

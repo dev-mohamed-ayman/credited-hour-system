@@ -17,6 +17,7 @@ class CourseForm extends Component
     public $name = '';
 
     public $code_prefix = '';
+
     public $code_suffix = '';
 
     public $hours = '';
@@ -93,7 +94,7 @@ class CourseForm extends Component
             $this->prerequisite_ids = $course->prerequisites->pluck('id')->toArray();
 
             $this->updatedDepartmentId($this->department_id);
-            
+
             if ($this->code_prefix && str_starts_with($course->code, $this->code_prefix)) {
                 $this->code_suffix = substr($course->code, strlen($this->code_prefix));
             } else {
@@ -109,7 +110,7 @@ class CourseForm extends Component
         if ($value) {
             $this->sections = Section::where('department_id', $value)->get();
             $department = Department::find($value);
-            $this->code_prefix = $this->extractCodePrefix($department->code);
+            $this->code_prefix = $department->course_code ?? '';
         } else {
             $this->sections = collect();
             $this->code_prefix = '';
@@ -160,10 +161,11 @@ class CourseForm extends Component
             return;
         }
 
-        $code = $this->code_prefix . $this->code_suffix;
+        $code = $this->code_prefix.$this->code_suffix;
         $existingCourse = Course::where('code', $code)->where('id', '!=', $courseId)->first();
         if ($existingCourse) {
             $this->addError('code_suffix', 'كود المادة هذا مستخدم من قبل.');
+
             return;
         }
         $validatedData['code'] = $code;
@@ -184,17 +186,6 @@ class CourseForm extends Component
         }
 
         return redirect()->route('courses.index');
-    }
-
-    private function extractCodePrefix(string $departmentCode): string
-    {
-        if (preg_match('/[A-Za-z]/', $departmentCode, $matches)) {
-            return strtoupper($matches[0]);
-        }
-
-        $firstCharacter = mb_substr($departmentCode, 0, 1, 'UTF-8');
-
-        return $firstCharacter !== '' ? $firstCharacter : 'C';
     }
 
     public function render()

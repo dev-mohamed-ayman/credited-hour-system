@@ -13,11 +13,21 @@
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
-                <div class="form-group col-md-6 mb-4">
-                    <label for="code" class="form-label">الكود</label>
+                <div class="form-group col-md-3 mb-4">
+                    <label for="code" class="form-label">كود الطلاب</label>
                     <input type="text" name="code" id="code" value="{{ old('code') }}"
-                        class="form-control @error('code') is-invalid @enderror">
+                        class="form-control @error('code') is-invalid @enderror"
+                        placeholder="بادئة كود الطالب">
                     @error('code')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="form-group col-md-3 mb-4">
+                    <label for="course_code" class="form-label">كود المواد</label>
+                    <input type="text" name="course_code" id="course_code" value="{{ old('course_code') }}"
+                        class="form-control @error('course_code') is-invalid @enderror"
+                        placeholder="بادئة كود المادة">
+                    @error('course_code')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
