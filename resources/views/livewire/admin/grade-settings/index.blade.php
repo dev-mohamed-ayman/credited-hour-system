@@ -13,6 +13,39 @@
 
     <div class="card mb-4">
         <div class="card-header">
+            <h5 class="mb-0">إعدادات التسجيل العامة</h5>
+        </div>
+        <div class="card-body">
+            <div class="form-check form-switch custom-switch-primary">
+                <input class="form-check-input" type="checkbox" wire:model="allowCrossLevelRegistration"
+                       id="allowCrossLevelRegistration">
+                <label class="form-check-label fw-medium" for="allowCrossLevelRegistration">
+                    السماح بتسجيل مواد من فرق دراسية أخرى
+                </label>
+            </div>
+            <small class="text-muted mt-2 d-block">
+                <i class="ti tabler-info-circle ti-xs me-1"></i>
+                عند التفعيل: يمكن للطالب رؤية مواد من فرق أخرى بشرط أن تكون مرتبطة بنفس الشعبة.
+                عند الإيقاف: تظهر مواد فرقته الدراسية فقط.
+            </small>
+        </div>
+        @can('course_registration_settings.edit')
+            <div class="card-footer d-flex justify-content-end border-top pt-3">
+                <button type="button" class="btn btn-primary" wire:click="saveGeneralSettings" wire:loading.attr="disabled">
+                    <span wire:loading.remove wire:target="saveGeneralSettings">
+                        <i class="ti tabler-device-floppy me-1"></i> حفظ الإعدادات العامة
+                    </span>
+                    <span wire:loading wire:target="saveGeneralSettings">
+                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                        جاري الحفظ...
+                    </span>
+                </button>
+            </div>
+        @endcan
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
             <h5 class="mb-0">قوائم التقييمات المتحكمة في التسجيل</h5>
         </div>
         <div class="card-body">

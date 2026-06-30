@@ -11,6 +11,7 @@ use App\Models\Level;
 use App\Models\Registration;
 use App\Models\RegistrationCourse;
 use App\Models\Section;
+use App\Models\Setting;
 use App\Models\Student;
 use App\Models\Year;
 use App\Services\CourseEligibilityService;
@@ -70,6 +71,8 @@ function createRegistrationTestFixtures(): array
     ]);
 
     $sport2->prerequisites()->attach($sport1->id);
+    $sport1->sections()->attach($section->id);
+    $sport2->sections()->attach($section->id);
 
     $student = Student::create([
         'name' => 'طالب تجريبي',
@@ -187,4 +190,66 @@ test('grade observer enforces single pending default', function () {
 
     expect($first->is_pending_default)->toBeFalse();
     expect($second->is_pending_default)->toBeTrue();
+});
+
+test('cross level registration disabled shows only student level due courses', function () {
+    $fixtures = createRegistrationTestFixtures();
+    extract($fixtures);
+
+    Setting::query()->firstOrCreate([])->update(['allow_cross_level_registration' => false]);
+
+    $level1Course = Course::create([
+        'code' => 'L1001',
+        'name' => 'مادة فرقة أولى',
+        'hours' => 3,
+        'is_selected' => false,
+        'is_active' => true,
+        'department_id' => $department->id,
+        'level_id' => $level1->id,
+        'semester' => 'الأول',
+    ]);
+    $level1Course->sections()->attach($section->id);
+
+    $service = app(CourseEligibilityService::class);
+    $buckets = $service->getBuckets($student, $year2, Semester::FIRST);
+
+    expect($buckets['due']->pluck('id')->contains($level1Course->id))->toBeFalse();
+});
+
+test('cross level registration enabled shows other level courses for same section', function () {
+    $fixtures = createRegistrationTestFixtures();
+    extract($fixtures);
+
+    Setting::query()->firstOrCreate([])->update(['allow_cross_level_registration' => true]);
+
+    $level1Course = Course::create([
+        'code' => 'L1002',
+        'name' => 'مادة فرقة أولى مشتركة',
+        'hours' => 3,
+        'is_selected' => false,
+        'is_active' => true,
+        'department_id' => $department->id,
+        'level_id' => $level1->id,
+        'semester' => 'الأول',
+    ]);
+    $level1Course->sections()->attach($section->id);
+
+    $otherSection = Section::create(['name' => 'شعبة ب', 'department_id' => $department->id, 'cgpa' => 2.0]);
+    $otherSectionCourse = Course::create([
+        'code' => 'L1003',
+        'name' => 'مادة شعبة أخرى',
+        'hours' => 3,
+        'is_selected' => false,
+        'is_active' => true,
+        'department_id' => $department->id,
+        'level_id' => $level1->id,
+        'semester' => 'الأول',
+    ]);
+    $otherSectionCourse->sections()->attach($otherSection->id);
+
+    $service = app(CourseEligibilityService::class);
+    $buckets = $service->getBuckets($student, $year2, Semester::FIRST);
+
+    expect($buckets['due']->pluck('id')->contains($level1Course->id))->toBeTrue();
+    expect($buckets['due']->pluck('id')->contains($otherSectionCourse->id))->toBeFalse();
 });

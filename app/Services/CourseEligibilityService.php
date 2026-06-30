@@ -9,6 +9,7 @@ use App\Models\Grade;
 use App\Models\ImprovementGradeSetting;
 use App\Models\Registration;
 use App\Models\RegistrationCourse;
+use App\Models\Setting;
 use App\Models\Student;
 use App\Models\Year;
 use App\Support\CourseSemesterMapper;
@@ -40,8 +41,8 @@ class CourseEligibilityService
     ): array {
         $student->loadMissing(['level', 'section']);
 
-        $historicalSequence = $isHistorical 
-            ? ($year->id * 100) + CourseSemesterMapper::sequence($registrationSemester) 
+        $historicalSequence = $isHistorical
+            ? ($year->id * 100) + CourseSemesterMapper::sequence($registrationSemester)
             : null;
 
         $attempts = $this->getStudentAttempts($student, $historicalSequence);
@@ -49,13 +50,34 @@ class CourseEligibilityService
             ? $currentRegistration->courses()->pluck('course_id')
             : collect();
 
+        $allowCrossLevel = $this->isCrossLevelRegistrationAllowed();
+        $attemptedCourseIds = $attempts->pluck('course_id')->unique();
+
         $candidateCourses = Course::query()
-            ->with(['prerequisites', 'level'])
+            ->with(['prerequisites', 'level', 'sections'])
             ->where('is_active', true)
             ->when(
                 $student->section?->department_id,
                 fn ($query, $departmentId) => $query->where('department_id', $departmentId)
             )
+            ->where(function ($query) use ($student, $allowCrossLevel, $attemptedCourseIds) {
+                if ($attemptedCourseIds->isNotEmpty()) {
+                    $query->whereIn('id', $attemptedCourseIds);
+                }
+
+                $query->orWhere(function ($levelQuery) use ($student, $allowCrossLevel) {
+                    if ($allowCrossLevel) {
+                        if ($student->section_id) {
+                            $levelQuery->whereHas(
+                                'sections',
+                                fn ($sectionQuery) => $sectionQuery->where('sections.id', $student->section_id)
+                            );
+                        }
+                    } elseif ($student->level_id) {
+                        $levelQuery->where('level_id', $student->level_id);
+                    }
+                });
+            })
             ->get();
 
         $retake = collect();
@@ -159,6 +181,10 @@ class CourseEligibilityService
             return false;
         }
 
+        if (! $this->matchesLevelRegistrationRules($course, $student)) {
+            return false;
+        }
+
         if (! $this->isCurriculumWithinCutoff($course, $student, $registrationSemester)) {
             return false;
         }
@@ -170,6 +196,30 @@ class CourseEligibilityService
         }
 
         return true;
+    }
+
+    public function isCrossLevelRegistrationAllowed(): bool
+    {
+        return Setting::allowCrossLevelRegistration();
+    }
+
+    public function matchesLevelRegistrationRules(Course $course, Student $student): bool
+    {
+        if ($this->isCrossLevelRegistrationAllowed()) {
+            if (! $student->section_id) {
+                return false;
+            }
+
+            $course->loadMissing('sections');
+
+            return $course->sections->contains('id', $student->section_id);
+        }
+
+        if (! $student->level_id || ! $course->level_id) {
+            return false;
+        }
+
+        return $course->level_id === $student->level_id;
     }
 
     public function isCurriculumWithinCutoff(Course $course, Student $student, Semester $registrationSemester): bool

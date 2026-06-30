@@ -36,6 +36,12 @@ class Setting extends Model
             'cert_show_semester' => 'boolean',
             'cert_show_extra' => 'boolean',
             'military_education_default_fee' => 'decimal:2',
+            'allow_cross_level_registration' => 'boolean',
         ];
+    }
+
+    public static function allowCrossLevelRegistration(): bool
+    {
+        return (bool) static::query()->value('allow_cross_level_registration');
     }
 }

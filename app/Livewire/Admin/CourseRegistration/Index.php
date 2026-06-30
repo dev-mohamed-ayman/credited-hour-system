@@ -268,10 +268,6 @@ class Index extends Component
     {
         abort_unless(auth()->user()->can('course_registrations.view'), 403);
 
-        if ($this->searched && $this->student && $this->registrationAvailable) {
-            $this->loadBuckets();
-        }
-
         return view('livewire.admin.course-registration.index')
             ->extends('admin.layouts.app')
             ->section('content');

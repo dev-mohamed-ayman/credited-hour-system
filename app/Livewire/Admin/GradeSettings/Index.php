@@ -8,6 +8,7 @@ use App\Models\FailingGradeSetting;
 use App\Models\Grade;
 use App\Models\ImprovementGradeSetting;
 use App\Models\Level;
+use App\Models\Setting;
 use Livewire\Component;
 
 class Index extends Component
@@ -21,8 +22,12 @@ class Index extends Component
     /** @var array<int, array<string, int|null>> */
     public array $maxOptionalSettings = [];
 
+    public bool $allowCrossLevelRegistration = false;
+
     public function mount(): void
     {
+        $settings = Setting::query()->first();
+        $this->allowCrossLevelRegistration = (bool) ($settings?->allow_cross_level_registration ?? false);
         $this->failingGradeIds = FailingGradeSetting::query()->pluck('grade_id')->map(fn ($id) => (int) $id)->all();
         $this->improvementGradeIds = ImprovementGradeSetting::query()->pluck('grade_id')->map(fn ($id) => (int) $id)->all();
 
@@ -75,6 +80,19 @@ class Index extends Component
         }
 
         $this->dispatch('toast', ['type' => 'success', 'message' => 'تم حفظ إعدادات التقييمات بنجاح.']);
+    }
+
+    public function saveGeneralSettings(): void
+    {
+        abort_unless(auth()->user()->can('course_registration_settings.edit'), 403);
+
+        $settings = Setting::query()->firstOrCreate([]);
+
+        $settings->update([
+            'allow_cross_level_registration' => $this->allowCrossLevelRegistration,
+        ]);
+
+        $this->dispatch('toast', ['type' => 'success', 'message' => 'تم حفظ إعدادات التسجيل العامة بنجاح.']);
     }
 
     public function saveMaxOptionalSettings(): void
