@@ -1,8 +1,8 @@
 <div>
     <form wire:submit.prevent="save">
         <div class="card-body row">
-            <!-- Name & Hours -->
-            <div class="form-group col-md-8 mb-4">
+            <!-- Name, Code & Hours -->
+            <div class="form-group col-md-5 mb-4">
                 <label for="name" class="form-label fw-bold">اسم المادة</label>
                 <div class="input-group input-group-merge">
                     <span class="input-group-text"><i class="ti tabler-book"></i></span>
@@ -16,6 +16,19 @@
             </div>
 
             <div class="form-group col-md-4 mb-4">
+                <label for="code_suffix" class="form-label fw-bold">كود المادة</label>
+                <div class="input-group">
+                    <span class="input-group-text" dir="ltr">{{ $code_prefix ?? '---' }}</span>
+                    <input type="text" wire:model="code_suffix" id="code_suffix"
+                           class="form-control @error('code_suffix') is-invalid @enderror" 
+                           placeholder="0001" dir="ltr">
+                </div>
+                @error('code_suffix')
+                <div class="text-danger small mt-1">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="form-group col-md-3 mb-4">
                 <label for="hours" class="form-label fw-bold">عدد الساعات</label>
                 <div class="input-group input-group-merge">
                     <span class="input-group-text"><i class="ti tabler-clock"></i></span>

@@ -29,11 +29,22 @@
                 </select>
                 <span class="text-muted small">صفحة</span>
             </div>
-            <div class="col-md-4">
-                <div class="input-group input-group-merge">
+            <div class="d-flex align-items-center gap-2 flex-grow-1 justify-content-md-end">
+                <select wire:model.live="role_id" class="form-select form-select-sm w-auto">
+                    <option value="">كل الصلاحيات</option>
+                    @foreach($this->roles as $role)
+                        <option value="{{ $role->id }}">{{ $role->name }}</option>
+                    @endforeach
+                </select>
+                <div class="input-group input-group-merge" style="max-width: 300px;">
                     <span class="input-group-text"><i class="ti tabler-search"></i></span>
-                    <input type="text" wire:model.live.debounce.300ms="search" class="form-control" placeholder="بحث باسم المستخدم أو البريد الإلكتروني...">
+                    <input type="text" wire:model.live.debounce.300ms="search" class="form-control" placeholder="بحث باسم المستخدم أو البريد...">
                 </div>
+                @if($search || $role_id)
+                    <button wire:click="resetFilters" class="btn btn-sm btn-label-secondary text-nowrap">
+                        <i class="ti tabler-refresh me-1"></i> إعادة تعيين
+                    </button>
+                @endif
             </div>
         </div>
 
@@ -79,11 +90,16 @@
                             </td>
                             <td>{{ $user->email }}</td>
                             <td>
-                                @if ($user->is_super_admin)
-                                    <span class="badge bg-label-danger">مدير النظام (Super Admin)</span>
-                                @else
-                                    <span class="badge bg-label-primary">مستخدم مخصص</span>
-                                @endif
+                                <div class="form-check form-switch d-inline-block">
+                                    <input class="form-check-input cursor-pointer" type="checkbox"
+                                           wire:click="toggleBoolean({{ $user->id }}, 'is_super_admin')"
+                                           wire:loading.attr="disabled"
+                                           wire:target="toggleBoolean({{ $user->id }}, 'is_super_admin')"
+                                           {{ $user->is_super_admin ? 'checked' : '' }}>
+                                    <label class="form-check-label small text-muted">
+                                        {{ $user->is_super_admin ? 'مدير النظام (Super Admin)' : 'مستخدم مخصص' }}
+                                    </label>
+                                </div>
                             </td>
                             <td>
                                 @if ($user->is_super_admin)

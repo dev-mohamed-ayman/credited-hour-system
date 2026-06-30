@@ -16,6 +16,9 @@ class CourseForm extends Component
 
     public $name = '';
 
+    public $code_prefix = '';
+    public $code_suffix = '';
+
     public $hours = '';
 
     public $department_id = '';
@@ -44,6 +47,7 @@ class CourseForm extends Component
     {
         return [
             'name' => 'required|string|max:255',
+            'code_suffix' => 'required|string|max:20',
             'hours' => 'required|integer|min:1|max:10',
             'department_id' => 'required|exists:departments,id',
             'level_id' => 'required|exists:levels,id',
@@ -59,6 +63,7 @@ class CourseForm extends Component
 
     protected $messages = [
         'name.required' => 'اسم المادة مطلوب',
+        'code_suffix.required' => 'كود المادة مطلوب',
         'hours.required' => 'عدد الساعات مطلوب',
         'department_id.required' => 'يجب اختيار التخصص',
         'department_id.exists' => 'التخصص المختار غير موجود',
@@ -88,6 +93,12 @@ class CourseForm extends Component
             $this->prerequisite_ids = $course->prerequisites->pluck('id')->toArray();
 
             $this->updatedDepartmentId($this->department_id);
+            
+            if ($this->code_prefix && str_starts_with($course->code, $this->code_prefix)) {
+                $this->code_suffix = substr($course->code, strlen($this->code_prefix));
+            } else {
+                $this->code_suffix = $course->code;
+            }
         }
 
         $this->loadAvailablePrerequisites();
@@ -97,8 +108,11 @@ class CourseForm extends Component
     {
         if ($value) {
             $this->sections = Section::where('department_id', $value)->get();
+            $department = Department::find($value);
+            $this->code_prefix = $this->extractCodePrefix($department->code);
         } else {
             $this->sections = collect();
+            $this->code_prefix = '';
         }
         $this->section_ids = [];
         $this->loadAvailablePrerequisites();
@@ -146,22 +160,22 @@ class CourseForm extends Component
             return;
         }
 
-        if ($this->course) {
-            if ($this->course->department_id != $this->department_id) {
-                $department = Department::findOrFail($this->department_id);
-                $validatedData['code'] = $this->generateUniqueCourseCode($department);
-            }
+        $code = $this->code_prefix . $this->code_suffix;
+        $existingCourse = Course::where('code', $code)->where('id', '!=', $courseId)->first();
+        if ($existingCourse) {
+            $this->addError('code_suffix', 'كود المادة هذا مستخدم من قبل.');
+            return;
+        }
+        $validatedData['code'] = $code;
+        unset($validatedData['code_suffix']);
 
+        if ($this->course) {
             $this->course->update($validatedData);
             $this->course->sections()->sync($this->section_ids);
             $this->course->prerequisites()->sync($this->prerequisite_ids);
 
             session()->flash('success', 'تم تحديث المادة بنجاح');
         } else {
-            $department = Department::findOrFail($this->department_id);
-            $code = $this->generateUniqueCourseCode($department);
-            $validatedData['code'] = $code;
-
             $course = Course::create($validatedData);
             $course->sections()->sync($this->section_ids);
             $course->prerequisites()->sync($this->prerequisite_ids);
@@ -170,17 +184,6 @@ class CourseForm extends Component
         }
 
         return redirect()->route('courses.index');
-    }
-
-    private function generateUniqueCourseCode(Department $department): string
-    {
-        $prefix = $this->extractCodePrefix($department->code);
-
-        do {
-            $code = $prefix.str_pad((string) rand(0, 9999), 4, '0', STR_PAD_LEFT);
-        } while (Course::where('code', $code)->exists());
-
-        return $code;
     }
 
     private function extractCodePrefix(string $departmentCode): string

@@ -23,8 +23,24 @@ class Index extends Component
 
     public string $sortDirection = 'desc';
 
-    public function updatingSearch(): void
+    #[Url(except: '')]
+    public $role_id = '';
+
+    public function getRolesProperty()
     {
+        return \Spatie\Permission\Models\Role::all();
+    }
+
+    public function updating($property): void
+    {
+        if (in_array($property, ['search', 'perPage', 'role_id'])) {
+            $this->resetPage();
+        }
+    }
+
+    public function resetFilters(): void
+    {
+        $this->reset(['search', 'role_id']);
         $this->resetPage();
     }
 
@@ -56,14 +72,44 @@ class Index extends Component
         $this->dispatch('toast', ['message' => 'تم حذف المستخدم بنجاح.', 'type' => 'success']);
     }
 
+    public function toggleBoolean(int $id, string $column): void
+    {
+        abort_unless(auth()->user()->can('users.edit'), 403);
+
+        $allowedColumns = ['is_super_admin'];
+
+        if (! in_array($column, $allowedColumns)) {
+            return;
+        }
+
+        $user = User::findOrFail($id);
+
+        if ($column === 'is_super_admin' && $user->is_super_admin && User::where('is_super_admin', true)->count() <= 1) {
+            $this->dispatch('toast', ['message' => 'لا يمكن إلغاء صلاحية آخر مدير نظام (Super Admin).', 'type' => 'error']);
+
+            return;
+        }
+
+        $user->update([$column => ! $user->{$column}]);
+
+        $this->dispatch('toast', ['message' => 'تم التحديث بنجاح', 'type' => 'success']);
+    }
+
     public function render()
     {
         abort_unless(auth()->user()->can('users.view'), 403);
 
         $users = User::query()
             ->when($this->search, function ($query) {
-                $query->where('name', 'like', '%'.$this->search.'%')
-                    ->orWhere('email', 'like', '%'.$this->search.'%');
+                $query->where(function ($q) {
+                    $q->where('name', 'like', '%'.$this->search.'%')
+                        ->orWhere('email', 'like', '%'.$this->search.'%');
+                });
+            })
+            ->when($this->role_id, function ($query) {
+                $query->whereHas('roles', function ($q) {
+                    $q->where('id', $this->role_id);
+                });
             })
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->perPage);
