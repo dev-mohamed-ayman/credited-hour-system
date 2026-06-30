@@ -31,6 +31,7 @@ class DepartmentController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:departments,code',
+            'course_code' => 'required|string|max:50',
             'requirements' => 'nullable|array',
             'requirements.*.subject_name' => 'nullable|string|max:255',
             'requirements.*.min_score' => 'nullable|numeric|min:0',
@@ -39,6 +40,7 @@ class DepartmentController extends Controller
         $department = Department::create([
             'name' => $request->name,
             'code' => $request->code,
+            'course_code' => $request->course_code,
         ]);
 
         if ($request->has('requirements')) {
@@ -69,6 +71,7 @@ class DepartmentController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:departments,code,'.$department->id,
+            'course_code' => 'required|string|max:50',
             'requirements' => 'nullable|array',
             'requirements.*.subject_name' => 'nullable|string|max:255',
             'requirements.*.min_score' => 'nullable|numeric|min:0',
@@ -77,6 +80,7 @@ class DepartmentController extends Controller
         $department->update([
             'name' => $request->name,
             'code' => $request->code,
+            'course_code' => $request->course_code,
         ]);
 
         // حذف المتطلبات القديمة وإعادة إضافة المعبأة فقط

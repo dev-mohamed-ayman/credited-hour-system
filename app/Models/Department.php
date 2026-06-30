@@ -9,7 +9,7 @@ class Department extends Model
 {
     use HasDeletionGuards;
 
-    protected $fillable = ['name', 'code'];
+    protected $fillable = ['name', 'code', 'course_code'];
     protected $blockingRelations = ['sections', 'requirements'];
 
     public function requirements()

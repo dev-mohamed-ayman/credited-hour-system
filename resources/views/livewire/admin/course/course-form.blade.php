@@ -18,10 +18,10 @@
             <div class="form-group col-md-4 mb-4">
                 <label for="code_suffix" class="form-label fw-bold">كود المادة</label>
                 <div class="input-group">
-                    <span class="input-group-text" dir="ltr">{{ $code_prefix ?? '---' }}</span>
+                    <span class="input-group-text fw-bold text-primary">{{ $code_prefix ? $code_prefix : '---' }}</span>
                     <input type="text" wire:model="code_suffix" id="code_suffix"
                            class="form-control @error('code_suffix') is-invalid @enderror" 
-                           placeholder="0001" dir="ltr">
+                           placeholder="مثال: 0001">
                 </div>
                 @error('code_suffix')
                 <div class="text-danger small mt-1">{{ $message }}</div>
