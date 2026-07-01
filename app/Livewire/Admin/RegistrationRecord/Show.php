@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\RegistrationRecord;
 
+use App\Enums\RegistrationStatus;
 use App\Models\Registration;
 use App\Models\RegistrationCourse;
 use App\Services\CourseEligibilityService;
@@ -17,9 +18,11 @@ class Show extends Component
 
     public Collection $availableCourses;
 
+    public ?string $rejectionReason = null;
+
     public function mount(Registration $registration, CourseEligibilityService $eligibilityService): void
     {
-        $this->registration = $registration->loadMissing(['student.level', 'student.section.department', 'year', 'courses.course', 'courses.grade']);
+        $this->registration = $registration->loadMissing(['student.level', 'student.section.department', 'year', 'courses.course', 'courses.grade', 'approvedByUser', 'approvedByAdvisor']);
 
         $this->loadAvailableCourses($eligibilityService);
     }
@@ -85,8 +88,8 @@ class Show extends Component
 
         if (! $guard['allowed']) {
             $blockingCourses = implode(' و ', $guard['blocking_courses']);
-            $this->dispatch('toast', 
-                message: "لا يمكن إزالة المادة. الطالب مسجل في مادة ({$blockingCourses}) في ترم لاحق بناءً على نجاحه في مادة ({$registrationCourse->course->name}).", 
+            $this->dispatch('toast',
+                message: "لا يمكن إزالة المادة. الطالب مسجل في مادة ({$blockingCourses}) في ترم لاحق بناءً على نجاحه في مادة ({$registrationCourse->course->name}).",
                 type: 'error'
             );
             return;
@@ -97,6 +100,40 @@ class Show extends Component
         $this->loadAvailableCourses($eligibilityService);
 
         $this->dispatch('toast', message: 'تم إزالة المادة من السجل بنجاح.', type: 'success');
+    }
+
+    public function approveRegistration(): void
+    {
+        abort_unless(auth()->user()->can('course_registrations.create'), 403);
+
+        $this->registration->update([
+            'status' => RegistrationStatus::APPROVED,
+            'approved_by_user_id' => auth()->id(),
+            'rejection_reason' => null,
+        ]);
+
+        $this->registration->load('approvedByUser');
+        $this->dispatch('toast', message: 'تمت الموافقة على التسجيل بنجاح.', type: 'success');
+    }
+
+    public function rejectRegistration(): void
+    {
+        abort_unless(auth()->user()->can('course_registrations.create'), 403);
+
+        $this->validate([
+            'rejectionReason' => 'required|string',
+        ]);
+
+        $this->registration->update([
+            'status' => RegistrationStatus::REJECTED,
+            'approved_by_user_id' => auth()->id(),
+            'rejection_reason' => $this->rejectionReason,
+        ]);
+
+        $this->registration->load('approvedByUser');
+        $this->rejectionReason = null;
+        $this->dispatch('close-modal', id: 'rejectRegistrationModal');
+        $this->dispatch('toast', message: 'تم رفض التسجيل بنجاح.', type: 'error');
     }
 
     public function render(): View

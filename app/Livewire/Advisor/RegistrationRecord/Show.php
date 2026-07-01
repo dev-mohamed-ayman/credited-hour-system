@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Advisor\RegistrationRecord;
 
+use App\Enums\RegistrationStatus;
 use App\Models\Registration;
 use App\Models\RegistrationCourse;
 use App\Services\CourseEligibilityService;
@@ -17,9 +18,11 @@ class Show extends Component
 
     public Collection $availableCourses;
 
+    public ?string $rejectionReason = null;
+
     public function mount(Registration $registration, CourseEligibilityService $eligibilityService): void
     {
-        $this->registration = $registration->loadMissing(['student.level', 'student.section.department', 'year', 'courses.course', 'courses.grade']);
+        $this->registration = $registration->loadMissing(['student.level', 'student.section.department', 'year', 'courses.course', 'courses.grade', 'approvedByUser', 'approvedByAdvisor']);
 
         abort_unless($this->registration->student->academic_advisor_id === auth('advisor')->id(), 403);
 
@@ -46,7 +49,6 @@ class Show extends Component
 
     public function addCourse(CourseEligibilityService $eligibilityService): void
     {
-
         $this->validate([
             'selectedCourseId' => 'required|exists:courses,id',
         ]);
@@ -70,6 +72,36 @@ class Show extends Component
 
         $this->dispatch('close-modal', id: 'addCourseModal');
         $this->dispatch('toast', message: 'تم إضافة المادة للسجل بنجاح.', type: 'success');
+    }
+
+    public function approveRegistration(): void
+    {
+        $this->registration->update([
+            'status' => RegistrationStatus::APPROVED,
+            'approved_by_advisor_id' => auth('advisor')->id(),
+            'rejection_reason' => null,
+        ]);
+
+        $this->registration->load('approvedByAdvisor');
+        $this->dispatch('toast', message: 'تمت الموافقة على التسجيل بنجاح.', type: 'success');
+    }
+
+    public function rejectRegistration(): void
+    {
+        $this->validate([
+            'rejectionReason' => 'required|string',
+        ]);
+
+        $this->registration->update([
+            'status' => RegistrationStatus::REJECTED,
+            'approved_by_advisor_id' => auth('advisor')->id(),
+            'rejection_reason' => $this->rejectionReason,
+        ]);
+
+        $this->registration->load('approvedByAdvisor');
+        $this->rejectionReason = null;
+        $this->dispatch('close-modal', id: 'rejectRegistrationModal');
+        $this->dispatch('toast', message: 'تم رفض التسجيل بنجاح.', type: 'error');
     }
 
     public function render(): View

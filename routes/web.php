@@ -136,3 +136,26 @@ Route::prefix('advisor')->name('advisor.')->group(function () {
         Route::get('registration-records/{registration}', \App\Livewire\Advisor\RegistrationRecord\Show::class)->name('registration-records.show');
     });
 });
+
+// Student Routes
+Route::prefix('student')->name('student.')->group(function () {
+    Route::middleware('guest:student')->group(function () {
+        Route::get('login', \App\Livewire\Student\Auth\Login::class)->name('login');
+    });
+
+    Route::middleware('auth:student')->group(function () {
+        Route::post('logout', function () {
+            Auth::guard('student')->logout();
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
+
+            return redirect()->route('student.login');
+        })->name('logout');
+
+        Route::get('', \App\Livewire\Student\Dashboard::class)->name('dashboard');
+        
+        Route::get('course-registrations', \App\Livewire\Student\CourseRegistration\Index::class)->name('course-registrations.index');
+        Route::get('registration-records', \App\Livewire\Student\RegistrationRecord\Index::class)->name('registration-records.index');
+        Route::get('status-statement', \App\Livewire\Student\StatusStatement::class)->name('status-statement');
+    });
+});

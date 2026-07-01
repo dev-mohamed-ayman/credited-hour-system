@@ -6,15 +6,49 @@ use App\Enums\Semester;
 use App\Enums\Student\ApplicationCategory;
 use App\Enums\Student\StudentStatus;
 use App\Enums\Student\StudyStatus;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Student extends Model
+class Student extends Authenticatable
 {
     use SoftDeletes;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'name',
+        'image',
+        'religion',
+        'birth_date',
+        'certificate_type_id',
+        'graduation_date',
+        'seat_number',
+        'score',
+        'application_category',
+        'country_id',
+        'city_id',
+        'address',
+        'nationality_id',
+        'is_foreign',
+        'national_id',
+        'national_id_place',
+        'email',
+        'phone',
+        'landline_phone',
+        'guardian_job',
+        'guardian_phone_1',
+        'guardian_phone_2',
+        'gender',
+        'status',
+        'status_notes',
+        'section_id',
+        'level_id',
+        'study_status',
+        'username',
+        'password',
+        'plain_password',
+        'academic_advisor_id',
+        'military_education_passed',
+    ];
 
     protected function casts(): array
     {
@@ -23,8 +57,15 @@ class Student extends Model
             'status' => StudentStatus::class,
             'study_status' => StudyStatus::class,
             'semester' => Semester::class,
+            'password' => 'hashed',
+            'is_foreign' => 'boolean',
+            'military_education_passed' => 'boolean',
         ];
     }
+
+    protected $hidden = [
+        'password',
+    ];
 
     public function year()
     {

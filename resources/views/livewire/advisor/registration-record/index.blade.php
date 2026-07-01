@@ -58,6 +58,7 @@
                         <th>الفرقة</th>
                         <th>السنة / الترم</th>
                         <th class="text-center">عدد المواد</th>
+                        <th class="text-center">الحالة</th>
                         <th class="text-center" wire:click="sortBy('created_at')" style="cursor: pointer;">
                             تاريخ التسجيل
                             @if($sortField === 'created_at')
@@ -92,6 +93,15 @@
                                 <span class="badge bg-label-info">{{ $registration->courses->count() }} مواد</span>
                             </td>
                             <td class="text-center">
+                                @if($registration->status === \App\Enums\RegistrationStatus::PENDING)
+                                    <span class="badge bg-label-warning">{{ $registration->status->label() }}</span>
+                                @elseif($registration->status === \App\Enums\RegistrationStatus::APPROVED)
+                                    <span class="badge bg-label-success">{{ $registration->status->label() }}</span>
+                                @else
+                                    <span class="badge bg-label-danger">{{ $registration->status->label() }}</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
                                 {{ $registration->created_at->format('Y-m-d') }}
                             </td>
                             <td class="text-center">
@@ -102,7 +112,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center py-5 text-muted">
+                            <td colspan="7" class="text-center py-5 text-muted">
                                 <i class="ti tabler-clipboard-data d-block mb-2" style="font-size: 3rem;"></i>
                                 لا توجد سجلات تسجيل مطابقة للبحث
                             </td>

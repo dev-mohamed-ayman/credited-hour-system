@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\Semester;
+use App\Enums\RegistrationStatus;
 use App\Models\Course;
 use App\Models\CourseRegistrationSetting;
 use App\Models\Grade;
@@ -75,10 +76,17 @@ class CourseRegistrationService
         );
 
         if ($registration->wasRecentlyCreated) {
-            if (auth('advisor')->check()) {
-                $registration->created_by_advisor_id = auth('advisor')->id();
-            } elseif (auth('web')->check()) {
-                $registration->created_by_user_id = auth('web')->id();
+            if (auth('student')->check()) {
+                $registration->status = RegistrationStatus::PENDING;
+            } else {
+                $registration->status = RegistrationStatus::APPROVED;
+                if (auth('advisor')->check()) {
+                    $registration->created_by_advisor_id = auth('advisor')->id();
+                    $registration->approved_by_advisor_id = auth('advisor')->id();
+                } elseif (auth('web')->check()) {
+                    $registration->created_by_user_id = auth('web')->id();
+                    $registration->approved_by_user_id = auth('web')->id();
+                }
             }
             $registration->save();
         }

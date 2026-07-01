@@ -34,7 +34,7 @@
                         <div class="col-12 col-sm-6 col-lg-3">
                             <label class="text-muted small mb-1">الفرقة والتخصص</label>
                             <div class="fw-bold fs-6">
-                                {{ $registration->student->level?->name ?? '—' }} 
+                                {{ $registration->student->level?->name ?? '—' }}
                                 <span class="mx-1">|</span>
                                 {{ $registration->student->section?->department?->name ?? '—' }}
                             </div>
@@ -59,10 +59,55 @@
                                 @endif
                             </div>
                         </div>
+                        <div class="col-12 col-sm-6 col-lg-3">
+                            <label class="text-muted small mb-1">حالة التسجيل</label>
+                            <div class="fw-bold fs-6">
+                                @if($registration->status === \App\Enums\RegistrationStatus::PENDING)
+                                    <span class="badge bg-label-warning">{{ $registration->status->label() }}</span>
+                                @elseif($registration->status === \App\Enums\RegistrationStatus::APPROVED)
+                                    <span class="badge bg-label-success">{{ $registration->status->label() }}</span>
+                                @else
+                                    <span class="badge bg-label-danger">{{ $registration->status->label() }}</span>
+                                @endif
+                            </div>
+                        </div>
+                        @if($registration->approvedByUser)
+                            <div class="col-12 col-sm-6 col-lg-3">
+                                <label class="text-muted small mb-1">تمت الموافقة بواسطة</label>
+                                <div class="fw-bold fs-6">
+                                    <span class="badge bg-label-success">الأدمن: {{ $registration->approvedByUser->name }}</span>
+                                </div>
+                            </div>
+                        @elseif($registration->approvedByAdvisor)
+                            <div class="col-12 col-sm-6 col-lg-3">
+                                <label class="text-muted small mb-1">تمت الموافقة بواسطة</label>
+                                <div class="fw-bold fs-6">
+                                    <span class="badge bg-label-success">المرشد: {{ $registration->approvedByAdvisor->name }}</span>
+                                </div>
+                            </div>
+                        @endif
+                        @if($registration->rejection_reason)
+                            <div class="col-12">
+                                <label class="text-muted small mb-1">سبب الرفض</label>
+                                <div class="alert alert-danger mb-0">{{ $registration->rejection_reason }}</div>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
         </div>
+        @if($registration->status === \App\Enums\RegistrationStatus::PENDING && auth()->user()->can('course_registrations.create'))
+            <div class="card-footer pt-0">
+                <div class="d-flex gap-2 justify-content-end">
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectRegistrationModal">
+                        <i class="ti tabler-x me-1"></i>رفض التسجيل
+                    </button>
+                    <button type="button" class="btn btn-success" wire:click="approveRegistration">
+                        <i class="ti tabler-check me-1"></i>موافقة على التسجيل
+                    </button>
+                </div>
+            </div>
+        @endif
     </div>
 
     <!-- Courses Table -->
@@ -171,6 +216,34 @@
                         <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
                             <span wire:loading.remove wire:target="addCourse">إضافة المادة</span>
                             <span wire:loading wire:target="addCourse">جاري الإضافة...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Registration Modal -->
+    <div wire:ignore.self class="modal fade" id="rejectRegistrationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="rejectRegistrationModalTitle">رفض التسجيل</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form wire:submit.prevent="rejectRegistration">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="rejectionReason" class="form-label fw-bold">سبب الرفض</label>
+                            <textarea id="rejectionReason" wire:model="rejectionReason" class="form-control" rows="3" placeholder="يرجى إدخال سبب رفض التسجيل..."></textarea>
+                            @error('rejectionReason')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" class="btn btn-danger" wire:loading.attr="disabled">
+                            <span wire:loading.remove wire:target="rejectRegistration">رفض التسجيل</span>
+                            <span wire:loading wire:target="rejectRegistration">جاري الرفض...</span>
                         </button>
                     </div>
                 </form>
