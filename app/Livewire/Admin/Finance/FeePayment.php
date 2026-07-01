@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Finance;
 
+use App\Models\DailyPaymentDateTime;
 use App\Models\Setting;
 use App\Models\StudentFeeTicket;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +27,8 @@ class FeePayment extends Component
     public $visaLastFour;
 
     public $showForm = false;
+
+    public $currentOpenDay;
 
     public function updatedSelectAll($value)
     {
@@ -52,6 +55,7 @@ class FeePayment extends Component
     public function mount()
     {
         $this->generateNextReceiptNumber();
+        $this->currentOpenDay = DailyPaymentDateTime::whereNull('end_date')->first();
     }
 
     public function generateNextReceiptNumber()
@@ -159,6 +163,13 @@ class FeePayment extends Component
     public function confirmPayment()
     {
         abort_unless(auth()->user()->can('finance.edit'), 403);
+
+        $this->currentOpenDay = DailyPaymentDateTime::whereNull('end_date')->first();
+        
+        if (!$this->currentOpenDay) {
+            $this->dispatch('alert', ['type' => 'error', 'message' => 'لا يمكن السداد، لا يوجد يوم مفتوح']);
+            return;
+        }
 
         $this->validate([
             'paymentMethod' => 'required|in:cash,credit,both',

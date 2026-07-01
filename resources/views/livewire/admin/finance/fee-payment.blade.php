@@ -4,6 +4,15 @@
     </h4>
 
     <div class="row">
+        @if(!$currentOpenDay)
+            <div class="col-md-12 mb-4">
+                <div class="alert alert-danger">
+                    <i class="ti tabler-alert-circle me-2"></i>
+                    لا يمكن السداد حالياً، لا يوجد يوم مفتوح. يرجى فتح يوم من صفحة <a href="{{ route('admin.finance.daily-payments') }}" class="alert-link">اليوميات المالية</a>.
+                </div>
+            </div>
+        @endif
+        
         {{-- Search Card --}}
         <div class="col-md-12 mb-4">
             <div class="card">

@@ -183,13 +183,18 @@
                 <div data-i18n="المالية">المالية</div>
             </a>
             <ul class="menu-sub">
-                <li class="menu-item {{isActiveRoute('admin.finance.fee-payment')}}">
-                    <a href="{{route('admin.finance.fee-payment')}}" class="menu-link">
+                <li class="menu-item {{ isActiveRoute('admin.finance.fee-payment') }}">
+                    <a href="{{ route('admin.finance.fee-payment') }}" class="menu-link">
                         <div data-i18n="سداد الحافظة">سداد الحافظة</div>
                     </a>
                 </li>
-                <li class="menu-item {{isActiveRoute('admin.finance.student-financial-status')}}">
-                    <a href="{{route('admin.finance.student-financial-status')}}" class="menu-link">
+                <li class="menu-item {{ isActiveRoute('admin.finance.daily-payments') }}">
+                    <a href="{{ route('admin.finance.daily-payments') }}" class="menu-link">
+                        <div data-i18n="اليوميات المالية">اليوميات المالية</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ isActiveRoute('admin.finance.student-financial-status') }}">
+                    <a href="{{ route('admin.finance.student-financial-status') }}" class="menu-link">
                         <div data-i18n="بيان الحالة المالية">بيان الحالة المالية</div>
                     </a>
                 </li>
