@@ -44,8 +44,9 @@
         </li>
 
         @canany(['students.view', 'students.create', 'student_warnings.view', 'finance.view'])
-        <li
-            class="menu-item {{isActiveRoute(['students.*', 'print.student.cards.*', 'print.seat.numbers.*', 'print.certificates.*', 'student-warnings.*', 'student-search.*', 'admin.finance.fee-issuance', 'admin.finance.student-financial-status'], true)}}">
+    <li
+        class="menu-item {{isActiveRoute(['students.*', 'print.student.cards.*', 'print.seat.numbers.*', 'print.certificates.*', 'student-warnings.*', 'student-search.*', 'admin.finance.fee-issuance', 'admin.finance.student-financial-status', 'admin.student-affairs.student-status'], true)}}"
+    >
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base ti tabler-users"></i>
                 <div data-i18n="شئون الطلبه">شئون الطلبه</div>
@@ -67,6 +68,11 @@
                 <li class="menu-item {{isActiveRoute('student-search.index')}}">
                     <a href="{{route('student-search.index')}}" class="menu-link">
                         <div data-i18n="البحث عن طالب">البحث عن طالب</div>
+                    </a>
+                </li>
+                <li class="menu-item {{isActiveRoute('admin.student-affairs.student-status')}}">
+                    <a href="{{route('admin.student-affairs.student-status')}}" class="menu-link">
+                        <div data-i18n="بيان حالة الطالب">بيان حالة الطالب</div>
                     </a>
                 </li>
                 @endcan

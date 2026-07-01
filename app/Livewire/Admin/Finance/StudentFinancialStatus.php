@@ -77,20 +77,17 @@ class StudentFinancialStatus extends Component
             return 0;
         }
 
-        return $this->student->feeTickets
-            ->where('status', 'paid')
-            ->sum('amount');
+        return $this->student->feeTickets->sum('paid');
     }
 
     public function getTotalPendingProperty(): float
     {
-        if (!$this->student) {
-            return 0;
-        }
+        return $this->remaining;
+    }
 
-        return $this->student->feeTickets
-            ->where('status', 'pending')
-            ->sum('amount');
+    public function getRemainingProperty(): float
+    {
+        return $this->totalFees - $this->totalPaid;
     }
 
     public function getTotalFeesProperty(): float
@@ -116,6 +113,7 @@ class StudentFinancialStatus extends Component
             ->with('recentStudents', $recentStudents)
             ->with('totalFees', $this->totalFees)
             ->with('totalPaid', $this->totalPaid)
+            ->with('remaining', $this->remaining)
             ->with('totalPending', $this->totalPending)
             ->with('groupedTickets', $this->groupedTickets)
             ->extends('admin.layouts.app')

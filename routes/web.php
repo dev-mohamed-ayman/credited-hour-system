@@ -65,6 +65,9 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('years', \App\Http\Controllers\Admin\YearController::class)->except(['show'])->middleware('permission:years.view');
     Route::get('year-settings', \App\Livewire\Admin\YearSettings::class)->name('year-settings.index')->middleware('permission:years.edit');
 
+    // Student Affairs Routes
+    Route::get('student-affairs/student-status', \App\Livewire\Admin\StudentAffairs\StudentStatus::class)->name('admin.student-affairs.student-status')->middleware('permission:students.view');
+
     // Finance Routes
     Route::get('finance/fee-issuance', \App\Livewire\Admin\Finance\FeeIssuance::class)->name('admin.finance.fee-issuance')->middleware('permission:finance.view');
     Route::get('finance/fee-payment', \App\Livewire\Admin\Finance\FeePayment::class)->name('admin.finance.fee-payment')->middleware('permission:finance.view');
