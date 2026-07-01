@@ -9,6 +9,7 @@ use App\Models\Student;
 use App\Models\StudentFeeTicket;
 use App\Models\Year;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Livewire\Component;
 
 class FeeIssuance extends Component
@@ -29,6 +30,13 @@ class FeeIssuance extends Component
 
     public $notes;
 
+    /** @var array<int, array{id: string, name: string, amount: float}> */
+    public array $otherFees = [];
+
+    public string $otherFeeName = '';
+
+    public $otherFeeAmount = '';
+
     public function mount()
     {
         //
@@ -47,6 +55,10 @@ class FeeIssuance extends Component
 
             return;
         }
+
+        $this->otherFees = [];
+        $this->otherFeeName = '';
+        $this->otherFeeAmount = '';
 
         $this->loadFees();
         $this->loadPendingTickets();
@@ -149,6 +161,46 @@ class FeeIssuance extends Component
         $this->selectedFees = [];
     }
 
+    public function addOtherFee(): void
+    {
+        abort_unless(auth()->user()->can('finance.create'), 403);
+
+        $this->validate([
+            'otherFeeName' => 'required|string|max:255',
+            'otherFeeAmount' => 'required|numeric|min:0.01',
+        ], [
+            'otherFeeName.required' => 'وصف المصروف مطلوب',
+            'otherFeeAmount.required' => 'المبلغ مطلوب',
+            'otherFeeAmount.min' => 'المبلغ يجب أن يكون أكبر من صفر',
+        ]);
+
+        $this->otherFees[] = [
+            'id' => (string) Str::uuid(),
+            'name' => trim($this->otherFeeName),
+            'amount' => round((float) $this->otherFeeAmount, 2),
+        ];
+
+        $this->otherFeeName = '';
+        $this->otherFeeAmount = '';
+
+        $this->dispatch('alert', ['type' => 'success', 'message' => 'تمت إضافة المصروف بنجاح']);
+    }
+
+    public function removeOtherFee(string $feeId): void
+    {
+        abort_unless(auth()->user()->can('finance.create'), 403);
+
+        $this->otherFees = array_values(array_filter(
+            $this->otherFees,
+            fn (array $fee) => $fee['id'] !== $feeId
+        ));
+
+        $this->selectedFees = array_values(array_filter(
+            $this->selectedFees,
+            fn (string $key) => $key !== 'other-'.$feeId
+        ));
+    }
+
     public function generateTickets()
     {
         abort_unless(auth()->user()->can('finance.create'), 403);
@@ -181,8 +233,10 @@ class FeeIssuance extends Component
         DB::transaction(function () use (&$ticketNumbers) {
             $currentYear = Year::current();
             $currentSemester = Year::currentSemester();
+            $issuedOtherFeeIds = [];
+
             foreach ($this->selectedFees as $feeKey) {
-                [$type, $id] = explode('-', $feeKey);
+                [$type, $id] = explode('-', $feeKey, 2);
 
                 $amount = 0;
                 $feeName = '';
@@ -193,6 +247,7 @@ class FeeIssuance extends Component
                 $feeDetails = [];
                 $yearId = $currentYear?->id;
                 $semester = $currentSemester;
+                $feeId = (int) $id;
 
                 if ($type === 'additional') {
                     $fee = AdditionalFee::with('items', 'departments', 'levels', 'sections', 'year')->find($id);
@@ -236,6 +291,24 @@ class FeeIssuance extends Component
                         'enrollment_id' => $enrollment->id,
                         'amount' => $course->fee_amount,
                     ];
+                } elseif ($type === 'other') {
+                    $otherFee = collect($this->otherFees)->firstWhere('id', $id);
+
+                    if (! $otherFee) {
+                        continue;
+                    }
+
+                    $amount = $otherFee['amount'];
+                    $feeName = 'مصاريف أخرى - '.$otherFee['name'];
+                    $departmentId = $this->student->section->department_id;
+                    $levelId = $this->student->level_id;
+                    $sectionId = $this->student->section_id;
+                    $feeId = 0;
+                    $feeDetails = [
+                        'name' => $otherFee['name'],
+                        'amount' => $otherFee['amount'],
+                    ];
+                    $issuedOtherFeeIds[] = $id;
                 } else {
                     $fee = RegistrationFee::with('department', 'level')->find($id);
                     $amount = $fee->total_student_payment;
@@ -271,7 +344,7 @@ class FeeIssuance extends Component
                     'ticket_number' => $ticketNumber,
                     'student_id' => $this->student->id,
                     'fee_type' => $type,
-                    'fee_id' => $id,
+                    'fee_id' => $feeId,
                     'fee_name' => $feeName,
                     'amount' => $amount,
                     'status' => 'pending',
@@ -286,6 +359,13 @@ class FeeIssuance extends Component
                 ]);
 
                 $ticketNumbers[] = $ticketNumber;
+            }
+
+            if (! empty($issuedOtherFeeIds)) {
+                $this->otherFees = array_values(array_filter(
+                    $this->otherFees,
+                    fn (array $fee) => ! in_array($fee['id'], $issuedOtherFeeIds, true)
+                ));
             }
         });
 

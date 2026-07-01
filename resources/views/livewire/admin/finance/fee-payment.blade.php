@@ -87,7 +87,12 @@
                                             @endif
                                         </td>
                                         <td>{{ $ticket->ticket_number }}</td>
-                                        <td>{{ $ticket->fee_name ?? ($ticket->fee_type === 'additional' ? 'رسوم إضافية' : 'رسوم تسجيل') }}</td>
+                                        <td>{{ $ticket->fee_name ?? match($ticket->fee_type) {
+                                            'additional' => 'رسوم إضافية',
+                                            'military_education' => 'مصاريف التربية العسكرية',
+                                            'other' => 'مصاريف أخرى',
+                                            default => 'رسوم تسجيل',
+                                        } }}</td>
                                         <td>
                                             @if($ticket->year)
                                                 <span class="badge bg-label-primary">{{ $ticket->year->year }}</span>

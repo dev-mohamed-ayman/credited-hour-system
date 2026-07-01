@@ -45,7 +45,7 @@
 
         @canany(['students.view', 'students.create', 'student_warnings.view', 'finance.view'])
         <li
-            class="menu-item {{isActiveRoute(['students.*', 'print.student.cards.*', 'print.seat.numbers.*', 'print.certificates.*', 'student-warnings.*', 'student-search.*', 'admin.finance.fee-issuance'], true)}}">
+            class="menu-item {{isActiveRoute(['students.*', 'print.student.cards.*', 'print.seat.numbers.*', 'print.certificates.*', 'student-warnings.*', 'student-search.*', 'admin.finance.fee-issuance', 'admin.finance.student-financial-status'], true)}}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base ti tabler-users"></i>
                 <div data-i18n="شئون الطلبه">شئون الطلبه</div>
@@ -74,6 +74,11 @@
                 <li class="menu-item {{isActiveRoute('admin.finance.fee-issuance')}}">
                     <a href="{{route('admin.finance.fee-issuance')}}" class="menu-link">
                         <div data-i18n="إصدار حافظة مصاريف">إصدار حافظة مصاريف</div>
+                    </a>
+                </li>
+                <li class="menu-item {{isActiveRoute('admin.finance.student-financial-status')}}">
+                    <a href="{{route('admin.finance.student-financial-status')}}" class="menu-link">
+                        <div data-i18n="بيان الحالة المالية">بيان الحالة المالية</div>
                     </a>
                 </li>
                 @endcan
@@ -166,7 +171,7 @@
         </li>
 
         @can('finance.view')
-        <li class="menu-item {{isActiveRoute('admin.finance.fee-payment')}}">
+        <li class="menu-item {{isActiveRoute(['admin.finance.fee-payment', 'admin.finance.student-financial-status'], true)}}">
             <a href="javascript:void(0)" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base ti tabler-currency-dollar"></i>
                 <div data-i18n="المالية">المالية</div>
@@ -175,6 +180,11 @@
                 <li class="menu-item {{isActiveRoute('admin.finance.fee-payment')}}">
                     <a href="{{route('admin.finance.fee-payment')}}" class="menu-link">
                         <div data-i18n="سداد الحافظة">سداد الحافظة</div>
+                    </a>
+                </li>
+                <li class="menu-item {{isActiveRoute('admin.finance.student-financial-status')}}">
+                    <a href="{{route('admin.finance.student-financial-status')}}" class="menu-link">
+                        <div data-i18n="بيان الحالة المالية">بيان الحالة المالية</div>
                     </a>
                 </li>
             </ul>

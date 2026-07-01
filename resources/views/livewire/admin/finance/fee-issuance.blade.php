@@ -83,15 +83,24 @@
                         <span class="badge bg-label-info">حدد المصاريف المراد إصدار حافظة لها</span>
                     </div>
                     <div class="card-body">
-                        @if($additionalFees->isEmpty() && $registrationFees->isEmpty() && $militaryEducationFees->isEmpty())
-                            <div class="alert alert-success text-center py-4">
-                                <i class="ti tabler-circle-check fs-1 mb-2"></i>
-                                <h5>لا توجد مصاريف مستحقة على هذا الطالب حالياً</h5>
+                        @php
+                            $hasAutomaticFees = $additionalFees->isNotEmpty()
+                                || $registrationFees->isNotEmpty()
+                                || $militaryEducationFees->isNotEmpty();
+                            $hasOtherFees = count($otherFees) > 0;
+                            $hasSelectableFees = $hasAutomaticFees || $hasOtherFees;
+                        @endphp
+
+                        @if(!$hasSelectableFees)
+                            <div class="alert alert-info text-center py-3 mb-4">
+                                <i class="ti tabler-info-circle fs-4 mb-2"></i>
+                                <p class="mb-0">لا توجد مصاريف مستحقة تلقائياً على هذا الطالب. يمكنك إضافة مصاريف أخرى يدوياً أدناه.</p>
                             </div>
-                        @else
-                            <form wire:submit.prevent="generateTickets">
-                                {{-- Additional Fees Section --}}
-                                @if($additionalFees->isNotEmpty())
+                        @endif
+
+                        <form wire:submit.prevent="generateTickets">
+                            {{-- Additional Fees Section --}}
+                            @if($additionalFees->isNotEmpty())
                                     <div class="mb-4">
                                         <h6 class="text-uppercase text-muted small fw-bold mb-3">1. المصاريف الإدارية والإضافية</h6>
                                         <div class="table-responsive border rounded">
@@ -206,22 +215,100 @@
                                     </div>
                                 @endif
 
-                                <div class="mb-4">
-                                    <label for="notes" class="form-label">ملاحظات إضافية (تظهر في الوصل)</label>
-                                    <textarea wire:model="notes" id="notes" class="form-control" rows="2"
-                                        placeholder="أدخل أي ملاحظات هنا..."></textarea>
+                            {{-- Other Fees Section --}}
+                            <div class="mb-4">
+                                <h6 class="text-uppercase text-muted small fw-bold mb-3">
+                                    {{ $hasAutomaticFees ? '4.' : '1.' }} مصاريف أخرى (يدوي)
+                                </h6>
+
+                                <div class="row g-3 align-items-end mb-3">
+                                    <div class="col-md-6">
+                                        <label for="otherFeeName" class="form-label">وصف المصروف</label>
+                                        <input type="text" wire:model="otherFeeName" id="otherFeeName"
+                                               class="form-control @error('otherFeeName') is-invalid @enderror"
+                                               placeholder="مثال: طباعة كarnieh نسخة جديدة">
+                                        @error('otherFeeName')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="otherFeeAmount" class="form-label">المبلغ (ج.م)</label>
+                                        <input type="number" wire:model="otherFeeAmount" id="otherFeeAmount" min="0.01" step="0.01"
+                                               class="form-control @error('otherFeeAmount') is-invalid @enderror"
+                                               placeholder="150">
+                                        @error('otherFeeAmount')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <div class="col-md-3">
+                                        @can('finance.create')
+                                            <button type="button" wire:click="addOtherFee" class="btn btn-label-primary w-100" wire:loading.attr="disabled" wire:target="addOtherFee">
+                                                <span wire:loading.remove wire:target="addOtherFee">
+                                                    <i class="ti tabler-plus me-1"></i> إضافة مصروف
+                                                </span>
+                                                <span wire:loading wire:target="addOtherFee">جاري الإضافة...</span>
+                                            </button>
+                                        @endcan
+                                    </div>
                                 </div>
 
-                                <div class="d-flex justify-content-end gap-2">
-                                    <button type="button" wire:click="loadFees" class="btn btn-label-secondary">
-                                        <i class="ti tabler-refresh me-1"></i> إعادة تحميل
-                                    </button>
+                                @if($hasOtherFees)
+                                    <div class="table-responsive border rounded">
+                                        <table class="table table-hover mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th width="50">#</th>
+                                                    <th>الوصف</th>
+                                                    <th class="text-center">المبلغ</th>
+                                                    <th width="100" class="text-center">تحديد</th>
+                                                    <th width="80" class="text-center">حذف</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($otherFees as $fee)
+                                                    <tr wire:key="other-fee-{{ $fee['id'] }}">
+                                                        <td>{{ $loop->iteration }}</td>
+                                                        <td>{{ $fee['name'] }}</td>
+                                                        <td class="text-center fw-bold">{{ number_format($fee['amount'], 2) }} ج.م</td>
+                                                        <td class="text-center">
+                                                            <input type="checkbox" wire:model="selectedFees"
+                                                                   value="other-{{ $fee['id'] }}" class="form-check-input">
+                                                        </td>
+                                                        <td class="text-center">
+                                                            @can('finance.create')
+                                                                <button type="button" wire:click="removeOtherFee('{{ $fee['id'] }}')"
+                                                                        class="btn btn-sm btn-icon btn-label-danger" title="حذف">
+                                                                    <i class="ti tabler-trash"></i>
+                                                                </button>
+                                                            @endcan
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <div class="text-muted small">لم تتم إضافة مصاريف أخرى بعد.</div>
+                                @endif
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="notes" class="form-label">ملاحظات إضافية (تظهر في الوصل)</label>
+                                <textarea wire:model="notes" id="notes" class="form-control" rows="2"
+                                    placeholder="أدخل أي ملاحظات هنا..."></textarea>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="button" wire:click="loadFees" class="btn btn-label-secondary">
+                                    <i class="ti tabler-refresh me-1"></i> إعادة تحميل
+                                </button>
+                                @can('finance.create')
                                     <button type="submit" class="btn btn-success px-5">
                                         <i class="ti tabler-printer me-1"></i> إصدار الحافظة والطباعة
                                     </button>
-                                </div>
-                            </form>
-                        @endif
+                                @endcan
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -256,6 +343,8 @@
                                                         رسوم إضافية
                                                     @elseif($ticket->fee_type === 'military_education')
                                                         مصاريف التربية العسكرية
+                                                    @elseif($ticket->fee_type === 'other')
+                                                        {{ $ticket->fee_name ?? 'مصاريف أخرى' }}
                                                     @else
                                                         رسوم تسجيل
                                                     @endif

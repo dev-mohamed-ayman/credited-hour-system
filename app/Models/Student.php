@@ -117,4 +117,9 @@ class Student extends Model
     {
         return $this->section?->department_id;
     }
+
+    public function feeTickets(): HasMany
+    {
+        return $this->hasMany(StudentFeeTicket::class);
+    }
 }

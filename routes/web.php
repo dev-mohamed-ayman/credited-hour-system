@@ -68,6 +68,7 @@ Route::middleware(['auth'])->group(function () {
     // Finance Routes
     Route::get('finance/fee-issuance', \App\Livewire\Admin\Finance\FeeIssuance::class)->name('admin.finance.fee-issuance')->middleware('permission:finance.view');
     Route::get('finance/fee-payment', \App\Livewire\Admin\Finance\FeePayment::class)->name('admin.finance.fee-payment')->middleware('permission:finance.view');
+    Route::get('finance/student-financial-status', \App\Livewire\Admin\Finance\StudentFinancialStatus::class)->name('admin.finance.student-financial-status')->middleware('permission:finance.view');
     Route::get('finance/print-tickets', [\App\Http\Controllers\Admin\FinanceController::class, 'printTickets'])->name('admin.finance.print-tickets')->middleware('permission:finance.view');
 
     // Course Routes
