@@ -117,8 +117,8 @@
         </li>
         @endcanany
 
-        @canany(['course_registrations.view', 'courses.view', 'grades.view', 'academic_advisors.view', 'military_education.view'])
-        <li class="menu-item {{isActiveRoute(['course-registrations.*', 'registration-records.*', 'courses.*', 'grades.*', 'academic-advisors.*', 'military-education-courses.*'], true)}}">
+        @canany(['course_registrations.view', 'courses.view', 'grades.view', 'academic_advisors.view', 'military_education.view', 'transfer_equivalency.view'])
+        <li class="menu-item {{isActiveRoute(['course-registrations.*', 'registration-records.*', 'courses.*', 'grades.*', 'academic-advisors.*', 'military-education-courses.*', 'admin.transfer-equivalency.*'], true)}}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base ti tabler-book"></i>
                 <div data-i18n="الشئون الأكاديمية">الشئون الأكاديمية</div>
@@ -165,6 +165,14 @@
                 <li class="menu-item {{isActiveRoute('military-education-courses.*')}}">
                     <a href="{{route('military-education-courses.index')}}" class="menu-link">
                         <div data-i18n="التربية العسكرية">التربية العسكرية</div>
+                    </a>
+                </li>
+                @endcan
+
+                @can('transfer_equivalency.view')
+                <li class="menu-item {{isActiveRoute('admin.transfer-equivalency.*')}}">
+                    <a href="{{route('admin.transfer-equivalency.index')}}" class="menu-link">
+                        <div data-i18n="معادلة المحولين">معادلة المحولين</div>
                     </a>
                 </li>
                 @endcan

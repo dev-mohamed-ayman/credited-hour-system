@@ -86,6 +86,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('registration-records', \App\Livewire\Admin\RegistrationRecord\Index::class)->name('registration-records.index')->middleware('permission:course_registrations.view');
     Route::get('registration-records/{registration}', \App\Livewire\Admin\RegistrationRecord\Show::class)->name('registration-records.show')->middleware('permission:course_registrations.view');
 
+    // Transfer Equivalency Routes
+    Route::get('transfer-equivalency', \App\Livewire\Admin\TransferEquivalency\Index::class)->name('admin.transfer-equivalency.index')->middleware('permission:transfer_equivalency.view');
+
     // Student Routes
     Route::get('students/print-cards', [StudentController::class, 'printCardsIndex'])->name('print.student.cards.index')->middleware('permission:students.view');
     Route::post('students/print-cards', [StudentController::class, 'printCards'])->name('print.student.cards.print')->middleware('permission:students.view');

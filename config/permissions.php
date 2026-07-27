@@ -89,4 +89,8 @@ return [
         'label' => 'المستخدمين',
         'actions' => ['view' => 'عرض', 'create' => 'إنشاء', 'edit' => 'تعديل', 'delete' => 'حذف'],
     ],
+    'transfer_equivalency' => [
+        'label' => 'معادلة المحولين',
+        'actions' => ['view' => 'عرض', 'create' => 'إنشاء', 'delete' => 'حذف'],
+    ],
 ];

@@ -6,9 +6,9 @@ use App\Enums\Semester;
 use App\Enums\Student\ApplicationCategory;
 use App\Enums\Student\StudentStatus;
 use App\Enums\Student\StudyStatus;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class Student extends Authenticatable
 {
@@ -162,5 +162,10 @@ class Student extends Authenticatable
     public function feeTickets(): HasMany
     {
         return $this->hasMany(StudentFeeTicket::class);
+    }
+
+    public function transferEquivalencies(): HasMany
+    {
+        return $this->hasMany(TransferEquivalency::class);
     }
 }
