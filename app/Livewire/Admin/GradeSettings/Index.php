@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\GradeSettings;
 
 use App\Enums\Semester;
 use App\Models\CourseRegistrationSetting;
+use App\Models\CrossLevelVisibility;
 use App\Models\FailingGradeSetting;
 use App\Models\Grade;
 use App\Models\ImprovementGradeSetting;
@@ -24,6 +25,9 @@ class Index extends Component
 
     public bool $allowCrossLevelRegistration = false;
 
+    /** @var array<int, array<int, bool>> */
+    public array $crossLevelVisibility = [];
+
     public function mount(): void
     {
         $settings = Setting::query()->first();
@@ -31,7 +35,9 @@ class Index extends Component
         $this->failingGradeIds = FailingGradeSetting::query()->pluck('grade_id')->map(fn ($id) => (int) $id)->all();
         $this->improvementGradeIds = ImprovementGradeSetting::query()->pluck('grade_id')->map(fn ($id) => (int) $id)->all();
 
-        foreach (Level::query()->orderBy('id')->get() as $level) {
+        $levels = Level::query()->orderBy('id')->get();
+
+        foreach ($levels as $level) {
             foreach ([Semester::FIRST, Semester::SECOND] as $semester) {
                 $setting = CourseRegistrationSetting::query()
                     ->where('level_id', $level->id)
@@ -39,6 +45,11 @@ class Index extends Component
                     ->first();
 
                 $this->maxOptionalSettings[$level->id][$semester->value] = $setting?->max_optional_courses;
+            }
+
+            $visibleIds = Level::getVisibleLevelIds($level->id);
+            foreach ($levels as $targetLevel) {
+                $this->crossLevelVisibility[$level->id][$targetLevel->id] = in_array($targetLevel->id, $visibleIds, true);
             }
         }
     }
@@ -93,6 +104,26 @@ class Index extends Component
         ]);
 
         $this->dispatch('toast', ['type' => 'success', 'message' => 'تم حفظ إعدادات التسجيل العامة بنجاح.']);
+    }
+
+    public function saveCrossLevelVisibility(): void
+    {
+        abort_unless(auth()->user()->can('course_registration_settings.edit'), 403);
+
+        CrossLevelVisibility::query()->delete();
+
+        foreach ($this->crossLevelVisibility as $sourceLevelId => $targets) {
+            foreach ($targets as $visibleLevelId => $isVisible) {
+                if ($isVisible && (int) $sourceLevelId !== (int) $visibleLevelId) {
+                    CrossLevelVisibility::create([
+                        'source_level_id' => (int) $sourceLevelId,
+                        'visible_level_id' => (int) $visibleLevelId,
+                    ]);
+                }
+            }
+        }
+
+        $this->dispatch('toast', ['type' => 'success', 'message' => 'تم حفظ مصفوفة ظهور المواد عبر الفرق بنجاح.']);
     }
 
     public function saveMaxOptionalSettings(): void

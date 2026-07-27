@@ -4,9 +4,11 @@ namespace App\Services;
 
 use App\Enums\Semester;
 use App\Models\Course;
+use App\Models\CrossLevelVisibility;
 use App\Models\FailingGradeSetting;
 use App\Models\Grade;
 use App\Models\ImprovementGradeSetting;
+use App\Models\Level;
 use App\Models\Registration;
 use App\Models\RegistrationCourse;
 use App\Models\Setting;
@@ -24,6 +26,12 @@ class CourseEligibilityService
     private ?Collection $improvementGradeIds = null;
 
     private ?int $pendingGradeId = null;
+
+    /** @var array<int, array<int, int>>|null */
+    private ?array $visibleLevelCache = null;
+
+    /** @var array<int, bool>|null */
+    private ?array $visibilityConfiguredCache = null;
 
     /**
      * @return array{
@@ -52,6 +60,10 @@ class CourseEligibilityService
 
         $allowCrossLevel = $this->isCrossLevelRegistrationAllowed();
         $attemptedCourseIds = $attempts->pluck('course_id')->unique();
+        $visibilityConfigured = $allowCrossLevel && $student->level_id
+            ? $this->isVisibilityMatrixConfigured($student->level_id)
+            : false;
+        $allowedLevelIds = $visibilityConfigured ? $this->getAllowedLevelIds($student) : [];
 
         $candidateCourses = Course::query()
             ->with(['prerequisites', 'level', 'sections'])
@@ -60,14 +72,17 @@ class CourseEligibilityService
                 $student->section?->department_id,
                 fn ($query, $departmentId) => $query->where('department_id', $departmentId)
             )
-            ->where(function ($query) use ($student, $allowCrossLevel, $attemptedCourseIds) {
+            ->where(function ($query) use ($student, $allowCrossLevel, $attemptedCourseIds, $visibilityConfigured, $allowedLevelIds) {
                 if ($attemptedCourseIds->isNotEmpty()) {
                     $query->whereIn('id', $attemptedCourseIds);
                 }
 
-                $query->orWhere(function ($levelQuery) use ($student, $allowCrossLevel) {
+                $query->orWhere(function ($levelQuery) use ($student, $allowCrossLevel, $visibilityConfigured, $allowedLevelIds) {
                     if ($allowCrossLevel) {
                         if ($student->section_id) {
+                            if ($visibilityConfigured) {
+                                $levelQuery->whereIn('level_id', $allowedLevelIds);
+                            }
                             $levelQuery->whereHas(
                                 'sections',
                                 fn ($sectionQuery) => $sectionQuery->where('sections.id', $student->section_id)
@@ -111,6 +126,38 @@ class CourseEligibilityService
             'improvement' => $improvement->sortBy('name')->values(),
             'due' => $due->sortBy('name')->values(),
         ];
+    }
+
+    public function isVisibilityMatrixConfigured(int $sourceLevelId): bool
+    {
+        if (! isset($this->visibilityConfiguredCache[$sourceLevelId])) {
+            $this->visibilityConfiguredCache[$sourceLevelId] = CrossLevelVisibility::query()
+                ->where('source_level_id', $sourceLevelId)
+                ->exists();
+        }
+
+        return $this->visibilityConfiguredCache[$sourceLevelId];
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    public function getAllowedLevelIds(Student $student): array
+    {
+        if (! $student->level_id) {
+            return [];
+        }
+
+        if (! $this->isCrossLevelRegistrationAllowed()) {
+            return [$student->level_id];
+        }
+
+        if (! isset($this->visibleLevelCache[$student->level_id])) {
+            $visible = Level::getVisibleLevelIds($student->level_id);
+            $this->visibleLevelCache[$student->level_id] = array_merge([$student->level_id], $visible);
+        }
+
+        return $this->visibleLevelCache[$student->level_id];
     }
 
     public function hasSatisfactoryAttempt(Course $course, Collection $attempts): bool
@@ -205,7 +252,27 @@ class CourseEligibilityService
 
     public function matchesLevelRegistrationRules(Course $course, Student $student): bool
     {
-        if ($this->isCrossLevelRegistrationAllowed()) {
+        if (! $student->level_id || ! $course->level_id) {
+            return false;
+        }
+
+        $allowCrossLevel = $this->isCrossLevelRegistrationAllowed();
+        $visibilityConfigured = $allowCrossLevel && $student->level_id
+            ? $this->isVisibilityMatrixConfigured($student->level_id)
+            : false;
+
+        if ($visibilityConfigured) {
+            $allowedLevelIds = $this->getAllowedLevelIds($student);
+            if (! in_array($course->level_id, $allowedLevelIds, true)) {
+                return false;
+            }
+        } elseif (! $allowCrossLevel) {
+            if ($course->level_id !== $student->level_id) {
+                return false;
+            }
+        }
+
+        if ($allowCrossLevel) {
             if (! $student->section_id) {
                 return false;
             }
@@ -215,11 +282,7 @@ class CourseEligibilityService
             return $course->sections->contains('id', $student->section_id);
         }
 
-        if (! $student->level_id || ! $course->level_id) {
-            return false;
-        }
-
-        return $course->level_id === $student->level_id;
+        return true;
     }
 
     public function isCurriculumWithinCutoff(Course $course, Student $student, Semester $registrationSemester): bool
@@ -325,6 +388,8 @@ class CourseEligibilityService
         $this->failingGradeIds = null;
         $this->improvementGradeIds = null;
         $this->pendingGradeId = null;
+        $this->visibleLevelCache = null;
+        $this->visibilityConfiguredCache = null;
     }
 
     /**

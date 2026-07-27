@@ -17,7 +17,7 @@
         </div>
         <div class="card-body">
             <div class="form-check form-switch custom-switch-primary">
-                <input class="form-check-input" type="checkbox" wire:model="allowCrossLevelRegistration"
+                <input class="form-check-input" type="checkbox" wire:model.live="allowCrossLevelRegistration"
                        id="allowCrossLevelRegistration">
                 <label class="form-check-label fw-medium" for="allowCrossLevelRegistration">
                     السماح بتسجيل مواد من فرق دراسية أخرى
@@ -25,7 +25,7 @@
             </div>
             <small class="text-muted mt-2 d-block">
                 <i class="ti tabler-info-circle ti-xs me-1"></i>
-                عند التفعيل: يمكن للطالب رؤية مواد من فرق أخرى بشرط أن تكون مرتبطة بنفس الشعبة.
+                عند التفعيل: يمكن للطالب رؤية مواد من فرق أخرى وفقاً لمصفوفة الظهور المحددة أدناه.
                 عند الإيقاف: تظهر مواد فرقته الدراسية فقط.
             </small>
         </div>
@@ -43,6 +43,71 @@
             </div>
         @endcan
     </div>
+
+    @if($allowCrossLevelRegistration)
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">مصفوفة ظهور المواد عبر الفرق</h5>
+            </div>
+            <div class="card-body">
+                <small class="text-muted mb-3 d-block">
+                    <i class="ti tabler-info-circle ti-xs me-1"></i>
+                    حدد لكل فرقة دراسية (صفوف)، أي الفرق الأخرى (أعمدة) التي تظهر لها موادها.
+                    الفرقة نفسها مفعلة دائماً ولا تحتاج لتحديدها.
+                </small>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-start align-middle">الفرقة \ تظهر لها مواد</th>
+                                @foreach($levels as $colLevel)
+                                    <th class="text-center align-middle small">{{ $colLevel->name }}</th>
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($levels as $rowLevel)
+                                <tr>
+                                    <td class="fw-medium align-middle">{{ $rowLevel->name }}</td>
+                                    @foreach($levels as $colLevel)
+                                        <td class="text-center align-middle">
+                                            @if($rowLevel->id === $colLevel->id)
+                                                <span class="badge bg-label-primary" title="مفعلة دائماً">
+                                                    <i class="ti tabler-check me-1"></i>نفس الفرقة
+                                                </span>
+                                            @else
+                                                <div class="form-check form-check-inline d-flex justify-content-center">
+                                                    <input
+                                                        class="form-check-input"
+                                                        type="checkbox"
+                                                        wire:model="crossLevelVisibility.{{ $rowLevel->id }}.{{ $colLevel->id }}"
+                                                        id="vis_{{ $rowLevel->id }}_{{ $colLevel->id }}"
+                                                    >
+                                                </div>
+                                            @endif
+                                        </td>
+                                    @endforeach
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @can('course_registration_settings.edit')
+                <div class="card-footer d-flex justify-content-end border-top pt-3">
+                    <button type="button" class="btn btn-primary" wire:click="saveCrossLevelVisibility" wire:loading.attr="disabled">
+                        <span wire:loading.remove wire:target="saveCrossLevelVisibility">
+                            <i class="ti tabler-device-floppy me-1"></i> حفظ مصفوفة الظهور
+                        </span>
+                        <span wire:loading wire:target="saveCrossLevelVisibility">
+                            <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                            جاري الحفظ...
+                        </span>
+                    </button>
+                </div>
+            @endcan
+        </div>
+    @endif
 
     <div class="card mb-4">
         <div class="card-header">
