@@ -298,7 +298,7 @@
                 @endcan
 
                 @canany(['registration_fees.view', 'additional_fees.view', 'years.view'])
-                <li class="menu-item {{isActiveRoute(['registration-fees.*', 'additional-fees.*', 'years.*'], true)}}">
+                <li class="menu-item {{isActiveRoute(['registration-fees.*', 'additional-fees.*', 'years.*', 'fee-templates.*'], true)}}">
                     <a href="javascript:void(0)" class="menu-link menu-toggle">
                         <div data-i18n="إعدادات النظام">إعدادات النظام</div>
                     </a>
@@ -314,6 +314,11 @@
                         <li class="menu-item {{isActiveRoute('additional-fees.*')}}">
                             <a href="{{route('additional-fees.index')}}" class="menu-link">
                                 <div data-i18n="رسوم إضافية">رسوم إضافية</div>
+                            </a>
+                        </li>
+                        <li class="menu-item {{isActiveRoute('fee-templates.*')}}">
+                            <a href="{{route('fee-templates.index')}}" class="menu-link">
+                                <div data-i18n="قوالب المصاريف">قوالب المصاريف</div>
                             </a>
                         </li>
                         @endcan

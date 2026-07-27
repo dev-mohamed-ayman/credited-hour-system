@@ -94,7 +94,7 @@
                         @if(!$hasSelectableFees)
                             <div class="alert alert-info text-center py-3 mb-4">
                                 <i class="ti tabler-info-circle fs-4 mb-2"></i>
-                                <p class="mb-0">لا توجد مصاريف مستحقة تلقائياً على هذا الطالب. يمكنك إضافة مصاريف أخرى يدوياً أدناه.</p>
+                                <p class="mb-0">لا توجد مصاريف مستحقة تلقائياً على هذا الطالب. يمكنك اختيار مصاريف من القوالب المتكررة أدناه.</p>
                             </div>
                         @endif
 
@@ -215,82 +215,73 @@
                                     </div>
                                 @endif
 
-                            {{-- Other Fees Section --}}
-                            <div class="mb-4">
-                                <h6 class="text-uppercase text-muted small fw-bold mb-3">
-                                    {{ $hasAutomaticFees ? '4.' : '1.' }} مصاريف أخرى (يدوي)
-                                </h6>
+                            {{-- Other Fees Section (from templates only) --}}
+                            @if(!empty($feeTemplates))
+                                <div class="mb-4">
+                                    <h6 class="text-uppercase text-muted small fw-bold mb-3">
+                                        {{ $hasAutomaticFees ? '4.' : '1.' }} مصاريف أخرى (من القوالب المتكررة)
+                                    </h6>
 
-                                <div class="row g-3 align-items-end mb-3">
-                                    <div class="col-md-6">
-                                        <label for="otherFeeName" class="form-label">وصف المصروف</label>
-                                        <input type="text" wire:model="otherFeeName" id="otherFeeName"
-                                               class="form-control @error('otherFeeName') is-invalid @enderror"
-                                               placeholder="مثال: طباعة كarnieh نسخة جديدة">
-                                        @error('otherFeeName')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label for="otherFeeAmount" class="form-label">المبلغ (ج.م)</label>
-                                        <input type="number" wire:model="otherFeeAmount" id="otherFeeAmount" min="0.01" step="0.01"
-                                               class="form-control @error('otherFeeAmount') is-invalid @enderror"
-                                               placeholder="150">
-                                        @error('otherFeeAmount')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                    <div class="col-md-3">
-                                        @can('finance.create')
-                                            <button type="button" wire:click="addOtherFee" class="btn btn-label-primary w-100" wire:loading.attr="disabled" wire:target="addOtherFee">
-                                                <span wire:loading.remove wire:target="addOtherFee">
-                                                    <i class="ti tabler-plus me-1"></i> إضافة مصروف
-                                                </span>
-                                                <span wire:loading wire:target="addOtherFee">جاري الإضافة...</span>
-                                            </button>
-                                        @endcan
-                                    </div>
-                                </div>
+                                    @can('finance.create')
+                                        <div class="row g-3 align-items-end mb-3">
+                                            <div class="col-md-9">
+                                                <label class="form-label">اختر من المصاريف المتكررة</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="ti tabler-templates"></i></span>
+                                                    <select wire:model.live="selectedFeeTemplateId"
+                                                            class="form-select">
+                                                        <option value="">-- اختر مصروف من القائمة --</option>
+                                                        @foreach($feeTemplates as $template)
+                                                            <option value="{{ $template['id'] }}">
+                                                                {{ $template['name'] }} - {{ number_format($template['amount'], 2) }} ج.م
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endcan
 
-                                @if($hasOtherFees)
-                                    <div class="table-responsive border rounded">
-                                        <table class="table table-hover mb-0">
-                                            <thead class="table-light">
-                                                <tr>
-                                                    <th width="50">#</th>
-                                                    <th>الوصف</th>
-                                                    <th class="text-center">المبلغ</th>
-                                                    <th width="100" class="text-center">تحديد</th>
-                                                    <th width="80" class="text-center">حذف</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach($otherFees as $fee)
-                                                    <tr wire:key="other-fee-{{ $fee['id'] }}">
-                                                        <td>{{ $loop->iteration }}</td>
-                                                        <td>{{ $fee['name'] }}</td>
-                                                        <td class="text-center fw-bold">{{ number_format($fee['amount'], 2) }} ج.م</td>
-                                                        <td class="text-center">
-                                                            <input type="checkbox" wire:model="selectedFees"
-                                                                   value="other-{{ $fee['id'] }}" class="form-check-input">
-                                                        </td>
-                                                        <td class="text-center">
-                                                            @can('finance.create')
-                                                                <button type="button" wire:click="removeOtherFee('{{ $fee['id'] }}')"
-                                                                        class="btn btn-sm btn-icon btn-label-danger" title="حذف">
-                                                                    <i class="ti tabler-trash"></i>
-                                                                </button>
-                                                            @endcan
-                                                        </td>
+                                    @if($hasOtherFees)
+                                        <div class="table-responsive border rounded">
+                                            <table class="table table-hover mb-0">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th width="50">#</th>
+                                                        <th>الوصف</th>
+                                                        <th class="text-center">المبلغ</th>
+                                                        <th width="100" class="text-center">تحديد</th>
+                                                        <th width="80" class="text-center">حذف</th>
                                                     </tr>
-                                                @endforeach
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                @else
-                                    <div class="text-muted small">لم تتم إضافة مصاريف أخرى بعد.</div>
-                                @endif
-                            </div>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($otherFees as $fee)
+                                                        <tr wire:key="other-fee-{{ $fee['id'] }}">
+                                                            <td>{{ $loop->iteration }}</td>
+                                                            <td>{{ $fee['name'] }}</td>
+                                                            <td class="text-center fw-bold">{{ number_format($fee['amount'], 2) }} ج.م</td>
+                                                            <td class="text-center">
+                                                                <input type="checkbox" wire:model="selectedFees"
+                                                                       value="other-{{ $fee['id'] }}" class="form-check-input" checked>
+                                                            </td>
+                                                            <td class="text-center">
+                                                                @can('finance.create')
+                                                                    <button type="button" wire:click="removeOtherFee('{{ $fee['id'] }}')"
+                                                                            class="btn btn-sm btn-icon btn-label-danger" title="حذف">
+                                                                        <i class="ti tabler-trash"></i>
+                                                                    </button>
+                                                                @endcan
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    @else
+                                        <div class="text-muted small">لم تتم إضافة مصاريف أخرى بعد. اختر من القائمة أعلاه.</div>
+                                    @endif
+                                </div>
+                            @endif
 
                             <div class="mb-4">
                                 <label for="notes" class="form-label">ملاحظات إضافية (تظهر في الوصل)</label>

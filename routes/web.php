@@ -39,6 +39,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('settings', [SettingController::class, 'update'])->name('setting.update')->middleware('permission:settings.edit');
     Route::get('registration-fees', \App\Livewire\Admin\RegistrationFee\Index::class)->name('registration-fees.index')->middleware('permission:registration_fees.view');
     Route::get('additional-fees', \App\Livewire\Admin\AdditionalFee\Index::class)->name('additional-fees.index')->middleware('permission:additional_fees.view');
+    Route::get('fee-templates', \App\Livewire\Admin\FeeTemplate\Index::class)->name('fee-templates.index')->middleware('permission:additional_fees.view');
 
     // Department Routes
     Route::resource('departments', DepartmentController::class)->except(['show'])->middleware('permission:departments.view');
@@ -131,7 +132,7 @@ Route::prefix('advisor')->name('advisor.')->group(function () {
         })->name('logout');
 
         Route::get('', \App\Livewire\Advisor\Dashboard::class)->name('dashboard');
-        
+
         Route::get('course-registrations', \App\Livewire\Advisor\CourseRegistration\Index::class)->name('course-registrations.index');
         Route::get('registration-records', \App\Livewire\Advisor\RegistrationRecord\Index::class)->name('registration-records.index');
         Route::get('registration-records/{registration}', \App\Livewire\Advisor\RegistrationRecord\Show::class)->name('registration-records.show');
@@ -154,7 +155,7 @@ Route::prefix('student')->name('student.')->group(function () {
         })->name('logout');
 
         Route::get('', \App\Livewire\Student\Dashboard::class)->name('dashboard');
-        
+
         Route::get('course-registrations', \App\Livewire\Student\CourseRegistration\Index::class)->name('course-registrations.index');
         Route::get('registration-records', \App\Livewire\Student\RegistrationRecord\Index::class)->name('registration-records.index');
         Route::get('status-statement', \App\Livewire\Student\StatusStatement::class)->name('status-statement');

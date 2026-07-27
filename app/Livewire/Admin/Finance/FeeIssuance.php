@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin\Finance;
 
 use App\Models\AdditionalFee;
+use App\Models\FeeTemplate;
 use App\Models\MilitaryEducationEnrollment;
 use App\Models\RegistrationFee;
 use App\Models\Student;
@@ -33,13 +34,56 @@ class FeeIssuance extends Component
     /** @var array<int, array{id: string, name: string, amount: float}> */
     public array $otherFees = [];
 
-    public string $otherFeeName = '';
+    public $selectedFeeTemplateId = '';
 
-    public $otherFeeAmount = '';
+    public $feeTemplates = [];
 
     public function mount()
     {
-        //
+        $this->loadFeeTemplates();
+    }
+
+    public function loadFeeTemplates(): void
+    {
+        try {
+            $this->feeTemplates = FeeTemplate::active()
+                ->orderBy('name')
+                ->get(['id', 'name', 'amount'])
+                ->toArray();
+        } catch (\Throwable) {
+            $this->feeTemplates = [];
+        }
+    }
+
+    public function updatedSelectedFeeTemplateId(): void
+    {
+        if (empty($this->selectedFeeTemplateId)) {
+            return;
+        }
+
+        try {
+            $template = FeeTemplate::find((int) $this->selectedFeeTemplateId);
+        } catch (\Throwable) {
+            $template = null;
+        }
+
+        if ($template) {
+            abort_unless(auth()->user()->can('finance.create'), 403);
+
+            $feeId = (string) Str::uuid();
+
+            $this->otherFees[] = [
+                'id' => $feeId,
+                'name' => $template->name,
+                'amount' => (float) $template->amount,
+            ];
+
+            $this->selectedFees[] = 'other-'.$feeId;
+
+            $this->dispatch('alert', ['type' => 'success', 'message' => 'تمت إضافة «'.$template->name.'» بنجاح']);
+        }
+
+        $this->selectedFeeTemplateId = '';
     }
 
     public function searchStudent()
@@ -57,8 +101,8 @@ class FeeIssuance extends Component
         }
 
         $this->otherFees = [];
-        $this->otherFeeName = '';
-        $this->otherFeeAmount = '';
+        $this->selectedFeeTemplateId = '';
+        $this->loadFeeTemplates();
 
         $this->loadFees();
         $this->loadPendingTickets();
@@ -159,31 +203,6 @@ class FeeIssuance extends Component
             });
 
         $this->selectedFees = [];
-    }
-
-    public function addOtherFee(): void
-    {
-        abort_unless(auth()->user()->can('finance.create'), 403);
-
-        $this->validate([
-            'otherFeeName' => 'required|string|max:255',
-            'otherFeeAmount' => 'required|numeric|min:0.01',
-        ], [
-            'otherFeeName.required' => 'وصف المصروف مطلوب',
-            'otherFeeAmount.required' => 'المبلغ مطلوب',
-            'otherFeeAmount.min' => 'المبلغ يجب أن يكون أكبر من صفر',
-        ]);
-
-        $this->otherFees[] = [
-            'id' => (string) Str::uuid(),
-            'name' => trim($this->otherFeeName),
-            'amount' => round((float) $this->otherFeeAmount, 2),
-        ];
-
-        $this->otherFeeName = '';
-        $this->otherFeeAmount = '';
-
-        $this->dispatch('alert', ['type' => 'success', 'message' => 'تمت إضافة المصروف بنجاح']);
     }
 
     public function removeOtherFee(string $feeId): void
