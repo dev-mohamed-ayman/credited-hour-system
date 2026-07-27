@@ -37,11 +37,31 @@ class Setting extends Model
             'cert_show_extra' => 'boolean',
             'military_education_default_fee' => 'decimal:2',
             'allow_cross_level_registration' => 'boolean',
+            'graduation_required_hours' => 'integer',
+            'warning_gpa_threshold' => 'decimal:2',
         ];
     }
 
     public static function allowCrossLevelRegistration(): bool
     {
         return (bool) static::query()->value('allow_cross_level_registration');
+    }
+
+    public static function graduationRequiredHours(): int
+    {
+        try {
+            return (int) (static::query()->value('graduation_required_hours') ?? 132);
+        } catch (\Throwable) {
+            return 132;
+        }
+    }
+
+    public static function warningGpaThreshold(): float
+    {
+        try {
+            return (float) (static::query()->value('warning_gpa_threshold') ?? 2.0);
+        } catch (\Throwable) {
+            return 2.0;
+        }
     }
 }

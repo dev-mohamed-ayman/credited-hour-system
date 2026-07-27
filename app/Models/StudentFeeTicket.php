@@ -38,6 +38,24 @@ class StudentFeeTicket extends Model
         ];
     }
 
+    public function isPaid(): bool
+    {
+        return $this->status === 'paid' || $this->paid_at !== null;
+    }
+
+    public function isPending(): bool
+    {
+        return $this->status === 'pending';
+    }
+
+    public function scopeUnpaid($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('status', 'pending')
+                ->orWhereNull('paid_at');
+        });
+    }
+
     public function year()
     {
         return $this->belongsTo(Year::class);
