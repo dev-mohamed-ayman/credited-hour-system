@@ -68,6 +68,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Student Affairs Routes
     Route::get('student-affairs/student-status', \App\Livewire\Admin\StudentAffairs\StudentStatus::class)->name('admin.student-affairs.student-status')->middleware('permission:students.view');
+    Route::get('student-affairs/seat-numbers', \App\Livewire\Admin\StudentAffairs\SeatNumbers::class)->name('admin.student-affairs.seat-numbers')->middleware('permission:students.view');
 
     // Finance Routes
     Route::get('finance/fee-issuance', \App\Livewire\Admin\Finance\FeeIssuance::class)->name('admin.finance.fee-issuance')->middleware('permission:finance.view');
