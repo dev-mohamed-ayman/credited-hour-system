@@ -274,7 +274,7 @@
 
     <div class="row g-4 mb-4">
         @if (! empty($student->seat_number))
-            <div class="col-md-4 col-12">
+            <div class="col-md-3 col-12">
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex align-items-center">
@@ -292,7 +292,7 @@
         @endif
 
         @if ($student->section)
-            <div class="col-md-4 col-12">
+            <div class="col-md-3 col-12">
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex align-items-center">
@@ -300,7 +300,7 @@
                                 <i class="ti ti-users-group ti-xl"></i>
                             </div>
                             <div>
-                                <p class="text-muted mb-1">رقم السكشن / الشعبة</p>
+                                <p class="text-muted mb-1">الشعبة</p>
                                 <h4 class="fw-bold mb-0">{{ $student->section->name }}</h4>
                             </div>
                         </div>
@@ -309,7 +309,7 @@
             </div>
         @endif
 
-        <div class="col-md-4 col-12">
+        <div class="col-md-3 col-12">
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
@@ -324,7 +324,66 @@
                 </div>
             </div>
         </div>
+
+        <div class="col-md-3 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-md me-3 bg-label-success">
+                            <i class="ti ti-wallet ti-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-muted mb-1">رصيد المحفظة</p>
+                            <h4 class="fw-bold mb-0">{{ number_format($walletBalance, 2) }} ج.م</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    @if($walletTransactions->isNotEmpty())
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">آخر حركات المحفظة</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>التاريخ</th>
+                                    <th>الترم</th>
+                                    <th>النوع</th>
+                                    <th>المبلغ</th>
+                                    <th>البيان</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($walletTransactions as $transaction)
+                                    <tr>
+                                        <td>{{ $transaction->created_at->format('Y-m-d H:i') }}</td>
+                                        <td>{{ $transaction->year?->name }} - {{ $transaction->semester?->label() }}</td>
+                                        <td>
+                                            <span class="badge {{ $transaction->type->value === 'deposit' ? 'bg-label-success' : 'bg-label-danger' }}">
+                                                {{ $transaction->type->label() }}
+                                            </span>
+                                        </td>
+                                        <td class="fw-bold {{ $transaction->type->value === 'deposit' ? 'text-success' : 'text-danger' }}">
+                                            {{ $transaction->type->value === 'deposit' ? '+' : '-' }}{{ number_format($transaction->amount, 2) }}
+                                        </td>
+                                        <td>{{ $transaction->reason }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
 
     <div class="row mb-4">
         <div class="col-12">

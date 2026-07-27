@@ -142,6 +142,10 @@ class Dashboard extends Component
         $unpaidFeeTickets = $this->getUnpaidFeeTickets($student);
         $hasUnpaidFees = $unpaidFeeTickets->isNotEmpty();
 
+        $walletService = app(\App\Services\WalletService::class);
+        $walletBalance = $walletService->getBalance($student);
+        $walletTransactions = $student->walletTransactions()->with('year')->latest()->take(5)->get();
+
         $cgpaColorClass = match (true) {
             $stats['cgpa'] >= 3 => 'bg-success',
             $stats['cgpa'] >= 2 => 'bg-warning',
@@ -170,6 +174,8 @@ class Dashboard extends Component
             'hasUnpaidFees' => $hasUnpaidFees,
             'unpaidFeeTickets' => $unpaidFeeTickets,
             'cgpaColorClass' => $cgpaColorClass,
+            'walletBalance' => $walletBalance,
+            'walletTransactions' => $walletTransactions,
         ])
             ->extends('student.layouts.app')
             ->section('content');

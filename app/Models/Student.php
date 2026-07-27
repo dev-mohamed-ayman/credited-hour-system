@@ -168,4 +168,14 @@ class Student extends Authenticatable
     {
         return $this->hasMany(TransferEquivalency::class);
     }
+
+    public function wallet(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(StudentWallet::class);
+    }
+
+    public function walletTransactions(): HasMany
+    {
+        return $this->hasMany(WalletTransaction::class);
+    }
 }

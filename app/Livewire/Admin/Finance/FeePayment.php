@@ -165,9 +165,10 @@ class FeePayment extends Component
         abort_unless(auth()->user()->can('finance.edit'), 403);
 
         $this->currentOpenDay = DailyPaymentDateTime::whereNull('end_date')->first();
-        
-        if (!$this->currentOpenDay) {
+
+        if (! $this->currentOpenDay) {
             $this->dispatch('alert', ['type' => 'error', 'message' => 'لا يمكن السداد، لا يوجد يوم مفتوح']);
+
             return;
         }
 
@@ -210,6 +211,16 @@ class FeePayment extends Component
                 }
 
                 $ticket->update($updateData);
+
+                app(\App\Services\WalletService::class)->deposit(
+                    student: $ticket->student,
+                    amount: $ticket->amount,
+                    yearId: $ticket->year_id,
+                    semester: $ticket->semester,
+                    reason: 'إيداع مبلغ مالي من سداد حافظة',
+                    reference: $ticket,
+                    performedBy: auth()->user()
+                );
             }
 
             if ($registrationFeesCount > 0) {

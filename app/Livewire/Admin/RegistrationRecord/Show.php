@@ -55,6 +55,7 @@ class Show extends Component
 
         if (! $this->availableCourses->contains('id', $this->selectedCourseId)) {
             $this->dispatch('toast', message: 'هذه المادة غير متاحة للتسجيل في هذا السجل التاريخي.', type: 'error');
+
             return;
         }
 
@@ -92,6 +93,7 @@ class Show extends Component
                 message: "لا يمكن إزالة المادة. الطالب مسجل في مادة ({$blockingCourses}) في ترم لاحق بناءً على نجاحه في مادة ({$registrationCourse->course->name}).",
                 type: 'error'
             );
+
             return;
         }
 
@@ -106,6 +108,23 @@ class Show extends Component
     {
         abort_unless(auth()->user()->can('course_registrations.create'), 403);
 
+        $walletService = app(\App\Services\WalletService::class);
+        $cost = $walletService->calculateRegistrationCost($this->registration);
+
+        if (! $walletService->hasEnoughBalance($this->registration->student, $cost)) {
+            $this->dispatch('toast', message: 'رصيد المحفظة غير كافٍ لإتمام التسجيل.', type: 'error');
+
+            return;
+        }
+
+        try {
+            $walletService->deductRegistrationFees($this->registration, auth()->user());
+        } catch (\Exception $e) {
+            $this->dispatch('toast', message: $e->getMessage(), type: 'error');
+
+            return;
+        }
+
         $this->registration->update([
             'status' => RegistrationStatus::APPROVED,
             'approved_by_user_id' => auth()->id(),
@@ -113,7 +132,7 @@ class Show extends Component
         ]);
 
         $this->registration->load('approvedByUser');
-        $this->dispatch('toast', message: 'تمت الموافقة على التسجيل بنجاح.', type: 'success');
+        $this->dispatch('toast', message: 'تمت الموافقة على التسجيل بنجاح وتم خصم الرسوم.', type: 'success');
     }
 
     public function rejectRegistration(): void
