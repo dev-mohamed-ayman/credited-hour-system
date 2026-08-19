@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\Traits\HasDeletionGuards;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CertificateType extends Model
 {
-    use HasDeletionGuards;
+    use HasDeletionGuards, HasFactory;
 
     public const NAMES = [
         'الثانوية العامة - علمي علوم',
@@ -27,6 +28,7 @@ class CertificateType extends Model
     ];
 
     protected $fillable = ['name', 'total_score'];
+
     protected $blockingRelations = ['sections', 'students'];
 
     public function requirements(): BelongsToMany

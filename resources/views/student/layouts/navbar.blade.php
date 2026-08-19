@@ -99,6 +99,15 @@
                         <div class="dropdown-divider my-1 mx-n2"></div>
                     </li>
                     <li>
+                        <a class="dropdown-item" href="{{ route('student.change-password') }}">
+                            <i class="icon-base ti tabler-lock me-3 icon-22px"></i>
+                            <span class="align-middle">تغيير كلمة المرور</span>
+                        </a>
+                    </li>
+                    <li>
+                        <div class="dropdown-divider my-1 mx-n2"></div>
+                    </li>
+                    <li>
                         <div class="d-grid px-2 pt-2 pb-1">
                             <form method="POST" action="{{ route('student.logout') }}">
                                 @csrf

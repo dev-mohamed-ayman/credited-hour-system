@@ -62,6 +62,17 @@
             </a>
         </li>
 
+        <li class="menu-header small text-uppercase">
+            <span class="menu-header-text">الحساب</span>
+        </li>
+
+        <li class="menu-item {{isActiveRoute('student.change-password')}}">
+            <a href="{{route('student.change-password')}}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-lock"></i>
+                <div data-i18n="تغيير كلمة المرور">تغيير كلمة المرور</div>
+            </a>
+        </li>
+
     </ul>
 </aside>
 
