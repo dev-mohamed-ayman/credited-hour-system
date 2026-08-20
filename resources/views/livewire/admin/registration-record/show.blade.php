@@ -86,6 +86,14 @@
                                 </div>
                             </div>
                         @endif
+                        <div class="col-md-6">
+                            <label class="text-muted small mb-1">الرسوم المخصومة من المحفظة</label>
+                            <div>
+                                <span class="badge bg-label-{{ (float) $registration->charged_amount > 0 ? 'success' : 'secondary' }} fs-6">
+                                    {{ number_format((float) $registration->charged_amount, 2) }} ج.م
+                                </span>
+                            </div>
+                        </div>
                         @if($registration->rejection_reason)
                             <div class="col-12">
                                 <label class="text-muted small mb-1">سبب الرفض</label>

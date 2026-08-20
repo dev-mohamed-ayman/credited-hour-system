@@ -6,6 +6,7 @@ use App\Enums\RegistrationStatus;
 use App\Models\Registration;
 use App\Models\RegistrationCourse;
 use App\Services\CourseEligibilityService;
+use App\Services\RegistrationBillingService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Livewire\Component;
@@ -47,7 +48,7 @@ class Show extends Component
             ->values();
     }
 
-    public function addCourse(CourseEligibilityService $eligibilityService): void
+    public function addCourse(CourseEligibilityService $eligibilityService, RegistrationBillingService $billingService): void
     {
         $this->validate([
             'selectedCourseId' => 'required|exists:courses,id',
@@ -61,35 +62,34 @@ class Show extends Component
 
         $pendingGradeId = $eligibilityService->getPendingGradeId();
 
-        RegistrationCourse::create([
+        $registrationCourse = RegistrationCourse::create([
             'registration_id' => $this->registration->id,
             'course_id' => $this->selectedCourseId,
             'grade_id' => $pendingGradeId,
         ]);
+
+        $settlement = $billingService->settleIfApproved($this->registration, auth('advisor')->user());
+
+        if (! $settlement['success']) {
+            $registrationCourse->delete();
+
+            $this->dispatch('toast', message: $settlement['message'], type: 'error');
+
+            return;
+        }
 
         $this->registration->load('courses.course', 'courses.grade');
         $this->loadAvailableCourses($eligibilityService);
         $this->selectedCourseId = null;
 
         $this->dispatch('close-modal', id: 'addCourseModal');
-        $this->dispatch('toast', message: 'تم إضافة المادة للسجل بنجاح.', type: 'success');
+        $this->dispatch('toast', message: trim('تم إضافة المادة للسجل بنجاح. '.$settlement['message']), type: 'success');
     }
 
-    public function approveRegistration(): void
+    public function approveRegistration(RegistrationBillingService $billingService): void
     {
-        $walletService = app(\App\Services\WalletService::class);
-        $cost = $walletService->calculateRegistrationCost($this->registration);
-
-        if (! $walletService->hasEnoughBalance($this->registration->student, $cost)) {
-            $this->dispatch('toast', message: 'رصيد المحفظة غير كافٍ لإتمام التسجيل.', type: 'error');
-
-            return;
-        }
-
-        try {
-            $walletService->deductRegistrationFees($this->registration, auth('advisor')->user());
-        } catch (\Exception $e) {
-            $this->dispatch('toast', message: $e->getMessage(), type: 'error');
+        if ($this->registration->status === RegistrationStatus::APPROVED) {
+            $this->dispatch('toast', message: 'تمت الموافقة على هذا التسجيل بالفعل.', type: 'warning');
 
             return;
         }
@@ -100,15 +100,30 @@ class Show extends Component
             'rejection_reason' => null,
         ]);
 
+        $settlement = $billingService->settle($this->registration, auth('advisor')->user());
+
+        if (! $settlement['success']) {
+            $this->registration->update([
+                'status' => RegistrationStatus::PENDING,
+                'approved_by_advisor_id' => null,
+            ]);
+
+            $this->dispatch('toast', message: $settlement['message'], type: 'error');
+
+            return;
+        }
+
         $this->registration->load('approvedByAdvisor');
-        $this->dispatch('toast', message: 'تمت الموافقة على التسجيل بنجاح وتم خصم الرسوم.', type: 'success');
+        $this->dispatch('toast', message: 'تمت الموافقة على التسجيل بنجاح. '.$settlement['message'], type: 'success');
     }
 
-    public function rejectRegistration(): void
+    public function rejectRegistration(RegistrationBillingService $billingService): void
     {
         $this->validate([
             'rejectionReason' => 'required|string',
         ]);
+
+        $refund = $billingService->refundAll($this->registration, auth('advisor')->user());
 
         $this->registration->update([
             'status' => RegistrationStatus::REJECTED,
@@ -119,7 +134,7 @@ class Show extends Component
         $this->registration->load('approvedByAdvisor');
         $this->rejectionReason = null;
         $this->dispatch('close-modal', id: 'rejectRegistrationModal');
-        $this->dispatch('toast', message: 'تم رفض التسجيل بنجاح.', type: 'error');
+        $this->dispatch('toast', message: trim('تم رفض التسجيل بنجاح. '.$refund['message']), type: 'error');
     }
 
     public function render(): View

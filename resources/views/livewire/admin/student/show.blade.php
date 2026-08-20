@@ -373,7 +373,7 @@
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="avatar flex-shrink-0">
                                             <div class="avatar-initial bg-label-secondary rounded">
-                                                <i class="ti ti-clipboard-check"></i>
+                                                <i class="ti tabler-clipboard-check"></i>
                                             </div>
                                         </div>
                                         <div>
@@ -386,7 +386,7 @@
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="avatar flex-shrink-0">
                                             <div class="avatar-initial {{ $hasPassed ? 'bg-label-success' : 'bg-label-warning' }} rounded">
-                                                <i class="ti ti-circle-check"></i>
+                                                <i class="ti tabler-circle-check"></i>
                                             </div>
                                         </div>
                                         <div>

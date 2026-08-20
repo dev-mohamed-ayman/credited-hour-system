@@ -10,11 +10,11 @@
                         <div class="input-group">
                             <input type="text" class="form-control" wire:model.live.debounce.300ms="searchQuery" placeholder="ابحث بكود أو اسم الطالب...">
                             <button class="btn btn-primary" type="submit">
-                                <i class="ti ti-search me-1"></i> بحث
+                                <i class="ti tabler-search me-1"></i> بحث
                             </button>
                             @if($student || strlen($searchQuery) > 0)
                                 <button class="btn btn-outline-secondary" type="button" wire:click="clearSearch">
-                                    <i class="ti ti-x me-1"></i> مسح
+                                    <i class="ti tabler-x me-1"></i> مسح
                                 </button>
                             @endif
                         </div>
@@ -60,7 +60,7 @@
                             <h2 class="text-white mb-0">{{ number_format($walletBalance, 2) }} ج.م</h2>
                         </div>
                         <div class="avatar avatar-lg bg-white text-primary rounded d-flex align-items-center justify-content-center">
-                            <i class="ti ti-wallet ti-xl"></i>
+                            <i class="ti tabler-wallet ti-xl"></i>
                         </div>
                     </div>
                 </div>

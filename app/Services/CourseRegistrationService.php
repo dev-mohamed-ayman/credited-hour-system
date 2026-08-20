@@ -2,8 +2,9 @@
 
 namespace App\Services;
 
-use App\Enums\Semester;
 use App\Enums\RegistrationStatus;
+use App\Enums\Semester;
+use App\Exceptions\InsufficientWalletBalanceException;
 use App\Models\Course;
 use App\Models\CourseRegistrationSetting;
 use App\Models\Grade;
@@ -11,13 +12,15 @@ use App\Models\Registration;
 use App\Models\RegistrationCourse;
 use App\Models\Student;
 use App\Models\Year;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class CourseRegistrationService
 {
     public function __construct(
-        protected CourseEligibilityService $eligibilityService
+        protected CourseEligibilityService $eligibilityService,
+        protected RegistrationBillingService $billingService
     ) {}
 
     /**
@@ -43,6 +46,16 @@ class CourseRegistrationService
                 'success' => false,
                 'message' => 'يرجى اختيار مادة واحدة على الأقل.',
                 'rejected_course_ids' => [],
+            ];
+        }
+
+        $feeGate = $this->billingService->checkFeeGate($student);
+
+        if (! $feeGate['allowed']) {
+            return [
+                'success' => false,
+                'message' => $feeGate['message'],
+                'rejected_course_ids' => $courseIds,
             ];
         }
 
@@ -89,6 +102,13 @@ class CourseRegistrationService
                 }
             }
             $registration->save();
+        } elseif (auth('student')->check() && $registration->status !== RegistrationStatus::PENDING) {
+            // A student touching their own registration sends it back for review; the
+            // charge already taken stays put, so approval only settles the difference.
+            $registration->forceFill([
+                'status' => RegistrationStatus::PENDING,
+                'rejection_reason' => null,
+            ])->save();
         }
 
         $attempts = $this->eligibilityService->getStudentAttempts($student);
@@ -147,22 +167,43 @@ class CourseRegistrationService
             ];
         }
 
-        DB::transaction(function () use ($registration, $validCourseIds, $defaultGrade) {
-            foreach ($validCourseIds as $courseId) {
-                RegistrationCourse::query()->firstOrCreate(
-                    [
-                        'registration_id' => $registration->id,
-                        'course_id' => $courseId,
-                    ],
-                    [
-                        'grade_id' => $defaultGrade->id,
-                    ]
-                );
-            }
-        });
+        $performedBy = $this->resolvePerformedBy();
+        $settlement = ['success' => true, 'message' => '', 'delta' => 0.0];
+
+        try {
+            DB::transaction(function () use ($registration, $validCourseIds, $defaultGrade, $performedBy, &$settlement) {
+                foreach ($validCourseIds as $courseId) {
+                    RegistrationCourse::query()->firstOrCreate(
+                        [
+                            'registration_id' => $registration->id,
+                            'course_id' => $courseId,
+                        ],
+                        [
+                            'grade_id' => $defaultGrade->id,
+                        ]
+                    );
+                }
+
+                $settlement = $this->billingService->settleIfApproved($registration, $performedBy);
+
+                if (! $settlement['success']) {
+                    throw new InsufficientWalletBalanceException($settlement['message']);
+                }
+            });
+        } catch (InsufficientWalletBalanceException $exception) {
+            return [
+                'success' => false,
+                'message' => $exception->getMessage(),
+                'rejected_course_ids' => $courseIds,
+            ];
+        }
 
         $savedCount = count($validCourseIds);
         $message = "تم حفظ تسجيل {$savedCount} مادة بنجاح.";
+
+        if ($settlement['message'] !== '') {
+            $message .= ' '.$settlement['message'];
+        }
 
         if (! empty($errors)) {
             $message .= ' '.implode(' ', $errors);
@@ -173,6 +214,14 @@ class CourseRegistrationService
             'message' => $message,
             'rejected_course_ids' => array_values(array_unique($rejectedCourseIds)),
         ];
+    }
+
+    /**
+     * The account acting on this registration, used to attribute wallet movements.
+     */
+    protected function resolvePerformedBy(): ?Model
+    {
+        return auth('advisor')->user() ?? auth('web')->user() ?? auth('student')->user();
     }
 
     /**

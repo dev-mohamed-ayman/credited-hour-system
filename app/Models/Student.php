@@ -170,6 +170,11 @@ class Student extends Authenticatable
         return $this->hasMany(TransferEquivalency::class);
     }
 
+    public function transferRequests(): HasMany
+    {
+        return $this->hasMany(StudentTransferRequest::class);
+    }
+
     public function wallet(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(StudentWallet::class);

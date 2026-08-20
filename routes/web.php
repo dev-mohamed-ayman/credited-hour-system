@@ -106,6 +106,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('student-warnings', \App\Livewire\Admin\StudentWarning\Index::class)->name('student-warnings.index')->middleware('permission:student_warnings.view');
     Route::get('student-warnings/create', \App\Livewire\Admin\StudentWarning\Create::class)->name('student-warnings.create')->middleware('permission:student_warnings.create');
 
+    // Student Department Transfer Routes
+    Route::get('student-transfers', \App\Livewire\Admin\StudentTransfer\Index::class)->name('student-transfers.index')->middleware('permission:student_transfers.view');
+    Route::get('student-transfers/{transferRequest}', \App\Livewire\Admin\StudentTransfer\Show::class)->name('student-transfers.show')->middleware('permission:student_transfers.view');
+
     // Student Search Route
     Route::get('student-search', \App\Livewire\Admin\StudentSearch::class)->name('student-search.index')->middleware('permission:students.view');
 

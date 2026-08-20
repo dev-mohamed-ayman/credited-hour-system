@@ -9,6 +9,7 @@ use App\Models\Student;
 use App\Models\Year;
 use App\Services\CourseEligibilityService;
 use App\Services\CourseRegistrationService;
+use App\Services\RegistrationBillingService;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -262,6 +263,51 @@ class Index extends Component
         return $this->retakeCourses->firstWhere('id', $courseId)
             ?? $this->improvementCourses->firstWhere('id', $courseId)
             ?? $this->dueCourses->firstWhere('id', $courseId);
+    }
+
+    /**
+     * Fee tickets blocking this student from registering, if any.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\StudentFeeTicket>
+     */
+    public function getOutstandingTicketsProperty(): \Illuminate\Database\Eloquent\Collection
+    {
+        if (! $this->student) {
+            return new \Illuminate\Database\Eloquent\Collection;
+        }
+
+        return app(RegistrationBillingService::class)->outstandingTickets($this->student);
+    }
+
+    public function getHasOutstandingFeesProperty(): bool
+    {
+        return $this->outstandingTickets->isNotEmpty();
+    }
+
+    /**
+     * What the current selection will cost, so the cost is visible before committing.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getCostQuoteProperty(): ?array
+    {
+        if (! $this->student || ! $this->currentYear || ! $this->currentSemester) {
+            return null;
+        }
+
+        $registration = Registration::query()
+            ->where('student_id', $this->student->id)
+            ->where('year_id', $this->currentYear->id)
+            ->where('semester', $this->currentSemester->value)
+            ->first();
+
+        $courseIds = array_values(array_unique(array_merge(
+            $this->selectedRetake,
+            $this->selectedImprovement,
+            $this->selectedDue
+        )));
+
+        return app(RegistrationBillingService::class)->quote($this->student, $registration, $courseIds);
     }
 
     public function render()

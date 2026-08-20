@@ -93,4 +93,8 @@ return [
         'label' => 'معادلة المحولين',
         'actions' => ['view' => 'عرض', 'create' => 'إنشاء', 'delete' => 'حذف'],
     ],
+    'student_transfers' => [
+        'label' => 'تحويل التخصص',
+        'actions' => ['view' => 'عرض', 'create' => 'إنشاء', 'approve' => 'موافقة', 'reject' => 'رفض'],
+    ],
 ];

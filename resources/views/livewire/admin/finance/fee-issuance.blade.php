@@ -227,7 +227,7 @@
                                             <div class="col-md-9">
                                                 <label class="form-label">اختر من المصاريف المتكررة</label>
                                                 <div class="input-group">
-                                                    <span class="input-group-text"><i class="ti tabler-templates"></i></span>
+                                                    <span class="input-group-text"><i class="ti tabler-template"></i></span>
                                                     <select wire:model.live="selectedFeeTemplateId"
                                                             class="form-select">
                                                         <option value="">-- اختر مصروف من القائمة --</option>

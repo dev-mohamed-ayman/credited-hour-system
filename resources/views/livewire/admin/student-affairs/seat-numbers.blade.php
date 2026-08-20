@@ -12,7 +12,7 @@
                     @if($this->lastSeatNumber)
                         <div class="alert alert-info d-flex align-items-center" role="alert">
                             <span class="alert-icon text-info me-2">
-                                <i class="ti ti-info-circle ti-xs"></i>
+                                <i class="ti tabler-info-circle ti-xs"></i>
                             </span>
                             <div>
                                 تنبيه: آخر رقم جلوس تم إنشاؤه في النظام هو <strong>{{ $this->lastSeatNumber }}</strong>. يرجى اختيار رقم بداية غير متعارض.
@@ -75,7 +75,7 @@
 
                         <div class="mt-4">
                             <button type="submit" class="btn btn-primary" wire:confirm="سيتم إنشاء أو تحديث أرقام الجلوس للطلاب المطابقين للشروط ترتيباً أبجدياً. هل أنت متأكد؟">
-                                <i class="ti ti-settings me-1"></i> إنشاء أرقام الجلوس
+                                <i class="ti tabler-settings me-1"></i> إنشاء أرقام الجلوس
                             </button>
                         </div>
                     </form>

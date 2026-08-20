@@ -43,9 +43,9 @@
             <span class="menu-header-text">الطلاب والأكاديميا</span>
         </li>
 
-        @canany(['students.view', 'students.create', 'student_warnings.view', 'finance.view'])
+        @canany(['students.view', 'students.create', 'student_warnings.view', 'student_transfers.view', 'finance.view'])
     <li
-        class="menu-item {{isActiveRoute(['students.*', 'print.student.cards.*', 'print.seat.numbers.*', 'print.certificates.*', 'student-warnings.*', 'student-search.*', 'admin.finance.fee-issuance', 'admin.finance.student-financial-status', 'admin.student-affairs.student-status', 'admin.student-affairs.seat-numbers'], true)}}"
+        class="menu-item {{isActiveRoute(['students.*', 'print.student.cards.*', 'print.seat.numbers.*', 'print.certificates.*', 'student-warnings.*', 'student-search.*', 'student-transfers.*', 'admin.finance.fee-issuance', 'admin.finance.student-financial-status', 'admin.student-affairs.student-status', 'admin.student-affairs.seat-numbers'], true)}}"
     >
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base ti tabler-users"></i>
@@ -115,6 +115,13 @@
                 <li class="menu-item {{isActiveRoute('student-warnings.*')}}">
                     <a href="{{route('student-warnings.index')}}" class="menu-link">
                         <div data-i18n="تنبيه الطلاب">تنبيه الطلاب</div>
+                    </a>
+                </li>
+                @endcan
+                @can('student_transfers.view')
+                <li class="menu-item {{isActiveRoute('student-transfers.*')}}">
+                    <a href="{{route('student-transfers.index')}}" class="menu-link">
+                        <div data-i18n="تحويل التخصص">تحويل التخصص</div>
                     </a>
                 </li>
                 @endcan

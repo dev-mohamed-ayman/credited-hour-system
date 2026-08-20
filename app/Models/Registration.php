@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use App\Enums\Semester;
 use App\Enums\RegistrationStatus;
+use App\Enums\Semester;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -15,6 +15,7 @@ class Registration extends Model
         'year_id',
         'semester',
         'status',
+        'charged_amount',
         'rejection_reason',
     ];
 
@@ -23,6 +24,7 @@ class Registration extends Model
         return [
             'semester' => Semester::class,
             'status' => RegistrationStatus::class,
+            'charged_amount' => 'decimal:2',
         ];
     }
 

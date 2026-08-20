@@ -30,7 +30,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-3 mb-3">
                         <div class="avatar avatar-lg bg-label-primary rounded-3">
-                            <i class="ti ti-users ti-2xl"></i>
+                            <i class="ti tabler-users ti-2xl"></i>
                         </div>
                         <div>
                             <h5 class="mb-0">{{ $course->enrollments->count() }} / {{ $course->capacity }}</h5>
@@ -45,7 +45,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-3 mb-3">
                         <div class="avatar avatar-lg bg-label-info rounded-3">
-                            <i class="ti ti-gender-bigender ti-2xl"></i>
+                            <i class="ti tabler-gender-bigender ti-2xl"></i>
                         </div>
                         <div>
                             <h5 class="mb-0">{{ $course->gender == 'male' ? 'ذكر' : 'أنثى' }}</h5>
@@ -60,7 +60,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-3 mb-3">
                         <div class="avatar avatar-lg bg-label-success rounded-3">
-                            <i class="ti ti-currency-dollar ti-2xl"></i>
+                            <i class="ti tabler-currency-dollar ti-2xl"></i>
                         </div>
                         <div>
                             <h5 class="mb-0">{{ number_format($course->fee_amount, 2) }}</h5>
@@ -75,7 +75,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-3 mb-3">
                         <div class="avatar avatar-lg {{ $course->status?->value === 'active' ? 'bg-label-success' : 'bg-label-secondary' }} rounded-3">
-                            <i class="ti ti-status-change ti-2xl"></i>
+                            <i class="ti tabler-status-change ti-2xl"></i>
                         </div>
                         <div>
                             <h5 class="mb-0">{{ $course->status?->label() ?? 'غير محدد' }}</h5>
@@ -145,7 +145,7 @@
                         <tr>
                             <td colspan="{{ $course->status?->value === 'active' ? 5 : 4 }}" class="text-center py-5">
                                 <div class="text-muted">
-                                    <i class="ti tabler-users-off d-block mb-2 fs-1"></i>
+                                    <i class="ti tabler-users-minus d-block mb-2 fs-1"></i>
                                     لا يوجد طلاب مسجلين في هذه الدورة
                                 </div>
                             </td>

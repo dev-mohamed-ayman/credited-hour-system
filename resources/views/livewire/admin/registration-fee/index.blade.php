@@ -104,7 +104,7 @@
                                         <div class="col-md-6">
                                             <label class="form-label fw-medium">المصاريف الوزارية للطلاب الباقين (Remaining Ministerial Payment)</label>
                                             <div class="input-group">
-                                                <span class="input-group-text"><i class="ti tabler-building-exclamation"></i></span>
+                                                <span class="input-group-text"><i class="ti tabler-building-bank"></i></span>
                                                 <input type="number" step="0.01" class="form-control @error('ministerial_payment_remaining') is-invalid @enderror" wire:model="ministerial_payment_remaining">
                                             </div>
                                             @error('ministerial_payment_remaining') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror

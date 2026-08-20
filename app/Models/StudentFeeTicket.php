@@ -50,10 +50,7 @@ class StudentFeeTicket extends Model
 
     public function scopeUnpaid($query)
     {
-        return $query->where(function ($q) {
-            $q->where('status', 'pending')
-                ->orWhereNull('paid_at');
-        });
+        return $query->where('status', 'pending');
     }
 
     public function year()

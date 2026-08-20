@@ -6,11 +6,25 @@
             <div class="col-12">
                 <div class="alert alert-danger d-flex align-items-center" role="alert">
                     <span class="alert-icon text-danger me-2">
-                        <i class="ti ti-alert-circle ti-xl"></i>
+                        <i class="ti tabler-alert-circle ti-xl"></i>
                     </span>
                     <div class="d-flex flex-column">
-                        <h5 class="mb-1 alert-heading">تنبيه هام - رسوم غير مدفوعة</h5>
-                        <span>يوجد لديك {{ $unpaidFeeTickets->count() }} فاتورة/فاتورات رسوم غير مدفوعة. برجاء السداد في أقرب وقت لتفادي تعليق الخدمات.</span>
+                        <h5 class="mb-1 alert-heading">تنبيه هام - تسجيل المواد موقوف</h5>
+                        <span>
+                            يوجد لديك {{ $unpaidFeeTickets->count() }} حافظة رسوم غير مدفوعة بإجمالي
+                            <strong>{{ number_format((float) $unpaidFeeTickets->sum('amount'), 2) }} ج.م</strong>.
+                            لن تتمكن من تسجيل المواد قبل السداد، وسيُفتح التسجيل تلقائياً بعد تسجيل السداد لدى الشؤون المالية.
+                        </span>
+                        <ul class="mb-0 mt-2 small">
+                            @foreach ($unpaidFeeTickets as $ticket)
+                                <li>
+                                    {{ $ticket->fee_name ?? 'حافظة رسوم' }}
+                                    <span class="mx-1">—</span>
+                                    <strong>{{ number_format((float) $ticket->amount, 2) }} ج.م</strong>
+                                    <span class="text-muted">(رقم {{ $ticket->ticket_number }})</span>
+                                </li>
+                            @endforeach
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -25,7 +39,7 @@
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <div>
                                 <h5 class="{{ $warningColorClass }} mb-1 fw-bold">
-                                    <i class="ti ti-alert-triangle me-1"></i>
+                                    <i class="ti tabler-alert-triangle me-1"></i>
                                     عدد الانذارات الاكاديمية ({{ $warningCount }})
                                 </h5>
                                 @if ($dangerCount > 0)
@@ -39,7 +53,7 @@
 
                         <div class="alert alert-info mb-0 p-3">
                             <h6 class="fw-bold mb-2 text-info">
-                                <i class="ti ti-info-circle me-1"></i>
+                                <i class="ti tabler-info-circle me-1"></i>
                                 تنبيه حول الانذارات الاكاديمية
                             </h6>
                             <p class="mb-1">على الطالب الذي وجه له إنذار اكاديمي أن يرفع <b>معدله التراكمي (CGPA)</b> إلى <b>({{ $warningThreshold }})</b> فما فوق لإلغاء مفعول الإنذار في مدة أقصاها فصلين دراسيين.</p>
@@ -79,7 +93,7 @@
                         </div>
                         <div class="avatar">
                             <span class="avatar-initial rounded {{ $cgpaColorClass }} bg-opacity-10">
-                                <i class="ti ti-chart-line ti-sm text-white"></i>
+                                <i class="ti tabler-chart-line ti-sm text-white"></i>
                             </span>
                         </div>
                     </div>
@@ -100,7 +114,7 @@
                         </div>
                         <div class="avatar">
                             <span class="avatar-initial rounded bg-label-success">
-                                <i class="ti ti-clock ti-sm"></i>
+                                <i class="ti tabler-clock ti-sm"></i>
                             </span>
                         </div>
                     </div>
@@ -121,7 +135,7 @@
                         </div>
                         <div class="avatar">
                             <span class="avatar-initial rounded bg-label-primary">
-                                <i class="ti ti-graduation-cap ti-sm"></i>
+                                <i class="ti tabler-school ti-sm"></i>
                             </span>
                         </div>
                     </div>
@@ -142,7 +156,7 @@
                         </div>
                         <div class="avatar">
                             <span class="avatar-initial rounded bg-label-info">
-                                <i class="ti ti-school ti-sm"></i>
+                                <i class="ti tabler-school ti-sm"></i>
                             </span>
                         </div>
                     </div>
@@ -213,7 +227,7 @@
                 <div class="card">
                     <div class="card-header d-flex align-items-center">
                         <div class="avatar avatar-md me-3 bg-label-primary">
-                            <i class="ti ti-user ti-xl"></i>
+                            <i class="ti tabler-user ti-xl"></i>
                         </div>
                         <div>
                             <h5 class="card-title mb-0">المرشد الأكاديمي</h5>
@@ -224,7 +238,7 @@
                         <h4 class="mb-0 fw-bold">{{ $student->academicAdvisor->name }}</h4>
                         @if (! empty($student->academicAdvisor->email))
                             <p class="text-muted mt-2 mb-0">
-                                <i class="ti ti-mail me-1"></i>{{ $student->academicAdvisor->email }}
+                                <i class="ti tabler-mail me-1"></i>{{ $student->academicAdvisor->email }}
                             </p>
                         @endif
                     </div>
@@ -237,7 +251,7 @@
                 <div class="card">
                     <div class="card-header d-flex align-items-center">
                         <div class="avatar avatar-md me-3 bg-label-{{ $student->hasPassedMilitaryEducation() ? 'success' : 'warning' }}">
-                            <i class="ti ti-shield ti-xl"></i>
+                            <i class="ti tabler-shield ti-xl"></i>
                         </div>
                         <div>
                             <h5 class="card-title mb-0">نتيجة التدريب العسكري</h5>
@@ -248,13 +262,13 @@
                         @if ($student->hasPassedMilitaryEducation())
                             <div class="d-flex align-items-center">
                                 <span class="badge bg-label-success p-2 px-3 fs-6 rounded-pill">
-                                    <i class="ti ti-check me-1"></i>تم الإنجاز بنجاح
+                                    <i class="ti tabler-check me-1"></i>تم الإنجاز بنجاح
                                 </span>
                             </div>
                         @else
                             <div class="d-flex align-items-center">
                                 <span class="badge bg-label-warning p-2 px-3 fs-6 rounded-pill">
-                                    <i class="ti ti-clock-hour-4 me-1"></i>قيد الإنجاز / غير مكتمل
+                                    <i class="ti tabler-clock-hour-4 me-1"></i>قيد الإنجاز / غير مكتمل
                                 </span>
                             </div>
                             @if ($lastMil = $student->lastMilitaryEducationEnrollment())
@@ -279,7 +293,7 @@
                     <div class="card-body">
                         <div class="d-flex align-items-center">
                             <div class="avatar avatar-md me-3 bg-label-info">
-                                <i class="ti ti-id ti-xl"></i>
+                                <i class="ti tabler-id ti-xl"></i>
                             </div>
                             <div>
                                 <p class="text-muted mb-1">رقم الجلوس</p>
@@ -297,7 +311,7 @@
                     <div class="card-body">
                         <div class="d-flex align-items-center">
                             <div class="avatar avatar-md me-3 bg-label-secondary">
-                                <i class="ti ti-users-group ti-xl"></i>
+                                <i class="ti tabler-users-group ti-xl"></i>
                             </div>
                             <div>
                                 <p class="text-muted mb-1">الشعبة</p>
@@ -314,7 +328,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="avatar avatar-md me-3 bg-label-dark">
-                            <i class="ti ti-barcode ti-xl"></i>
+                            <i class="ti tabler-barcode ti-xl"></i>
                         </div>
                         <div>
                             <p class="text-muted mb-1">الكود الجامعي</p>
@@ -330,7 +344,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="avatar avatar-md me-3 bg-label-success">
-                            <i class="ti ti-wallet ti-xl"></i>
+                            <i class="ti tabler-wallet ti-xl"></i>
                         </div>
                         <div>
                             <p class="text-muted mb-1">رصيد المحفظة</p>
@@ -390,7 +404,7 @@
             <div class="card">
                 <div class="card-header d-flex align-items-center">
                     <div class="avatar avatar-md me-3 bg-label-primary">
-                        <i class="ti ti-clipboard-check ti-xl"></i>
+                        <i class="ti tabler-clipboard-check ti-xl"></i>
                     </div>
                     <div class="flex-grow-1">
                         <h5 class="card-title mb-0">حالة تسجيل الترم الحالي</h5>
@@ -410,11 +424,11 @@
                                 <div class="alert {{ $currentRegistration->status === \App\Enums\RegistrationStatus::APPROVED ? 'alert-success' : ($currentRegistration->status === \App\Enums\RegistrationStatus::REJECTED ? 'alert-danger' : 'alert-warning') }} mb-0">
                                     <h6 class="mb-1 fw-bold d-flex align-items-center">
                                         @if ($currentRegistration->status === \App\Enums\RegistrationStatus::APPROVED)
-                                            <i class="ti ti-check me-2"></i>
+                                            <i class="ti tabler-check me-2"></i>
                                         @elseif ($currentRegistration->status === \App\Enums\RegistrationStatus::REJECTED)
-                                            <i class="ti ti-x me-2"></i>
+                                            <i class="ti tabler-x me-2"></i>
                                         @else
-                                            <i class="ti ti-clock-hour-4 me-2"></i>
+                                            <i class="ti tabler-clock-hour-4 me-2"></i>
                                         @endif
                                         حالة التسجيل: {{ $currentRegistration->status->label() }}
                                     </h6>
@@ -428,9 +442,9 @@
                                 <div class="alert {{ $currentRegistration->approvedByAdvisor ? 'alert-success' : 'alert-warning' }} mb-0">
                                     <h6 class="mb-1 fw-bold d-flex align-items-center">
                                         @if ($currentRegistration->approvedByAdvisor)
-                                            <i class="ti ti-user-check me-2"></i>
+                                            <i class="ti tabler-user-check me-2"></i>
                                         @else
-                                            <i class="ti ti-user-clock me-2"></i>
+                                            <i class="ti tabler-user-exclamation me-2"></i>
                                         @endif
                                         موافقة الإرشاد الأكاديمي:
                                         {{ $currentRegistration->approvedByAdvisor ? 'تمت الموافقة' : 'قيد الانتظار' }}
@@ -445,9 +459,9 @@
                                 <div class="alert {{ $currentRegistration->approvedByUser ? 'alert-success' : 'alert-warning' }} mb-0">
                                     <h6 class="mb-1 fw-bold d-flex align-items-center">
                                         @if ($currentRegistration->approvedByUser)
-                                            <i class="ti ti-building-check me-2"></i>
+                                            <i class="ti tabler-building-bank me-2"></i>
                                         @else
-                                            <i class="ti ti-building-clock me-2"></i>
+                                            <i class="ti tabler-building-estate me-2"></i>
                                         @endif
                                         موافقة الشؤون المالية:
                                         {{ $currentRegistration->approvedByUser ? 'تمت الموافقة' : 'قيد الانتظار' }}
@@ -461,7 +475,7 @@
                             <div class="col-md-6">
                                 <div class="alert alert-info mb-0">
                                     <h6 class="mb-1 fw-bold d-flex align-items-center">
-                                        <i class="ti ti-book me-2"></i>
+                                        <i class="ti tabler-book me-2"></i>
                                         عدد المواد المسجلة: {{ $currentRegistration->courses->count() }} مادة
                                     </h6>
                                     <p class="mb-0 text-sm">
@@ -472,7 +486,7 @@
                         </div>
                     @else
                         <div class="alert alert-warning mb-0 text-center py-4">
-                            <i class="ti ti-alert-triangle ti-2xl mb-2 d-block text-warning"></i>
+                            <i class="ti tabler-alert-triangle ti-2xl mb-2 d-block text-warning"></i>
                             <h6 class="mb-0 fw-bold">أنت لم تقم بالتسجيل في هذا الترم حتى الآن</h6>
                             <p class="mb-0 mt-2 text-muted">برجاء الانتقال إلى صفحة تسجيل المواد لبدء التسجيل.</p>
                         </div>

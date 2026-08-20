@@ -36,6 +36,8 @@
             <span>لا يوجد تسجيل مواد في الترم الصيفي.</span>
         </div>
     @elseif($student)
+        @include('partials.registration.outstanding-fees', ['tickets' => $this->outstandingTickets])
+
         <div class="d-flex flex-column flex-md-row justify-content-end align-items-md-center mb-3 gap-3">
             @if($maxOptionalCourses !== null)
                 <div class="badge bg-label-info p-2 px-3 fs-6 d-flex align-items-center rounded-pill">
@@ -120,10 +122,13 @@
             @endforeach
         </div>
 
+        @include('partials.registration.cost-summary', ['quote' => $this->costQuote])
+
         <div class="mt-4 text-end">
             <button type="button" class="btn btn-primary btn-lg"
                     onclick="confirmAction('حفظ التسجيل', 'هل أنت متأكد من حفظ المواد المختارة؟ سيتم مراجعة التسجيل من قبل المرشد الأكاديمي أو الأدمن.', () => @this.call('save'))"
-                    wire:loading.attr="disabled">
+                    wire:loading.attr="disabled"
+                    @disabled($this->hasOutstandingFees)>
                 <span wire:loading.remove wire:target="save">
                     <i class="ti tabler-device-floppy me-1"></i> حفظ التسجيل
                 </span>

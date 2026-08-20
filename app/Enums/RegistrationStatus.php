@@ -7,6 +7,7 @@ enum RegistrationStatus: string
     case PENDING = 'pending';
     case APPROVED = 'approved';
     case REJECTED = 'rejected';
+    case CANCELLED = 'cancelled';
 
     public function label(): string
     {
@@ -14,6 +15,7 @@ enum RegistrationStatus: string
             self::PENDING => 'قيد الموافقة',
             self::APPROVED => 'تمت الموافقة',
             self::REJECTED => 'مرفوض',
+            self::CANCELLED => 'ملغي',
         };
     }
 }

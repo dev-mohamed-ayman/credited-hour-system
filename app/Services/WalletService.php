@@ -93,6 +93,54 @@ class WalletService
     }
 
     /**
+     * Give an amount back to the student's wallet. Recorded as a refund rather than a
+     * deposit so reversals stay distinguishable from money the student actually paid in.
+     */
+    public function refund(
+        Student $student,
+        float $amount,
+        int $yearId,
+        Semester|string $semester,
+        string $reason,
+        ?Model $reference = null,
+        ?Model $performedBy = null
+    ): WalletTransaction {
+        return DB::transaction(function () use ($student, $amount, $yearId, $semester, $reason, $reference, $performedBy) {
+            $wallet = StudentWallet::firstOrCreate(
+                ['student_id' => $student->id],
+                ['balance' => 0]
+            );
+
+            $wallet->increment('balance', $amount);
+
+            return $student->walletTransactions()->create([
+                'year_id' => $yearId,
+                'semester' => $semester instanceof Semester ? $semester->value : $semester,
+                'amount' => $amount,
+                'type' => WalletTransactionType::REFUND,
+                'reason' => $reason,
+                'reference_type' => $reference?->getMorphClass(),
+                'reference_id' => $reference?->getKey(),
+                'performed_by_type' => $performedBy?->getMorphClass(),
+                'performed_by_id' => $performedBy?->getKey(),
+            ]);
+        });
+    }
+
+    /**
+     * The registration fee settings that apply to a student's department and level.
+     */
+    public function feeSettingFor(Student $student): ?RegistrationFee
+    {
+        $student->loadMissing(['section.department', 'level']);
+
+        return RegistrationFee::query()
+            ->where('department_id', $student->departmentId())
+            ->where('level_id', $student->level_id)
+            ->first();
+    }
+
+    /**
      * Check if the student has enough balance.
      */
     public function hasEnoughBalance(Student $student, float $amount): bool
@@ -107,12 +155,7 @@ class WalletService
     {
         $registration->loadMissing(['student.section.department', 'student.level', 'courses.course']);
 
-        $departmentId = $registration->student->departmentId();
-        $levelId = $registration->student->level_id;
-
-        $feeSetting = RegistrationFee::where('department_id', $departmentId)
-            ->where('level_id', $levelId)
-            ->first();
+        $feeSetting = $this->feeSettingFor($registration->student);
 
         if (! $feeSetting) {
             // Default behavior if no fee setting exists
@@ -125,29 +168,5 @@ class WalletService
         $ministerialPayment = (float) $feeSetting->ministerial_payment;
 
         return ($totalHours * $hourPayment) + $ministerialPayment;
-    }
-
-    /**
-     * Process registration fees withdrawal.
-     */
-    public function deductRegistrationFees(Registration $registration, ?Model $performedBy = null): WalletTransaction
-    {
-        $cost = $this->calculateRegistrationCost($registration);
-
-        if ($cost <= 0) {
-            // Nothing to deduct, but returning a dummy transaction model so it doesn't break
-            // Though it shouldn't happen unless fee settings are 0.
-            return new WalletTransaction;
-        }
-
-        return $this->withdraw(
-            student: $registration->student,
-            amount: $cost,
-            yearId: $registration->year_id,
-            semester: $registration->semester,
-            reason: 'سحب مصاريف دراسية عن تسجيل مواد',
-            reference: $registration,
-            performedBy: $performedBy
-        );
     }
 }
