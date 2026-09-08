@@ -65,6 +65,10 @@ trait HasDeletionGuards
             'registrationCourses' => 'تسجيلات مواد',
             'dependents' => 'مواد معتمدة على هذه المادة',
             'lectureSchedules' => 'جداول محاضرات',
+            'examSessions' => 'جداول امتحانات',
+            'examCommittees' => 'لجان امتحانات',
+            'committees' => 'لجان امتحانات',
+            'seatAssignments' => 'توزيع أرقام الجلوس',
         ];
 
         return $names[$relation] ?? $relation;

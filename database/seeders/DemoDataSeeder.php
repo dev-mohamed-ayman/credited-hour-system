@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Enums\DayOfWeek;
+use App\Enums\ExamSessionStatus;
+use App\Enums\ExamType;
 use App\Enums\RegistrationStatus;
 use App\Enums\Semester;
 use App\Enums\SemesterStatus;
@@ -18,6 +20,7 @@ use App\Models\Country;
 use App\Models\Course;
 use App\Models\CourseRegistrationSetting;
 use App\Models\Department;
+use App\Models\ExamSession;
 use App\Models\FailingGradeSetting;
 use App\Models\Grade;
 use App\Models\LectureSchedule;
@@ -32,8 +35,11 @@ use App\Models\StudentFeeTicket;
 use App\Models\StudentWarning;
 use App\Models\Venue;
 use App\Models\Year;
+use App\Services\ExamScheduleService;
+use App\Services\ExamSeatingService;
 use App\Services\RegistrationBillingService;
 use App\Services\WalletService;
+use App\Support\CourseSemesterMapper;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -63,6 +69,7 @@ class DemoDataSeeder extends Seeder
 
         $this->seedStudents($refs, $year, $courses, $advisor);
         $this->seedScheduling($refs, $year, $courses);
+        $this->seedExams($refs, $year, $courses);
 
         $this->command?->newLine();
         $this->command?->info('تم إنشاء بيانات التجربة.');
@@ -486,6 +493,70 @@ class DemoDataSeeder extends Seeder
             );
 
             $schedule->sections()->syncWithoutDetaching([$section->id]);
+        }
+    }
+
+    /**
+     * A full-term exam scenario: two dated sessions with committees, one of
+     * them distributed and published so the student portal shows a real table.
+     */
+    private function seedExams(array $refs, Year $year, \Illuminate\Support\Collection $courses): void
+    {
+        $auditorium = Venue::firstOrCreate(
+            ['name' => 'مدرج أ'],
+            ['type' => VenueType::AUDITORIUM, 'capacity' => 300, 'is_active' => true],
+        );
+
+        $hallB = Venue::firstOrCreate(
+            ['name' => 'مدرج ب'],
+            ['type' => VenueType::AUDITORIUM, 'capacity' => 200, 'is_active' => true],
+        );
+
+        $plan = [
+            ['CS101', '2026-01-18', '09:00', '11:00', $auditorium->id, 2],
+            ['CS102', '2026-01-20', '11:00', '13:00', $hallB->id, 1],
+        ];
+
+        foreach ($plan as [$code, $date, $start, $end, $venueId, $committeeCount]) {
+            $course = $courses[$code];
+            $semester = CourseSemesterMapper::toEnum((string) $course->semester) ?? Semester::FIRST;
+
+            $session = ExamSession::firstOrCreate(
+                [
+                    'course_id' => $course->id,
+                    'year_id' => $year->id,
+                    'semester' => $semester->value,
+                    'type' => ExamType::REGULAR->value,
+                ],
+                [
+                    'exam_date' => $date,
+                    'start_time' => $start,
+                    'end_time' => $end,
+                    'status' => ExamSessionStatus::DRAFT->value,
+                ],
+            );
+
+            for ($i = 1; $i <= $committeeCount; $i++) {
+                $session->committees()->firstOrCreate(
+                    ['name' => "لجنة {$i}"],
+                    ['venue_id' => $venueId, 'capacity' => 100],
+                );
+            }
+        }
+
+        $examService = app(ExamScheduleService::class);
+        $seatingService = app(ExamSeatingService::class);
+
+        $published = ExamSession::where('course_id', $courses['CS101']->id)->where('year_id', $year->id)->first();
+
+        if ($published !== null) {
+            $seatingService->generateDistribution($published);
+
+            try {
+                $examService->publish($published);
+            } catch (\App\Exceptions\ExamScheduleException) {
+                // Left as draft when the demo audience happens to conflict.
+            }
         }
     }
 }

@@ -68,6 +68,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('lecture-schedules/{schedule}/edit', \App\Livewire\Admin\LectureSchedule\Form::class)->name('lecture-schedules.edit')->middleware('permission:lecture_schedules.edit');
     Route::get('lecture-schedules/{course}/grid', \App\Livewire\Admin\LectureSchedule\WeekGrid::class)->name('lecture-schedules.grid')->middleware('permission:lecture_schedules.view');
 
+    // Exam Schedules Routes
+    Route::get('exam-schedules', \App\Livewire\Admin\ExamSchedule\Index::class)->name('exam-schedules.index')->middleware('permission:exam_schedules.view');
+    Route::get('exam-schedules/{course}/create', \App\Livewire\Admin\ExamSchedule\Form::class)->name('exam-schedules.create')->middleware('permission:exam_schedules.create');
+    Route::get('exam-schedules/{session}/edit', \App\Livewire\Admin\ExamSchedule\Form::class)->name('exam-schedules.edit')->middleware('permission:exam_schedules.edit');
+    Route::get('exam-schedules/{session}/seating', \App\Livewire\Admin\ExamSchedule\Seating::class)->name('exam-schedules.seating')->middleware('permission:exam_schedules.edit');
+    Route::get('exam-schedules/print/committee/{committee}', [\App\Http\Controllers\Admin\ExamPrintController::class, 'committeeSheet'])->name('exam-schedules.print.committee')->middleware('permission:exam_schedules.view');
+    Route::get('exam-schedules/print/student/{student}', [\App\Http\Controllers\Admin\ExamPrintController::class, 'studentSchedule'])->name('exam-schedules.print.student')->middleware('permission:students.view');
+
     // Level Routes
     Route::resource('levels', LevelController::class)->except(['show'])->middleware('permission:levels.view');
 
@@ -178,5 +186,6 @@ Route::prefix('student')->name('student.')->group(function () {
         Route::get('registration-records', \App\Livewire\Student\RegistrationRecord\Index::class)->name('registration-records.index');
         Route::get('status-statement', \App\Livewire\Student\StatusStatement::class)->name('status-statement');
         Route::get('change-password', \App\Livewire\Student\ChangePassword::class)->name('change-password');
+        Route::get('exam-schedule', \App\Livewire\Student\ExamSchedule::class)->name('exam-schedule');
     });
 });

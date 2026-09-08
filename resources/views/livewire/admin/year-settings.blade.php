@@ -196,6 +196,55 @@
                                 </div>
                             </div>
 
+                            <div class="mb-5">
+                                <h6 class="mb-3 pb-2 border-bottom">فترات الامتحانات</h6>
+
+                                <form wire:submit="updateExamWindows">
+                                    <div class="row g-3 align-items-end">
+                                        <div class="col-md-4">
+                                            <label class="form-label">الترم الأول — من</label>
+                                            <input type="date" class="form-control" wire:model="first_semester_exam_from" />
+                                            @error('first_semester_exam_from') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">الترم الأول — إلى</label>
+                                            <input type="date" class="form-control" wire:model="first_semester_exam_to" />
+                                            @error('first_semester_exam_to') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                        </div>
+                                        <div class="col-md-4"></div>
+
+                                        <div class="col-md-4">
+                                            <label class="form-label">الترم الثاني — من</label>
+                                            <input type="date" class="form-control" wire:model="second_semester_exam_from" />
+                                            @error('second_semester_exam_from') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">الترم الثاني — إلى</label>
+                                            <input type="date" class="form-control" wire:model="second_semester_exam_to" />
+                                            @error('second_semester_exam_to') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                        </div>
+                                        <div class="col-md-4"></div>
+
+                                        <div class="col-md-4">
+                                            <label class="form-label">الترم الصيفي — من</label>
+                                            <input type="date" class="form-control" wire:model="summer_exam_from" />
+                                            @error('summer_exam_from') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">الترم الصيفي — إلى</label>
+                                            <input type="date" class="form-control" wire:model="summer_exam_to" />
+                                            @error('summer_exam_to') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                        </div>
+                                        <div class="col-md-4">
+                                            <button type="submit" class="btn btn-primary w-100">
+                                                <i class="ti tabler-device-floppy me-2"></i> حفظ فترات الامتحانات
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p class="text-muted small mb-0 mt-2">عند ترك الفترة فارغة لأي ترم يُسمح بأي تاريخ للجلسات؛ وعند ضبطها تُرفض الجلسات خارجها.</p>
+                                </form>
+                            </div>
+
                             <div>
                                 <h6 class="mb-3 pb-2 border-bottom">إرشاد الأكاديمي</h6>
                                 

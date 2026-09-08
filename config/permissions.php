@@ -105,4 +105,8 @@ return [
         'label' => 'جدول المحاضرات',
         'actions' => ['view' => 'عرض', 'create' => 'إنشاء', 'edit' => 'تعديل', 'delete' => 'حذف'],
     ],
+    'exam_schedules' => [
+        'label' => 'جدول الامتحانات',
+        'actions' => ['view' => 'عرض', 'create' => 'إنشاء', 'edit' => 'تعديل', 'delete' => 'حذف', 'publish' => 'نشر'],
+    ],
 ];

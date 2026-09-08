@@ -173,6 +173,14 @@
                 </li>
                 @endcan
 
+                @can('exam_schedules.view')
+                <li class="menu-item {{isActiveRoute('exam-schedules.*')}}">
+                    <a href="{{route('exam-schedules.index')}}" class="menu-link">
+                        <div data-i18n="جدول الامتحانات">جدول الامتحانات</div>
+                    </a>
+                </li>
+                @endcan
+
                 @can('grades.view')
                 <li class="menu-item {{isActiveRoute('grades.*')}}">
                     <a href="{{route('grades.index')}}" class="menu-link">

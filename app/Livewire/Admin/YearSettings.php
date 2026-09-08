@@ -24,6 +24,18 @@ class YearSettings extends Component
 
     public $academicAdvisingStatus;
 
+    public $first_semester_exam_from = '';
+
+    public $first_semester_exam_to = '';
+
+    public $second_semester_exam_from = '';
+
+    public $second_semester_exam_to = '';
+
+    public $summer_exam_from = '';
+
+    public $summer_exam_to = '';
+
     public function mount()
     {
         $this->years = Year::latest()->get();
@@ -49,6 +61,17 @@ class YearSettings extends Component
             $this->secondSemesterStatus = $this->selectedYear->second_semester_status->value;
             $this->summerSemesterStatus = $this->selectedYear->summer_semester_status->value;
             $this->academicAdvisingStatus = $this->selectedYear->academic_advising_status->value;
+
+            foreach ([
+                'first_semester_exam_from',
+                'first_semester_exam_to',
+                'second_semester_exam_from',
+                'second_semester_exam_to',
+                'summer_exam_from',
+                'summer_exam_to',
+            ] as $field) {
+                $this->$field = $this->selectedYear->$field?->toDateString() ?? '';
+            }
         }
     }
 
@@ -74,6 +97,33 @@ class YearSettings extends Component
         $this->loadYearData();
 
         session()->flash('message', 'تم تحديث حالة الإرشاد الأكاديمي بنجاح');
+    }
+
+    public function updateExamWindows()
+    {
+        abort_unless(auth()->user()->can('years.edit'), 403);
+
+        $validated = $this->validate(
+            [
+                'first_semester_exam_from' => 'nullable|date',
+                'first_semester_exam_to' => 'nullable|date|after_or_equal:first_semester_exam_from',
+                'second_semester_exam_from' => 'nullable|date',
+                'second_semester_exam_to' => 'nullable|date|after_or_equal:second_semester_exam_from',
+                'summer_exam_from' => 'nullable|date',
+                'summer_exam_to' => 'nullable|date|after_or_equal:summer_exam_from',
+            ],
+            [
+                'first_semester_exam_to.after_or_equal' => 'نهاية فترة امتحانات الترم الأول يجب أن تكون بعد بدايتها',
+                'second_semester_exam_to.after_or_equal' => 'نهاية فترة امتحانات الترم الثاني يجب أن تكون بعد بدايتها',
+                'summer_exam_to.after_or_equal' => 'نهاية فترة الامتحانات الصيفية يجب أن تكون بعد بدايتها',
+            ],
+        );
+
+        $this->selectedYear->update($validated);
+
+        $this->loadYearData();
+
+        $this->dispatch('toast', ['message' => 'تم تحديث فترات الامتحانات بنجاح', 'type' => 'success']);
     }
 
     public function render()

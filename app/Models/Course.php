@@ -28,7 +28,7 @@ class Course extends Model
         'is_active' => 'boolean',
     ];
 
-    protected $blockingRelations = ['sections', 'registrationCourses', 'dependents', 'lectureSchedules'];
+    protected $blockingRelations = ['sections', 'registrationCourses', 'dependents', 'lectureSchedules', 'examSessions'];
 
     public function department(): BelongsTo
     {
@@ -38,6 +38,11 @@ class Course extends Model
     public function lectureSchedules(): HasMany
     {
         return $this->hasMany(LectureSchedule::class);
+    }
+
+    public function examSessions(): HasMany
+    {
+        return $this->hasMany(ExamSession::class);
     }
 
     public function level(): BelongsTo

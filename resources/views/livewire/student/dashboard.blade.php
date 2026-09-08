@@ -495,4 +495,6 @@
             </div>
         </div>
     </div>
+
+    @livewire('student.exam-schedule')
 </div>

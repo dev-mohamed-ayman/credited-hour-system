@@ -19,8 +19,15 @@ class Year extends Model
         'second_semester_status',
         'summer_semester_status',
         'academic_advising_status',
+        'first_semester_exam_from',
+        'first_semester_exam_to',
+        'second_semester_exam_from',
+        'second_semester_exam_to',
+        'summer_exam_from',
+        'summer_exam_to',
     ];
-    protected $blockingRelations = ['students', 'additionalFees'];
+
+    protected $blockingRelations = ['students', 'additionalFees', 'examSessions'];
 
     protected function casts(): array
     {
@@ -28,6 +35,12 @@ class Year extends Model
             'first_semester_status' => SemesterStatus::class,
             'second_semester_status' => SemesterStatus::class,
             'summer_semester_status' => SemesterStatus::class,
+            'first_semester_exam_from' => 'date:Y-m-d',
+            'first_semester_exam_to' => 'date:Y-m-d',
+            'second_semester_exam_from' => 'date:Y-m-d',
+            'second_semester_exam_to' => 'date:Y-m-d',
+            'summer_exam_from' => 'date:Y-m-d',
+            'summer_exam_to' => 'date:Y-m-d',
             'academic_advising_status' => AcademicAdvisingStatus::class,
         ];
     }
@@ -96,5 +109,31 @@ class Year extends Model
     public function additionalFees(): HasMany
     {
         return $this->hasMany(AdditionalFee::class);
+    }
+
+    public function examSessions(): HasMany
+    {
+        return $this->hasMany(ExamSession::class);
+    }
+
+    /**
+     * Configured exam window (from/to) for a semester, or null when the
+     * semester has no complete window — the guard is optional (R6).
+     *
+     * @return array{from: string, to: string}|null
+     */
+    public function semesterExamWindow(Semester $semester): ?array
+    {
+        [$from, $to] = match ($semester) {
+            Semester::FIRST => [$this->first_semester_exam_from, $this->first_semester_exam_to],
+            Semester::SECOND => [$this->second_semester_exam_from, $this->second_semester_exam_to],
+            Semester::SUMMER => [$this->summer_exam_from, $this->summer_exam_to],
+        };
+
+        if ($from === null || $to === null) {
+            return null;
+        }
+
+        return ['from' => $from->toDateString(), 'to' => $to->toDateString()];
     }
 }

@@ -20,7 +20,7 @@ class Venue extends Model
         'notes',
     ];
 
-    protected $blockingRelations = ['lectureSchedules'];
+    protected $blockingRelations = ['lectureSchedules', 'examCommittees'];
 
     protected function casts(): array
     {
@@ -34,5 +34,10 @@ class Venue extends Model
     public function lectureSchedules(): HasMany
     {
         return $this->hasMany(LectureSchedule::class);
+    }
+
+    public function examCommittees(): HasMany
+    {
+        return $this->hasMany(ExamCommittee::class);
     }
 }

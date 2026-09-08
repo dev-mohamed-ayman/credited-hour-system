@@ -293,3 +293,116 @@ function seedSectionStudents(\App\Models\Section $section, int $count, array $wo
         ]);
     }
 }
+
+/**
+ * Exam-scheduling world: a year with an open first semester, two courses in
+ * one department/level, five students approved in BOTH courses (shared
+ * audience for conflict tests), one pending student, and a venue.
+ */
+function examWorld(int $studentCount = 5): array
+{
+    foreach (['exam_schedules.view', 'exam_schedules.create', 'exam_schedules.edit', 'exam_schedules.delete', 'exam_schedules.publish'] as $name) {
+        Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
+    }
+
+    $department = Department::create(['name' => 'محاسبة', 'code' => 'EXM-'.uniqid()]);
+    $level = Level::create(['name' => 'الفرقة الأولى']);
+    $section = Section::create(['name' => '1', 'department_id' => $department->id]);
+
+    $year = Year::create([
+        'year' => '2025-2026',
+        'first_semester_status' => SemesterStatus::OPEN_REGISTRATION,
+        'second_semester_status' => SemesterStatus::DISABLED,
+        'summer_semester_status' => SemesterStatus::DISABLED,
+    ]);
+
+    $courses = collect(['E1' => 'إحصاء', 'E2' => 'جبر'])->map(fn ($name, $code) => Course::create([
+        'code' => $code.'-'.uniqid(),
+        'name' => $name,
+        'hours' => 3,
+        'is_selected' => false,
+        'is_active' => true,
+        'department_id' => $department->id,
+        'level_id' => $level->id,
+        'semester' => 'الأول',
+    ]));
+
+    $students = collect(range(1, $studentCount))->map(fn ($i) => \App\Models\Student::create([
+        'name' => 'طالب '.str_pad((string) $i, 3, '0', STR_PAD_LEFT),
+        'certificate_type_id' => CertificateType::firstOrCreate(['name' => 'ثانوية عامة'], ['total_score' => 410])->id,
+        'national_id' => '29901010'.str_pad((string) $i, 6, '0', STR_PAD_LEFT),
+        'username' => 'EXM'.str_pad((string) $i, 6, '0', STR_PAD_LEFT),
+        'password' => bcrypt('password'),
+        'plain_password' => 'password',
+        'section_id' => $section->id,
+        'level_id' => $level->id,
+        'year_id' => $year->id,
+        'semester' => Semester::FIRST->value,
+    ]));
+
+    $grade = Grade::firstOrCreate(['name' => 'Pending'], ['is_pending_default' => true, 'order' => 0]);
+
+    foreach ($students as $student) {
+        $registration = \App\Models\Registration::create([
+            'student_id' => $student->id,
+            'year_id' => $year->id,
+            'semester' => Semester::FIRST,
+            'status' => \App\Enums\RegistrationStatus::APPROVED,
+        ]);
+
+        foreach ($courses as $course) {
+            $registration->courses()->create(['course_id' => $course->id, 'grade_id' => $grade->id]);
+        }
+    }
+
+    $pendingStudent = \App\Models\Student::create([
+        'name' => 'طالب قيد الانتظار',
+        'certificate_type_id' => CertificateType::firstOrCreate(['name' => 'ثانوية عامة'], ['total_score' => 410])->id,
+        'national_id' => '29901011999999',
+        'username' => 'EXMPENDING',
+        'password' => bcrypt('password'),
+        'plain_password' => 'password',
+        'section_id' => $section->id,
+        'level_id' => $level->id,
+        'year_id' => $year->id,
+        'semester' => Semester::FIRST->value,
+    ]);
+
+    $pendingRegistration = \App\Models\Registration::create([
+        'student_id' => $pendingStudent->id,
+        'year_id' => $year->id,
+        'semester' => Semester::FIRST,
+        'status' => \App\Enums\RegistrationStatus::PENDING,
+    ]);
+
+    foreach ($courses as $course) {
+        $pendingRegistration->courses()->create(['course_id' => $course->id, 'grade_id' => $grade->id]);
+    }
+
+    $venue = \App\Models\Venue::factory()->create(['name' => 'مدرج أ', 'capacity' => 300]);
+
+    $admin = User::factory()->create();
+    $admin->givePermissionTo([
+        'exam_schedules.view', 'exam_schedules.create', 'exam_schedules.edit', 'exam_schedules.delete', 'exam_schedules.publish',
+    ]);
+
+    return compact('department', 'level', 'section', 'year', 'courses', 'students', 'pendingStudent', 'venue', 'admin');
+}
+
+function examService(): \App\Services\ExamScheduleService
+{
+    return app(\App\Services\ExamScheduleService::class);
+}
+
+function examAttributes(array $world, array $overrides = []): array
+{
+    return array_merge([
+        'course_id' => $world['courses']['E1']->id,
+        'year_id' => $world['year']->id,
+        'semester' => Semester::FIRST->value,
+        'type' => \App\Enums\ExamType::REGULAR->value,
+        'exam_date' => '2026-01-15',
+        'start_time' => '09:00',
+        'end_time' => '11:00',
+    ], $overrides);
+}
