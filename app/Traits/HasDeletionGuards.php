@@ -64,6 +64,7 @@ trait HasDeletionGuards
             'assignments' => 'تعيينات',
             'registrationCourses' => 'تسجيلات مواد',
             'dependents' => 'مواد معتمدة على هذه المادة',
+            'lectureSchedules' => 'جداول محاضرات',
         ];
 
         return $names[$relation] ?? $relation;

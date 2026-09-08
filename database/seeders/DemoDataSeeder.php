@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\DayOfWeek;
 use App\Enums\RegistrationStatus;
 use App\Enums\Semester;
 use App\Enums\SemesterStatus;
@@ -9,6 +10,7 @@ use App\Enums\Student\ApplicationCategory;
 use App\Enums\Student\StudentStatus;
 use App\Enums\Student\StudentWarningType;
 use App\Enums\Student\StudyStatus;
+use App\Enums\VenueType;
 use App\Models\AcademicAdvisor;
 use App\Models\CertificateType;
 use App\Models\City;
@@ -18,6 +20,7 @@ use App\Models\CourseRegistrationSetting;
 use App\Models\Department;
 use App\Models\FailingGradeSetting;
 use App\Models\Grade;
+use App\Models\LectureSchedule;
 use App\Models\Level;
 use App\Models\Nationality;
 use App\Models\Registration;
@@ -27,6 +30,7 @@ use App\Models\Section;
 use App\Models\Student;
 use App\Models\StudentFeeTicket;
 use App\Models\StudentWarning;
+use App\Models\Venue;
 use App\Models\Year;
 use App\Services\RegistrationBillingService;
 use App\Services\WalletService;
@@ -58,6 +62,7 @@ class DemoDataSeeder extends Seeder
         $advisor = $this->seedAdvisor();
 
         $this->seedStudents($refs, $year, $courses, $advisor);
+        $this->seedScheduling($refs, $year, $courses);
 
         $this->command?->newLine();
         $this->command?->info('تم إنشاء بيانات التجربة.');
@@ -438,5 +443,49 @@ class DemoDataSeeder extends Seeder
         }
 
         unset($currentYear);
+    }
+
+    /**
+     * Registers two venues and a small conflict-free lecture schedule for the
+     * first-year first-semester courses so the scheduling screens have data.
+     */
+    private function seedScheduling(array $refs, Year $year, \Illuminate\Support\Collection $courses): void
+    {
+        $auditorium = Venue::firstOrCreate(
+            ['name' => 'مدرج أ'],
+            ['type' => VenueType::AUDITORIUM, 'capacity' => 300, 'is_active' => true],
+        );
+
+        $lab = Venue::firstOrCreate(
+            ['name' => 'معمل 1'],
+            ['type' => VenueType::LAB, 'capacity' => 40, 'is_active' => true],
+        );
+
+        $section = $refs['section'];
+
+        $plan = [
+            ['CS101', $auditorium->id, DayOfWeek::SUNDAY, '09:00', '10:30'],
+            ['CS101', $auditorium->id, DayOfWeek::TUESDAY, '11:00', '12:30'],
+            ['CS102', $auditorium->id, DayOfWeek::SUNDAY, '11:00', '12:30'],
+            ['CS103', $lab->id, DayOfWeek::MONDAY, '09:00', '10:30'],
+        ];
+
+        foreach ($plan as [$code, $venueId, $day, $start, $end]) {
+            $course = $courses[$code];
+            $course->sections()->syncWithoutDetaching([$section->id]);
+
+            $schedule = LectureSchedule::firstOrCreate(
+                [
+                    'course_id' => $course->id,
+                    'venue_id' => $venueId,
+                    'day' => $day->value,
+                    'start_time' => $start,
+                    'year_id' => $year->id,
+                ],
+                ['end_time' => $end],
+            );
+
+            $schedule->sections()->syncWithoutDetaching([$section->id]);
+        }
     }
 }

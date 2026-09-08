@@ -222,3 +222,74 @@ function makeRequest(array $world, ?string $reason = 'رغبة الطالب'): \
         actor: $world['admin'],
     );
 }
+
+/**
+ * Lecture-scheduling world: department + level + first-semester course,
+ * N empty sections linked via course_section, an active Year, a 300-seat
+ * auditorium, and a fully-permissioned admin.
+ *
+ * @return array{department: \App\Models\Department, certificateType: \App\Models\CertificateType, level: \App\Models\Level, year: \App\Models\Year, course: \App\Models\Course, sections: \Illuminate\Support\Collection, venue: \App\Models\Venue, admin: \App\Models\User}
+ */
+function schedulingWorld(int $sectionCount = 12): array
+{
+    foreach (['venues.view', 'venues.create', 'venues.edit', 'venues.delete', 'lecture_schedules.view', 'lecture_schedules.create', 'lecture_schedules.edit', 'lecture_schedules.delete'] as $name) {
+        Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
+    }
+
+    $department = Department::create(['name' => 'محاسبة', 'code' => 'ACC-'.uniqid()]);
+    $certificateType = CertificateType::firstOrCreate(['name' => 'ثانوية عامة'], ['total_score' => 410]);
+    $level = Level::create(['name' => 'الفرقة الأولى']);
+
+    $year = Year::create([
+        'year' => '2025-2026',
+        'first_semester_status' => SemesterStatus::OPEN_REGISTRATION,
+        'second_semester_status' => SemesterStatus::DISABLED,
+        'summer_semester_status' => SemesterStatus::DISABLED,
+    ]);
+
+    $course = Course::create([
+        'code' => 'ACC-'.uniqid(),
+        'name' => 'محاسبه',
+        'hours' => 3,
+        'is_selected' => false,
+        'is_active' => true,
+        'department_id' => $department->id,
+        'level_id' => $level->id,
+        'semester' => 'الأول',
+    ]);
+
+    $sections = collect(range(1, $sectionCount))->map(function (int $i) use ($department, $course) {
+        $section = Section::create(['name' => (string) $i, 'department_id' => $department->id]);
+        $course->sections()->attach($section);
+
+        return $section;
+    });
+
+    $venue = \App\Models\Venue::factory()->create(['name' => 'مدرج أ', 'capacity' => 300]);
+
+    $admin = User::factory()->create();
+    $admin->givePermissionTo([
+        'venues.view', 'venues.create', 'venues.edit', 'venues.delete',
+        'lecture_schedules.view', 'lecture_schedules.create', 'lecture_schedules.edit', 'lecture_schedules.delete',
+    ]);
+
+    return compact('department', 'certificateType', 'level', 'year', 'course', 'sections', 'venue', 'admin');
+}
+
+function seedSectionStudents(\App\Models\Section $section, int $count, array $world): void
+{
+    for ($i = 0; $i < $count; $i++) {
+        Student::create([
+            'name' => 'طالب تجريبي',
+            'certificate_type_id' => $world['certificateType']->id,
+            'national_id' => fake()->unique()->numerify('##############'),
+            'username' => fake()->unique()->numerify('2#######'),
+            'password' => bcrypt('password'),
+            'plain_password' => 'password',
+            'section_id' => $section->id,
+            'level_id' => $world['level']->id,
+            'year_id' => $world['year']->id,
+            'semester' => Semester::FIRST->value,
+        ]);
+    }
+}

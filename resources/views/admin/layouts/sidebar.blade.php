@@ -157,6 +157,22 @@
                 </li>
                 @endcan
 
+                @can('lecture_schedules.view')
+                <li class="menu-item {{isActiveRoute('lecture-schedules.*')}}">
+                    <a href="{{route('lecture-schedules.index')}}" class="menu-link">
+                        <div data-i18n="جدول المحاضرات">جدول المحاضرات</div>
+                    </a>
+                </li>
+                @endcan
+
+                @can('venues.view')
+                <li class="menu-item {{isActiveRoute('venues.*')}}">
+                    <a href="{{route('venues.index')}}" class="menu-link">
+                        <div data-i18n="الأماكن والمدرجات">الأماكن والمدرجات</div>
+                    </a>
+                </li>
+                @endcan
+
                 @can('grades.view')
                 <li class="menu-item {{isActiveRoute('grades.*')}}">
                     <a href="{{route('grades.index')}}" class="menu-link">

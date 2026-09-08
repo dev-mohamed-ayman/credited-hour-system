@@ -97,4 +97,12 @@ return [
         'label' => 'تحويل التخصص',
         'actions' => ['view' => 'عرض', 'create' => 'إنشاء', 'approve' => 'موافقة', 'reject' => 'رفض'],
     ],
+    'venues' => [
+        'label' => 'الأماكن والمدرجات',
+        'actions' => ['view' => 'عرض', 'create' => 'إنشاء', 'edit' => 'تعديل', 'delete' => 'حذف'],
+    ],
+    'lecture_schedules' => [
+        'label' => 'جدول المحاضرات',
+        'actions' => ['view' => 'عرض', 'create' => 'إنشاء', 'edit' => 'تعديل', 'delete' => 'حذف'],
+    ],
 ];

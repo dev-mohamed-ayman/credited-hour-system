@@ -59,6 +59,15 @@ Route::middleware(['auth'])->group(function () {
     // Section Routes
     Route::resource('sections', SectionController::class)->except(['show'])->middleware('permission:sections.view');
 
+    // Venue Routes
+    Route::resource('venues', \App\Http\Controllers\Admin\VenueController::class)->except(['show'])->middleware('permission:venues.view');
+
+    // Lecture Schedules Routes
+    Route::get('lecture-schedules', \App\Livewire\Admin\LectureSchedule\Index::class)->name('lecture-schedules.index')->middleware('permission:lecture_schedules.view');
+    Route::get('lecture-schedules/{course}/create', \App\Livewire\Admin\LectureSchedule\Form::class)->name('lecture-schedules.create')->middleware('permission:lecture_schedules.create');
+    Route::get('lecture-schedules/{schedule}/edit', \App\Livewire\Admin\LectureSchedule\Form::class)->name('lecture-schedules.edit')->middleware('permission:lecture_schedules.edit');
+    Route::get('lecture-schedules/{course}/grid', \App\Livewire\Admin\LectureSchedule\WeekGrid::class)->name('lecture-schedules.grid')->middleware('permission:lecture_schedules.view');
+
     // Level Routes
     Route::resource('levels', LevelController::class)->except(['show'])->middleware('permission:levels.view');
 

@@ -13,7 +13,8 @@ class Section extends Model
     use HasDeletionGuards;
 
     protected $fillable = ['department_id', 'name', 'cgpa'];
-    protected $blockingRelations = ['students', 'certificateTypes', 'levels'];
+
+    protected $blockingRelations = ['students', 'certificateTypes', 'levels', 'lectureSchedules'];
 
     public function department(): BelongsTo
     {
@@ -33,5 +34,10 @@ class Section extends Model
     public function students(): HasMany
     {
         return $this->hasMany(Student::class);
+    }
+
+    public function lectureSchedules(): BelongsToMany
+    {
+        return $this->belongsToMany(LectureSchedule::class, 'lecture_schedule_section');
     }
 }

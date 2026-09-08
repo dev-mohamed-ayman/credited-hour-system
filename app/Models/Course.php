@@ -28,11 +28,16 @@ class Course extends Model
         'is_active' => 'boolean',
     ];
 
-    protected $blockingRelations = ['sections', 'registrationCourses', 'dependents'];
+    protected $blockingRelations = ['sections', 'registrationCourses', 'dependents', 'lectureSchedules'];
 
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function lectureSchedules(): HasMany
+    {
+        return $this->hasMany(LectureSchedule::class);
     }
 
     public function level(): BelongsTo
