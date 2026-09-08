@@ -73,6 +73,10 @@ return [
         'label' => 'المالية',
         'actions' => ['view' => 'عرض', 'create' => 'إنشاء', 'edit' => 'تعديل', 'delete' => 'حذف'],
     ],
+    'discounts' => [
+        'label' => 'خصومات الطلاب',
+        'actions' => ['view' => 'عرض', 'create' => 'إنشاء', 'edit' => 'تعديل', 'revoke' => 'إلغاء'],
+    ],
     'registration_fees' => [
         'label' => 'مصاريف التسجيل',
         'actions' => ['view' => 'عرض', 'edit' => 'تعديل'],

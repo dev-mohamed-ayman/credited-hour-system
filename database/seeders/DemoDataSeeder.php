@@ -68,6 +68,7 @@ class DemoDataSeeder extends Seeder
         $advisor = $this->seedAdvisor();
 
         $this->seedStudents($refs, $year, $courses, $advisor);
+        $this->seedDiscounts($year);
         $this->seedScheduling($refs, $year, $courses);
         $this->seedExams($refs, $year, $courses);
 
@@ -82,6 +83,8 @@ class DemoDataSeeder extends Seeder
                 ['CS250004', 'تسجيل معتمد ومخصوم', 'إضافة/حذف مادة ورؤية خصم الفرق'],
                 ['CS250005', 'رصيد لا يكفي', 'رفض التسجيل لعدم كفاية الرصيد'],
                 ['CS250006', 'إنذاران أكاديميان وسجل سابق', 'الإنذارات وCGPA في لوحة الطالب'],
+                ['CS250002', 'خصم 500 ج.م نشط على حافظتيه المعلنتين', 'زر «تطبيق على الحافظة القائمة» وإعادة التسعير'],
+                ['CS250006', 'خصم نسبة 25٪ على رسوم التسجيل', 'إصدار حافظة من Fee Issuance وشارة «خصم متاح»'],
             ]
         );
         $this->command?->newLine();
@@ -557,6 +560,42 @@ class DemoDataSeeder extends Seeder
             } catch (\App\Exceptions\ExamScheduleException) {
                 // Left as draft when the demo audience happens to conflict.
             }
+        }
+    }
+
+    private function seedDiscounts(Year $year): void
+    {
+        $discounts = app(\App\Services\DiscountService::class);
+        $granter = \App\Models\User::first();
+        $semester = $year->getCurrentSemester();
+
+        $owed = Student::where('username', 'CS250002')->first();
+        $warned = Student::where('username', 'CS250006')->first();
+
+        if ($owed !== null && ! \App\Models\StudentDiscount::where('decision_number', 'قرار-٤٥١')->exists()) {
+            $discounts->grant([
+                'student_id' => $owed->id,
+                'scope' => \App\Enums\DiscountScope::Registration->value,
+                'year_id' => $year->id,
+                'semester' => $semester?->value,
+                'mode' => \App\Enums\DiscountMode::Fixed->value,
+                'value' => '500.00',
+                'reason' => 'حالة إنسانية — قرار مجلس الكلية',
+                'decision_number' => 'قرار-٤٥١',
+            ], $granter);
+        }
+
+        if ($warned !== null && ! \App\Models\StudentDiscount::where('decision_number', 'قرار-٥٠٢')->exists()) {
+            $discounts->grant([
+                'student_id' => $warned->id,
+                'scope' => \App\Enums\DiscountScope::Registration->value,
+                'year_id' => $year->id,
+                'semester' => $semester?->value,
+                'mode' => \App\Enums\DiscountMode::Percentage->value,
+                'value' => '25.00',
+                'reason' => 'خصم تفوق نسبي',
+                'decision_number' => 'قرار-٥٠٢',
+            ], $granter);
         }
     }
 }

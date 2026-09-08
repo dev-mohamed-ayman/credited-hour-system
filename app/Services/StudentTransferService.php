@@ -209,6 +209,8 @@ class StudentTransferService
                 'level_id' => $request->to_level_id,
             ])->save();
 
+            app(DiscountService::class)->revokeActiveForStudent($student, 'تحويل الطالب');
+
             $request->forceFill([
                 'status' => TransferRequestStatus::APPROVED,
                 'refunded_amount' => $snapshot['total_refund'],

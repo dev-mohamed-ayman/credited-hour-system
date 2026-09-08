@@ -9,6 +9,7 @@ use App\Models\RegistrationFee;
 use App\Models\Student;
 use App\Models\StudentFeeTicket;
 use App\Models\Year;
+use App\Services\DiscountService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Component;
@@ -37,6 +38,9 @@ class FeeIssuance extends Component
     public $selectedFeeTemplateId = '';
 
     public $feeTemplates = [];
+
+    /** @var array<string, array{original: string, discount: string, net: string}> */
+    public array $discountSummaries = [];
 
     public function mount()
     {
@@ -128,6 +132,7 @@ class FeeIssuance extends Component
 
         $ticket = StudentFeeTicket::find($ticketId);
         if ($ticket && $ticket->status === 'pending') {
+            app(DiscountService::class)->revertTicket($ticket, auth()->user());
             $ticket->delete();
             $this->dispatch('alert', ['type' => 'success', 'message' => 'تم حذف الحافظة بنجاح']);
             $this->loadFees();
@@ -359,7 +364,7 @@ class FeeIssuance extends Component
                     $ticketNumber = date('ymdHis').$this->student->username;
                 }
 
-                StudentFeeTicket::create([
+                $ticket = StudentFeeTicket::create([
                     'ticket_number' => $ticketNumber,
                     'student_id' => $this->student->id,
                     'fee_type' => $type,
@@ -376,6 +381,14 @@ class FeeIssuance extends Component
                     'gender' => $gender,
                     'fee_details' => $feeDetails,
                 ]);
+
+                $discountService = app(DiscountService::class);
+                $plan = $discountService->planApplication(
+                    $discountService->eligibleFor($this->student, $type, $feeId ?: null, $yearId, $semester),
+                    (string) $amount
+                );
+                $discountService->logApplicationNotices($plan['notices']);
+                $discountService->applyToTicket($ticket, $plan['applied'], auth()->user());
 
                 $ticketNumbers[] = $ticketNumber;
             }
@@ -396,8 +409,54 @@ class FeeIssuance extends Component
 
     public function render()
     {
+        $this->buildDiscountSummaries();
+
         return view('livewire.admin.finance.fee-issuance')
             ->extends('admin.layouts.app')
             ->section('content');
+    }
+
+    /**
+     * Expected original/discount/net per selectable fee line, for the pre-issuance
+     * preview. Read-only; the real application happens inside generateTickets.
+     */
+    private function buildDiscountSummaries(): void
+    {
+        $this->discountSummaries = [];
+
+        if (! $this->student) {
+            return;
+        }
+
+        $service = app(DiscountService::class);
+        $currentYear = Year::current();
+        $currentSemester = Year::currentSemester();
+
+        $lines = [];
+        foreach ($this->additionalFees as $fee) {
+            $lines['additional-'.$fee->id] = ['registration', 'additional', $fee->id, $fee->amount];
+        }
+        foreach ($this->registrationFees as $fee) {
+            $lines['registration-'.$fee->id] = ['registration', 'registration', $fee->id, $fee->total_student_payment];
+        }
+        foreach ($this->militaryEducationFees as $enrollment) {
+            $lines['military_education-'.$enrollment->id] = ['registration', 'military_education', $enrollment->id, $enrollment->course->fee_amount];
+        }
+        foreach ($this->otherFees as $fee) {
+            $lines['other-'.$fee['id']] = ['registration', 'other', null, $fee['amount']];
+        }
+
+        foreach ($lines as $key => [$_, $feeType, $feeId, $amount]) {
+            $eligible = $service->eligibleFor($this->student, $feeType, $feeId, $currentYear?->id, $currentSemester);
+            $plan = $service->planApplication($eligible, (string) $amount);
+
+            if (! empty($plan['applied'])) {
+                $this->discountSummaries[$key] = [
+                    'original' => number_format((float) $amount, 2),
+                    'discount' => number_format((float) $amount - (float) $plan['net'], 2),
+                    'net' => number_format((float) $plan['net'], 2),
+                ];
+            }
+        }
     }
 }

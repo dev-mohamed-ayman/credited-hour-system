@@ -114,6 +114,23 @@
                                             <h5>{{ $date }}</h5>
                                         </div>
                                     </div>
+                                    @if($discountTotal > 0)
+                                        <div class="form-group row">
+                                            <label class="col-4 control-label">إجمالي المستحق</label>
+                                            <div class="col-8">
+                                                <h5 class="text-muted">{{ number_format($grossTotal, 2) }} ج.م</h5>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label class="col-4 control-label">خصم</label>
+                                            <div class="col-8">
+                                                <h5 class="text-success">- {{ number_format($discountTotal, 2) }} ج.م</h5>
+                                                @if($discountReasons)
+                                                    <small class="text-muted">السبب: {{ $discountReasons }}</small>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endif
                                     <div class="form-group row">
                                         <label class="col-4 control-label">المبلغ المراد سداده</label>
                                         <div class="col-8">

@@ -128,6 +128,18 @@
                     <div class="card-body">
                         <div class="row g-3">
                             <div class="col-md-4">
+                                <div class="p-3 bg-label-secondary rounded border-start border-secondary border-4">
+                                    <small class="text-muted d-block">المستحق الأصلي</small>
+                                    <span class="fw-bold text-heading fs-5">{{ number_format($totalOriginal, 2) }} ج</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 bg-label-info rounded border-start border-info border-4">
+                                    <small class="text-muted d-block">إجمالي الخصومات</small>
+                                    <span class="fw-bold text-heading fs-5">{{ number_format($totalDiscount, 2) }} ج</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
                                 <div class="p-3 bg-label-primary rounded border-start border-primary border-4">
                                     <small class="text-muted d-block">إجمالي الرسوم</small>
                                     <span class="fw-bold text-heading fs-5">{{ number_format($totalFees, 2) }} ج</span>

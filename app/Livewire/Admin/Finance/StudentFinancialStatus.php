@@ -3,14 +3,15 @@
 namespace App\Livewire\Admin\Finance;
 
 use App\Models\Student;
-use App\Models\Year;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
 class StudentFinancialStatus extends Component
 {
     public $searchQuery;
+
     public $student;
+
     public $selectedStudentId;
 
     public function searchStudent()
@@ -19,22 +20,23 @@ class StudentFinancialStatus extends Component
             'searchQuery' => 'required|string',
         ]);
 
-        $this->student = Student::where('username', 'like', '%' . $this->searchQuery . '%')
-            ->orWhere('name', 'like', '%' . $this->searchQuery . '%')
+        $this->student = Student::where('username', 'like', '%'.$this->searchQuery.'%')
+            ->orWhere('name', 'like', '%'.$this->searchQuery.'%')
             ->with(['feeTickets' => fn ($q) => $q->orderByDesc('created_at')->with(['year', 'department', 'level', 'section'])])
             ->first();
 
-        if (!$this->student) {
+        if (! $this->student) {
             $this->dispatch('alert', [
                 'type' => 'error',
-                'message' => 'لم يتم العثور على طالب بهذا الاسم أو الكود'
+                'message' => 'لم يتم العثور على طالب بهذا الاسم أو الكود',
             ]);
+
             return;
         }
 
         $this->dispatch('alert', [
             'type' => 'success',
-            'message' => 'تم العثور على الطالب بنجاح'
+            'message' => 'تم العثور على الطالب بنجاح',
         ]);
     }
 
@@ -43,11 +45,12 @@ class StudentFinancialStatus extends Component
         $this->student = Student::with(['feeTickets' => fn ($q) => $q->orderByDesc('created_at')->with(['year', 'department', 'level', 'section'])])
             ->find($studentId);
 
-        if (!$this->student) {
+        if (! $this->student) {
             $this->dispatch('alert', [
                 'type' => 'error',
-                'message' => 'لم يتم العثور على الطالب'
+                'message' => 'لم يتم العثور على الطالب',
             ]);
+
             return;
         }
     }
@@ -60,20 +63,20 @@ class StudentFinancialStatus extends Component
 
     public function getGroupedTicketsProperty(): Collection
     {
-        if (!$this->student) {
+        if (! $this->student) {
             return collect();
         }
 
         return $this->student->feeTickets
             ->groupBy(function ($ticket) {
-                return $ticket->year?->year . ' - ' . $ticket->semester?->label();
+                return $ticket->year?->year.' - '.$ticket->semester?->label();
             })
             ->sortKeysDesc();
     }
 
     public function getTotalPaidProperty(): float
     {
-        if (!$this->student) {
+        if (! $this->student) {
             return 0;
         }
 
@@ -92,19 +95,43 @@ class StudentFinancialStatus extends Component
 
     public function getTotalFeesProperty(): float
     {
-        if (!$this->student) {
+        if (! $this->student) {
             return 0;
         }
 
         return $this->student->feeTickets->sum('amount');
     }
 
+    /**
+     * FR-023: original dues (gross before discounts) read from ticket snapshots.
+     */
+    public function getTotalOriginalProperty(): float
+    {
+        if (! $this->student) {
+            return 0;
+        }
+
+        return $this->student->feeTickets->sum(fn ($ticket) => (float) ($ticket->original_amount ?? $ticket->amount));
+    }
+
+    /**
+     * FR-023: total discounts actually applied, derived from the tickets themselves.
+     */
+    public function getTotalDiscountProperty(): float
+    {
+        if (! $this->student) {
+            return 0;
+        }
+
+        return (float) $this->student->feeTickets->sum('discount_amount');
+    }
+
     public function render()
     {
         $recentStudents = collect();
         if (empty($this->student) && strlen($this->searchQuery) >= 2) {
-            $recentStudents = Student::where('username', 'like', '%' . $this->searchQuery . '%')
-                ->orWhere('name', 'like', '%' . $this->searchQuery . '%')
+            $recentStudents = Student::where('username', 'like', '%'.$this->searchQuery.'%')
+                ->orWhere('name', 'like', '%'.$this->searchQuery.'%')
                 ->limit(10)
                 ->get();
         }
@@ -112,6 +139,8 @@ class StudentFinancialStatus extends Component
         return view('livewire.admin.finance.student-financial-status')
             ->with('recentStudents', $recentStudents)
             ->with('totalFees', $this->totalFees)
+            ->with('totalOriginal', $this->totalOriginal)
+            ->with('totalDiscount', $this->totalDiscount)
             ->with('totalPaid', $this->totalPaid)
             ->with('remaining', $this->remaining)
             ->with('totalPending', $this->totalPending)

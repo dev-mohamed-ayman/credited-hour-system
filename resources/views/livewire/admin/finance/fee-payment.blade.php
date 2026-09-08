@@ -110,7 +110,15 @@
                                                 <span class="badge bg-label-info">{{ $ticket->semester->label() }}</span>
                                             @endif
                                         </td>
-                                        <td>{{ number_format($ticket->amount, 2) }} ج.م</td>
+                                        <td>
+                                            <span class="fw-bold">{{ number_format($ticket->amount, 2) }} ج.م</span>
+                                            @if($ticket->hasDiscount())
+                                                <div class="small text-muted">
+                                                    <div>أصلي: {{ number_format($ticket->grossAmount(), 2) }}</div>
+                                                    <div class="text-success">خصم: {{ number_format((float) $ticket->discount_amount, 2) }}</div>
+                                                </div>
+                                            @endif
+                                        </td>
                                         <td>
                                             <span class="badge {{ $ticket->status === 'paid' ? 'bg-success' : 'bg-warning' }}">
                                                 {{ $ticket->status === 'paid' ? 'مدفوع' : 'غير مدفوع' }}

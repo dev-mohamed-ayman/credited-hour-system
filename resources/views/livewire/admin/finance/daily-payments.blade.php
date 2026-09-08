@@ -154,7 +154,15 @@
                                                 'other' => 'مصاريف أخرى',
                                                 default => 'رسوم تسجيل',
                                             } }}</td>
-                                            <td>{{ number_format($ticket->amount, 2) }} ج.م</td>
+                                            <td>
+                                                {{ number_format($ticket->amount, 2) }} ج.م
+                                                @if($ticket->hasDiscount())
+                                                    <div class="small text-muted">
+                                                        أصلي: {{ number_format($ticket->grossAmount(), 2) }}
+                                                        <span class="text-success">— خصم: {{ number_format((float) $ticket->discount_amount, 2) }} ج.م</span>
+                                                    </div>
+                                                @endif
+                                            </td>
                                             <td>
                                                 <span class="badge {{ match($ticket->payment_method) {
                                                     'cash' => 'bg-label-success',

@@ -98,6 +98,20 @@
                             </div>
                         @endif
 
+                        @if(!empty($discountSummaries))
+                            @php
+                                $grossTotal = array_sum(array_map(fn ($s) => (float) str_replace(',', '', $s['original']), $discountSummaries));
+                                $discountTotal = array_sum(array_map(fn ($s) => (float) str_replace(',', '', $s['discount']), $discountSummaries));
+                                $netTotal = array_sum(array_map(fn ($s) => (float) str_replace(',', '', $s['net']), $discountSummaries));
+                            @endphp
+                            <div class="alert alert-success d-flex flex-wrap gap-4 align-items-center py-2 mb-4">
+                                <span><i class="ti tabler-badge-percent me-1"></i>خصومات مؤهلة على هذه المصاريف:</span>
+                                <span>الإجمالي الأصلي: <strong>{{ number_format($grossTotal, 2) }}</strong> ج.م</span>
+                                <span>إجمالي الخصومات: <strong>{{ number_format($discountTotal, 2) }}</strong> ج.م</span>
+                                <span>الصافي المتوقع: <strong>{{ number_format($netTotal, 2) }}</strong> ج.م</span>
+                            </div>
+                        @endif
+
                         <form wire:submit.prevent="generateTickets">
                             {{-- Additional Fees Section --}}
                             @if($additionalFees->isNotEmpty())
@@ -128,6 +142,13 @@
                                                                 @endif
                                                             </td>
                                                             <td class="text-center fw-bold">{{ number_format($fee->amount, 2) }} ج.م
+                                                                @php($summary = $discountSummaries['additional-' . $fee->id] ?? null)
+                                                                @if($summary)
+                                                                    <div class="small fw-normal">
+                                                                        <span class="badge bg-label-success">خصم متاح</span>
+                                                                        <span class="text-muted">خصم {{ $summary['discount'] }} ⇒ الصافي {{ $summary['net'] }}</span>
+                                                                    </div>
+                                                                @endif
                                                             </td>
                                                             <td class="text-center">
                                                                 <input type="checkbox" wire:model="selectedFees"
@@ -161,7 +182,15 @@
                                                             <td>{{ $loop->iteration }}</td>
                                                             <td>مصاريف التسجيل - {{ $student->level?->name }}</td>
                                                             <td class="text-center fw-bold">
-                                                                {{ number_format($fee->total_student_payment, 2) }} ج.م</td>
+                                                                {{ number_format($fee->total_student_payment, 2) }} ج.م
+                                                                @php($summary = $discountSummaries['registration-' . $fee->id] ?? null)
+                                                                @if($summary)
+                                                                    <div class="small fw-normal">
+                                                                        <span class="badge bg-label-success">خصم متاح</span>
+                                                                        <span class="text-muted">خصم {{ $summary['discount'] }} ⇒ الصافي {{ $summary['net'] }}</span>
+                                                                    </div>
+                                                                @endif
+                                                            </td>
                                                             <td class="text-center">
                                                                 <input type="checkbox" wire:model="selectedFees"
                                                                     value="registration-{{ $fee->id }}" class="form-check-input">
@@ -202,7 +231,15 @@
                                                                     <span class="badge bg-label-info">{{ $enrollment->semester->label() }}</span>
                                                                 @endif
                                                             </td>
-                                                            <td class="text-center fw-bold">{{ number_format($enrollment->course->fee_amount, 2) }} ج.م</td>
+                                                            <td class="text-center fw-bold">{{ number_format($enrollment->course->fee_amount, 2) }} ج.م
+                                                                @php($militarySummary = $discountSummaries['military_education-' . $enrollment->id] ?? null)
+                                                                @if($militarySummary)
+                                                                    <div class="small fw-normal">
+                                                                        <span class="badge bg-label-success">خصم متاح</span>
+                                                                        <span class="text-muted">خصم {{ $militarySummary['discount'] }} ⇒ الصافي {{ $militarySummary['net'] }}</span>
+                                                                    </div>
+                                                                @endif
+                                                            </td>
                                                             <td class="text-center">
                                                                 <input type="checkbox" wire:model="selectedFees"
                                                                     value="military_education-{{ $enrollment->id }}" class="form-check-input">
@@ -259,7 +296,15 @@
                                                         <tr wire:key="other-fee-{{ $fee['id'] }}">
                                                             <td>{{ $loop->iteration }}</td>
                                                             <td>{{ $fee['name'] }}</td>
-                                                            <td class="text-center fw-bold">{{ number_format($fee['amount'], 2) }} ج.م</td>
+                                                            <td class="text-center fw-bold">{{ number_format($fee['amount'], 2) }} ج.م
+                                                                @php($otherSummary = $discountSummaries['other-' . $fee['id']] ?? null)
+                                                                @if($otherSummary)
+                                                                    <div class="small fw-normal">
+                                                                        <span class="badge bg-label-success">خصم متاح</span>
+                                                                        <span class="text-muted">خصم {{ $otherSummary['discount'] }} ⇒ الصافي {{ $otherSummary['net'] }}</span>
+                                                                    </div>
+                                                                @endif
+                                                            </td>
                                                             <td class="text-center">
                                                                 <input type="checkbox" wire:model="selectedFees"
                                                                        value="other-{{ $fee['id'] }}" class="form-check-input" checked>

@@ -68,6 +68,13 @@ class Student extends Authenticatable
         'password',
     ];
 
+    protected static function booted(): void
+    {
+        static::deleted(function (Student $student) {
+            app(\App\Services\DiscountService::class)->revokeActiveForStudent($student, 'حذف الطالب');
+        });
+    }
+
     public function year()
     {
         return $this->belongsTo(Year::class);
@@ -173,6 +180,11 @@ class Student extends Authenticatable
     public function transferRequests(): HasMany
     {
         return $this->hasMany(StudentTransferRequest::class);
+    }
+
+    public function discounts(): HasMany
+    {
+        return $this->hasMany(StudentDiscount::class);
     }
 
     public function wallet(): \Illuminate\Database\Eloquent\Relations\HasOne

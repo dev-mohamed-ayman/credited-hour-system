@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\Semester;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class StudentFeeTicket extends Model
 {
@@ -14,6 +15,8 @@ class StudentFeeTicket extends Model
         'fee_id',
         'fee_name',
         'amount',
+        'original_amount',
+        'discount_amount',
         'status',
         'ministerial_receipt_number',
         'payment_method',
@@ -35,7 +38,28 @@ class StudentFeeTicket extends Model
             'paid_at' => 'datetime',
             'semester' => Semester::class,
             'fee_details' => 'array',
+            'amount' => 'decimal:2',
+            'original_amount' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
         ];
+    }
+
+    public function discountUsages(): HasMany
+    {
+        return $this->hasMany(StudentDiscountUsage::class, 'student_fee_ticket_id');
+    }
+
+    /**
+     * The gross value before any discount: original snapshot when discounted, net otherwise.
+     */
+    public function grossAmount(): float
+    {
+        return (float) ($this->original_amount ?? $this->amount);
+    }
+
+    public function hasDiscount(): bool
+    {
+        return $this->original_amount !== null && (float) $this->discount_amount > 0;
     }
 
     public function isPaid(): bool

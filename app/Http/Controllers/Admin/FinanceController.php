@@ -13,7 +13,7 @@ class FinanceController extends Controller
         abort_unless(auth()->user()->can('finance.view'), 403);
 
         $ticketNumbers = explode(',', $request->tickets);
-        $tickets = StudentFeeTicket::with('student.level', 'student.section.department', 'year')
+        $tickets = StudentFeeTicket::with('student.level', 'student.section.department', 'year', 'discountUsages.discount')
             ->whereIn('ticket_number', $ticketNumbers)
             ->orderBy('ticket_number')
             ->get();
@@ -24,6 +24,13 @@ class FinanceController extends Controller
 
         $student = $tickets->first()->student;
         $totalAmount = $tickets->sum('amount');
+        $discountTotal = $tickets->sum('discount_amount');
+        $grossTotal = $tickets->sum(fn ($t) => (float) ($t->original_amount ?? $t->amount));
+        $discountReasons = $tickets->flatMap->discountUsages
+            ->map(fn ($u) => $u->discount?->reason)
+            ->filter()
+            ->unique()
+            ->implode(' / ');
 
         // Format ticket numbers for display and barcode
         $formattedTicketNumbers = [];
@@ -45,6 +52,9 @@ class FinanceController extends Controller
             'student' => $student,
             'tickets' => $tickets,
             'totalAmount' => $totalAmount,
+            'discountTotal' => $discountTotal,
+            'grossTotal' => $grossTotal,
+            'discountReasons' => $discountReasons,
             'ticketNumbers' => $formattedTicketNumbersStr, // For barcode and display
             'fullTicketNumbers' => $request->tickets, // Keep full numbers just in case
             'date' => now()->format('Y-m-d'),

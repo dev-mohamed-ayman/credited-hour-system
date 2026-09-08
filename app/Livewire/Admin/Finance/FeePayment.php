@@ -186,7 +186,9 @@ class FeePayment extends Component
 
         $settings = Setting::first();
         $next = $settings->ministerial_receipt_current + 1;
-        $registrationFeesCount = $selectedTicketModels->filter(fn ($t) => $t->fee_type === 'registration')->count();
+        $registrationFeesCount = $selectedTicketModels
+            ->filter(fn ($t) => $t->fee_type === 'registration' && (float) $t->amount > 0)
+            ->count();
 
         if ($registrationFeesCount > 0 && $next > $settings->ministerial_receipt_end) {
             $this->dispatch('alert', ['type' => 'error', 'message' => 'لا يمكن السداد، لقد وصلت لنهاية مدى الأرقام الوزارية']);
@@ -205,22 +207,28 @@ class FeePayment extends Component
                     'paid_at' => now(),
                 ];
 
-                if ($ticket->fee_type === 'registration') {
+                if ((float) $ticket->amount <= 0) {
+                    $updateData['notes'] = trim(($ticket->notes ? $ticket->notes.' — ' : '').'سداد بخصم كامل');
+                }
+
+                if ($ticket->fee_type === 'registration' && (float) $ticket->amount > 0) {
                     $updateData['ministerial_receipt_number'] = $currentReceiptNumber;
                     $currentReceiptNumber++;
                 }
 
                 $ticket->update($updateData);
 
-                app(\App\Services\WalletService::class)->deposit(
-                    student: $ticket->student,
-                    amount: $ticket->amount,
-                    yearId: $ticket->year_id,
-                    semester: $ticket->semester,
-                    reason: 'إيداع مبلغ مالي من سداد حافظة',
-                    reference: $ticket,
-                    performedBy: auth()->user()
-                );
+                if ((float) $ticket->amount > 0) {
+                    app(\App\Services\WalletService::class)->deposit(
+                        student: $ticket->student,
+                        amount: $ticket->amount,
+                        yearId: $ticket->year_id,
+                        semester: $ticket->semester,
+                        reason: 'إيداع مبلغ مالي من سداد حافظة',
+                        reference: $ticket,
+                        performedBy: auth()->user()
+                    );
+                }
             }
 
             if ($registrationFeesCount > 0) {
