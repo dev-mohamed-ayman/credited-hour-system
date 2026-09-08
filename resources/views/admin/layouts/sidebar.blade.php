@@ -221,7 +221,7 @@
         </li>
 
         @can('finance.view')
-        <li class="menu-item {{isActiveRoute(['admin.finance.fee-payment', 'admin.finance.student-financial-status', 'admin.finance.wallet-management', 'admin.finance.wallets-report', 'admin.finance.discounts'], true)}}">
+        <li class="menu-item {{isActiveRoute(['admin.finance.fee-payment', 'admin.finance.student-financial-status', 'admin.finance.wallet-management', 'admin.finance.wallets-report', 'admin.finance.students-review', 'admin.finance.daily-payments', 'admin.finance.discounts'], true)}}">
             <a href="javascript:void(0)" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base ti tabler-currency-dollar"></i>
                 <div data-i18n="المالية">المالية</div>
@@ -234,7 +234,12 @@
                 </li>
                 <li class="menu-item {{ isActiveRoute('admin.finance.daily-payments') }}">
                     <a href="{{ route('admin.finance.daily-payments') }}" class="menu-link">
-                        <div data-i18n="اليوميات المالية">اليوميات المالية</div>
+                        <div data-i18n="Daily Payments Review">مراجعة اليوميات</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ isActiveRoute('admin.finance.students-review') }}">
+                    <a href="{{ route('admin.finance.students-review') }}" class="menu-link">
+                        <div data-i18n="Students Payments Review">مراجعة الطلاب</div>
                     </a>
                 </li>
                 <li class="menu-item {{ isActiveRoute('admin.finance.student-financial-status') }}">
