@@ -190,5 +190,6 @@ Route::prefix('student')->name('student.')->group(function () {
         Route::get('status-statement', \App\Livewire\Student\StatusStatement::class)->name('status-statement');
         Route::get('change-password', \App\Livewire\Student\ChangePassword::class)->name('change-password');
         Route::get('exam-schedule', \App\Livewire\Student\ExamSchedule::class)->name('exam-schedule');
+        Route::get('print-seat-number', \App\Http\Controllers\Student\SeatNumberPrintController::class)->name('print-seat-number');
     });
 });

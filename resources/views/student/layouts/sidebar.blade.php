@@ -62,6 +62,13 @@
             </a>
         </li>
 
+        <li class="menu-item {{isActiveRoute('student.print-seat-number')}}">
+            <a href="{{route('student.print-seat-number')}}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-identity-card"></i>
+                <div data-i18n="طباعة رقم الجلوس">طباعة رقم الجلوس</div>
+            </a>
+        </li>
+
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">الحساب</span>
         </li>

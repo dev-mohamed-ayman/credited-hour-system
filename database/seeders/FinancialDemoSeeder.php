@@ -210,17 +210,18 @@ class FinancialDemoSeeder extends Seeder
         );
 
         $specs = [
-            ['FS250101', 'أحمد كامل السيد', 'male', 'علوم الحاسب', 'freshman', 'registered'],
-            ['FS250102', 'سارة محمود', 'female', 'علوم الحاسب', 'remaining', 'registered'],
-            ['FS250103', 'محمد إبراهيم', 'male', 'علوم الحاسب', 'freshman', 'registered'],
-            ['FS250104', 'ليلى حسن', 'female', 'علوم الحاسب', 'freshman', 'registered'],
-            ['FS250105', 'خالد سمير', 'male', 'علوم الحاسب', 'remaining', 'registered'],
-            ['FS250106', 'منى فؤاد', 'female', 'علوم الحاسب', 'external', 'excused'],
-            ['FS250107', 'تامر سعيد', 'male', 'علوم الحاسب', 'freshman', 'registered'],
-            ['FS250108', 'هند رامي', 'female', 'محاسبة', 'freshman', 'registered'],
+            ['FS250101', 'أحمد كامل السيد', 'male', 'علوم الحاسب', 'freshman', 'registered', '2025101'],
+            ['FS250102', 'سارة محمود', 'female', 'علوم الحاسب', 'remaining', 'registered', '2025102'],
+            ['FS250103', 'محمد إبراهيم', 'male', 'علوم الحاسب', 'freshman', 'registered', '2025103'],
+            ['FS250104', 'ليلى حسن', 'female', 'علوم الحاسب', 'freshman', 'registered', '2025104'],
+            ['FS250105', 'خالد سمير', 'male', 'علوم الحاسب', 'remaining', 'registered', '2025105'],
+            ['FS250106', 'منى فؤاد', 'female', 'علوم الحاسب', 'external', 'excused', '2025106'],
+            ['FS250107', 'تامر سعيد', 'male', 'علوم الحاسب', 'freshman', 'registered', '2025107'],
+            // FS250108 deliberately has no seat number — demonstrates the "not assigned yet" guard.
+            ['FS250108', 'هند رامي', 'female', 'محاسبة', 'freshman', 'registered', null],
         ];
 
-        foreach ($specs as [$username, $name, $gender, $departmentName, $studyStatus, $status]) {
+        foreach ($specs as [$username, $name, $gender, $departmentName, $studyStatus, $status, $seatNumber]) {
             $department = Department::where('name', $departmentName)->firstOrFail();
             $section = Section::where('department_id', $department->id)->orderBy('id')->firstOrFail();
 
@@ -242,8 +243,27 @@ class FinancialDemoSeeder extends Seeder
                     'password' => self::PASSWORD,
                     'plain_password' => self::PASSWORD,
                     'military_education_passed' => false,
+                    'seat_number' => $seatNumber,
                 ]
             );
+
+            if ($seatNumber !== null && blank($this->students[$username]->seat_number)) {
+                $this->students[$username]->update(['seat_number' => $seatNumber]);
+            }
+        }
+
+        $settings = Setting::query()->firstOrCreate([]);
+
+        if ($settings->wasRecentlyCreated || $settings->seat_show_seat_number === null) {
+            $settings->update([
+                'seat_show_photo' => true,
+                'seat_show_name' => true,
+                'seat_show_code' => true,
+                'seat_show_department' => true,
+                'seat_show_section' => true,
+                'seat_show_level' => true,
+                'seat_show_seat_number' => true,
+            ]);
         }
     }
 
