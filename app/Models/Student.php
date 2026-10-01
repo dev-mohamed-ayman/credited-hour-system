@@ -202,6 +202,11 @@ class Student extends Authenticatable
         return $this->section?->department_id;
     }
 
+    public function examCommitteeMemberships(): HasMany
+    {
+        return $this->hasMany(ExamCommitteeStudent::class);
+    }
+
     public function feeTickets(): HasMany
     {
         return $this->hasMany(StudentFeeTicket::class);

@@ -1,7 +1,7 @@
 <div>
     <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between mb-4 gap-3">
         <div>
-            <h4 class="mb-0 fw-bold text-heading">جدول الامتحانات</h4>
+            <h4 class="mb-0 fw-bold text-heading">جدول الامتحانات — اللجان</h4>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb breadcrumb-style1 mb-0 small">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">الرئيسية</a></li>
@@ -9,6 +9,11 @@
                 </ol>
             </nav>
         </div>
+        @can('exam_schedules.create')
+            <a class="btn btn-primary" href="{{ route('exam-schedules.create', ['year' => $year_id, 'semester' => $semester]) }}">
+                <i class="ti tabler-plus me-1"></i> إضافة لجنة
+            </a>
+        @endcan
     </div>
 
     <div class="card mb-4">
@@ -23,7 +28,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <label class="form-label" for="semester">الترم</label>
                     <select id="semester" wire:model.live="semester" class="form-select">
                         @foreach($semesters as $s)
@@ -31,41 +36,17 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label" for="department_id">التخصص</label>
-                    <select id="department_id" wire:model.live="department_id" class="form-select">
-                        <option value="">الكل</option>
-                        @foreach($departments as $d)
-                            <option value="{{ $d->id }}">{{ $d->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label" for="level_id">الفرقة</label>
-                    <select id="level_id" wire:model.live="level_id" class="form-select">
-                        <option value="">الكل</option>
-                        @foreach($levels as $l)
-                            <option value="{{ $l->id }}">{{ $l->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
                 <div class="col-md-3">
-                    <label class="form-label" for="status_filter">حالة الجلسة</label>
+                    <label class="form-label" for="status_filter">الحالة</label>
                     <select id="status_filter" wire:model.live="status_filter" class="form-select">
                         <option value="">الكل</option>
-                        <option value="not_set">لم تُحدد</option>
                         <option value="draft">مسودة</option>
                         <option value="published">منشورة</option>
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label" for="sort">ترتيب حسب</label>
-                    <select id="sort" wire:model.live="sort" class="form-select">
-                        <option value="name">اسم المادة</option>
-                        <option value="examinees">عدد الممتحنين</option>
-                        <option value="exam_date">تاريخ الامتحان</option>
-                        <option value="status">الحالة</option>
-                    </select>
+                    <label class="form-label" for="search">بحث (اسم لجنة / كود طالب)</label>
+                    <input type="text" id="search" wire:model.live.debounce.400ms="search" class="form-control" placeholder="لجنة 1 أو CS250001">
                 </div>
             </div>
         </div>
@@ -74,96 +55,103 @@
     @if(!$year_id || !strlen($semester))
         <div class="card">
             <div class="card-body text-center py-5 text-muted">
-                اختر السنة الدراسية والترم لعرض المواد التي لها تسجيلات معتمدة.
+                اختر السنة الدراسية والترم لعرض لجان الامتحانات.
             </div>
         </div>
     @else
+        @if($unassignedCount > 0)
+            <div class="alert alert-warning">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <i class="ti tabler-alert-triangle"></i>
+                    <span><b>{{ $unassignedCount }}</b> طالب لديهم تسجيل معتمد في هذا الترم ولم يُضافوا لأي لجنة.</span>
+                    <button type="button" class="btn btn-sm btn-label-warning ms-auto" wire:click="toggleUnassigned">
+                        {{ $showUnassigned ? 'إخفاء' : 'عرض الأكواد' }}
+                    </button>
+                </div>
+                @if($showUnassigned)
+                    <div class="d-flex flex-wrap gap-1 mt-3">
+                        @foreach($unassigned as $student)
+                            <span class="badge bg-label-dark" title="{{ $student->name }}" wire:key="unassigned-{{ $student->id }}">{{ $student->username }}</span>
+                        @endforeach
+                        @if($unassignedCount > $unassigned->count())
+                            <span class="small text-muted">و{{ $unassignedCount - $unassigned->count() }} آخرين…</span>
+                        @endif
+                    </div>
+                @endif
+            </div>
+        @endif
+
         <div class="card">
             <div class="table-responsive text-nowrap">
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>المادة</th>
-                            <th>التخصص</th>
-                            <th>الفرقة</th>
-                            <th>الممتحنون</th>
-                            <th>التاريخ</th>
-                            <th>الوقت</th>
-                            <th>النوع</th>
+                            <th>اللجنة</th>
+                            <th>المكان</th>
+                            <th>الطلاب / السعة</th>
+                            <th>عدد الامتحانات</th>
+                            <th>الفترة</th>
                             <th>الحالة</th>
                             <th class="text-end">إجراءات</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($courses as $course)
-                            @php($session = $sessions->get($course->id))
-                            <tr wire:key="course-{{ $course->id }}">
-                                <td class="fw-medium">{{ $course->name }}</td>
-                                <td>{{ $course->department->name }}</td>
-                                <td>{{ $course->level->name }}</td>
+                        @forelse($committees as $committee)
+                            <tr wire:key="committee-{{ $committee->id }}">
+                                <td class="fw-medium">
+                                    <a href="{{ route('exam-schedules.manage', $committee) }}">{{ $committee->name }}</a>
+                                </td>
+                                <td>{{ $committee->venue?->name ?? '—' }}</td>
                                 <td>
-                                    <span class="badge bg-label-{{ ($counts[$course->id] ?? 0) > 0 ? 'primary' : 'danger' }}">
-                                        {{ $counts[$course->id] ?? 0 }}
+                                    <span class="badge bg-label-{{ $committee->members_count > $committee->capacity ? 'danger' : ($committee->members_count > 0 ? 'primary' : 'secondary') }}">
+                                        {{ $committee->members_count }} / {{ $committee->capacity }}
                                     </span>
                                 </td>
-                                <td>{{ $session?->exam_date?->format('Y-m-d') ?? '—' }}</td>
+                                <td>{{ $committee->sessions_count }}</td>
                                 <td>
-                                    @if($session)
-                                        {{ substr($session->start_time, 0, 5) }} – {{ substr($session->end_time, 0, 5) }}
+                                    @if($committee->sessions_min_exam_date)
+                                        {{ \Illuminate\Support\Carbon::parse($committee->sessions_min_exam_date)->format('Y-m-d') }}
+                                        @if($committee->sessions_max_exam_date !== $committee->sessions_min_exam_date)
+                                            → {{ \Illuminate\Support\Carbon::parse($committee->sessions_max_exam_date)->format('Y-m-d') }}
+                                        @endif
                                     @else
                                         —
                                     @endif
                                 </td>
-                                <td>{{ $session?->type?->label() ?? '—' }}</td>
-                                <td>
-                                    @if($session)
-                                        <span class="badge {{ $session->status->badgeClass() }}">{{ $session->status->label() }}</span>
-                                        @if($stale->get($session->id))
-                                            <span class="badge bg-label-warning">توزيع غير محدّث</span>
-                                        @endif
-                                    @else
-                                        <span class="badge bg-label-secondary">لم تُحدد</span>
-                                    @endif
-                                </td>
+                                <td><span class="badge {{ $committee->status->badgeClass() }}">{{ $committee->status->label() }}</span></td>
                                 <td class="text-end">
-                                    @if(!$session)
-                                        @can('exam_schedules.create')
-                                            <a class="btn btn-sm btn-primary"
-                                               href="{{ route('exam-schedules.create', $course) }}?year={{ $year_id }}">
-                                                تحديد
-                                            </a>
-                                        @endcan
-                                    @else
-                                        @can('exam_schedules.edit')
-                                            <a class="btn btn-sm btn-label-info" href="{{ route('exam-schedules.edit', $session) }}">تعديل</a>
-                                            <a class="btn btn-sm btn-label-primary" href="{{ route('exam-schedules.seating', $session) }}">التوزيع</a>
-                                        @endcan
-                                        @can('exam_schedules.publish')
-                                            @if($session->status === \App\Enums\ExamSessionStatus::DRAFT)
-                                                <button type="button" class="btn btn-sm btn-success"
-                                                        onclick="confirmAction('نشر الجدول', 'سيظهر جدول الامتحان للطلاب فور النشر. هل أنت متأكد؟', () => @this.call('publish', {{ $session->id }}))">
-                                                    نشر
-                                                </button>
-                                            @else
-                                                <button type="button" class="btn btn-sm btn-label-warning"
-                                                        onclick="confirmAction('إخفاء الجدول', 'سيُخفى جدول الامتحان عن الطلاب ويعود لمسودة. هل أنت متأكد؟', () => @this.call('unpublish', {{ $session->id }}))">
-                                                    إخفاء
-                                                </button>
-                                            @endif
-                                        @endcan
-                                        @can('exam_schedules.delete')
-                                            <button type="button" class="btn btn-sm btn-label-danger"
-                                                    onclick="confirmAction('حذف الجلسة', 'هل أنت متأكد من حذف جلسة الامتحان هذه؟', () => @this.call('deleteSession', {{ $session->id }}))">
-                                                حذف
+                                    <a class="btn btn-sm btn-label-primary" href="{{ route('exam-schedules.manage', $committee) }}">الطلاب والمواعيد</a>
+                                    @can('exam_schedules.edit')
+                                        <a class="btn btn-sm btn-label-info" href="{{ route('exam-schedules.edit', $committee) }}">تعديل</a>
+                                    @endcan
+                                    <a class="btn btn-sm btn-label-secondary" target="_blank" href="{{ route('exam-schedules.print.committee', $committee) }}">
+                                        <i class="ti tabler-printer"></i>
+                                    </a>
+                                    @can('exam_schedules.publish')
+                                        @if($committee->isPublished())
+                                            <button type="button" class="btn btn-sm btn-label-warning"
+                                                    onclick="confirmAction('إخفاء الجدول', 'سيُخفى جدول اللجنة عن الطلاب ويعود لمسودة. هل أنت متأكد؟', () => @this.call('unpublish', {{ $committee->id }}))">
+                                                إخفاء
                                             </button>
-                                        @endcan
-                                    @endif
+                                        @else
+                                            <button type="button" class="btn btn-sm btn-success"
+                                                    onclick="confirmAction('نشر الجدول', 'سيظهر جدول اللجنة لطلابها فور النشر. هل أنت متأكد؟', () => @this.call('publish', {{ $committee->id }}))">
+                                                نشر
+                                            </button>
+                                        @endif
+                                    @endcan
+                                    @can('exam_schedules.delete')
+                                        <button type="button" class="btn btn-sm btn-label-danger"
+                                                onclick="confirmAction('حذف اللجنة', 'سيتم حذف اللجنة بطلابها ومواعيدها. هل أنت متأكد؟', () => @this.call('deleteCommittee', {{ $committee->id }}))">
+                                            حذف
+                                        </button>
+                                    @endcan
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="text-center text-muted py-5">
-                                    لا توجد مواد مسجّل بها في هذا الترم (تسجيلات معتمدة).
+                                <td colspan="7" class="text-center text-muted py-5">
+                                    لا توجد لجان في هذا الترم بعد.
                                 </td>
                             </tr>
                         @endforelse
@@ -171,7 +159,7 @@
                 </table>
             </div>
             <div class="card-footer d-flex justify-content-center">
-                {{ $courses->links() }}
+                {{ $committees->links() }}
             </div>
         </div>
     @endif

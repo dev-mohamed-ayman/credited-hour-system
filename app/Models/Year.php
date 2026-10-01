@@ -27,7 +27,7 @@ class Year extends Model
         'summer_exam_to',
     ];
 
-    protected $blockingRelations = ['students', 'additionalFees', 'examSessions'];
+    protected $blockingRelations = ['students', 'additionalFees', 'examCommittees'];
 
     protected function casts(): array
     {
@@ -111,9 +111,9 @@ class Year extends Model
         return $this->hasMany(AdditionalFee::class);
     }
 
-    public function examSessions(): HasMany
+    public function examCommittees(): HasMany
     {
-        return $this->hasMany(ExamSession::class);
+        return $this->hasMany(ExamCommittee::class);
     }
 
     /**

@@ -23,15 +23,14 @@
                 </thead>
                 <tbody>
                     @forelse($sessions as $session)
-                        @php($assignment = $session->seatAssignments->first())
                         <tr wire:key="exam-{{ $session->id }}">
                             <td class="fw-medium">{{ $session->course->name }}</td>
-                            <td>{{ \Illuminate\Support\Carbon::parse($session->exam_date)->locale('ar')->isoFormat('dddd') }}</td>
+                            <td>{{ $session->exam_date->locale('ar')->isoFormat('dddd') }}</td>
                             <td>{{ $session->exam_date->format('Y-m-d') }}</td>
-                            <td>{{ substr($session->start_time, 0, 5) }} – {{ substr($session->end_time, 0, 5) }}</td>
-                            <td>{{ $assignment?->committee?->venue?->name ?? '—' }}</td>
-                            <td>{{ $assignment?->committee?->name ?? '—' }}</td>
-                            <td><span class="badge bg-label-primary">{{ $assignment?->seat_number ?? '—' }}</span></td>
+                            <td>{{ $session->timeRangeLabel() }}</td>
+                            <td>{{ $membership?->committee?->venue?->name ?? '—' }}</td>
+                            <td>{{ $membership?->committee?->name ?? '—' }}</td>
+                            <td><span class="badge bg-label-primary">{{ $membership?->seat_number ?? '—' }}</span></td>
                         </tr>
                     @empty
                         <tr>

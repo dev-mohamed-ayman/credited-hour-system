@@ -2,41 +2,39 @@
 
 namespace App\Models;
 
-use App\Enums\ExamSessionStatus;
 use App\Enums\ExamType;
-use App\Enums\Semester;
-use App\Traits\HasDeletionGuards;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * One exam (course + date + time) inside a committee's timetable.
+ */
 class ExamSession extends Model
 {
-    use HasDeletionGuards, HasFactory;
+    use HasFactory;
 
     protected $fillable = [
+        'exam_committee_id',
         'course_id',
-        'year_id',
-        'semester',
         'type',
         'exam_date',
         'start_time',
         'end_time',
-        'status',
         'notes',
     ];
-
-    protected $blockingRelations = ['committees', 'seatAssignments'];
 
     protected function casts(): array
     {
         return [
-            'semester' => Semester::class,
             'type' => ExamType::class,
-            'status' => ExamSessionStatus::class,
             'exam_date' => 'date:Y-m-d',
         ];
+    }
+
+    public function committee(): BelongsTo
+    {
+        return $this->belongsTo(ExamCommittee::class, 'exam_committee_id');
     }
 
     public function course(): BelongsTo
@@ -44,24 +42,9 @@ class ExamSession extends Model
         return $this->belongsTo(Course::class);
     }
 
-    public function year(): BelongsTo
-    {
-        return $this->belongsTo(Year::class);
-    }
-
-    public function committees(): HasMany
-    {
-        return $this->hasMany(ExamCommittee::class);
-    }
-
-    public function seatAssignments(): HasMany
-    {
-        return $this->hasMany(ExamSeatAssignment::class);
-    }
-
     /**
-     * Two exam sessions conflict when they fall on the same date and their
-     * time ranges intersect. Back-to-back (end == start) does NOT overlap.
+     * Two exams conflict when they fall on the same date and their time
+     * ranges intersect. Back-to-back (end == start) does NOT overlap.
      */
     public function overlaps(self $other): bool
     {
@@ -71,6 +54,11 @@ class ExamSession extends Model
 
         return $this->timeToMinutes($this->start_time) < $this->timeToMinutes($other->end_time)
             && $this->timeToMinutes($this->end_time) > $this->timeToMinutes($other->start_time);
+    }
+
+    public function timeRangeLabel(): string
+    {
+        return substr((string) $this->start_time, 0, 5).' – '.substr((string) $this->end_time, 0, 5);
     }
 
     private function timeToMinutes(string $time): int

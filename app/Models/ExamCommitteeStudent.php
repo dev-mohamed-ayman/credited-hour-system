@@ -6,20 +6,22 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ExamSeatAssignment extends Model
+class ExamCommitteeStudent extends Model
 {
+    /** @use HasFactory<\Database\Factories\ExamCommitteeStudentFactory> */
     use HasFactory;
 
     protected $fillable = [
-        'exam_session_id',
         'exam_committee_id',
         'student_id',
         'seat_number',
     ];
 
-    public function examSession(): BelongsTo
+    protected function casts(): array
     {
-        return $this->belongsTo(ExamSession::class);
+        return [
+            'seat_number' => 'integer',
+        ];
     }
 
     public function committee(): BelongsTo

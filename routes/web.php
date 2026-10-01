@@ -70,10 +70,11 @@ Route::middleware(['auth'])->group(function () {
 
     // Exam Schedules Routes
     Route::get('exam-schedules', \App\Livewire\Admin\ExamSchedule\Index::class)->name('exam-schedules.index')->middleware('permission:exam_schedules.view');
-    Route::get('exam-schedules/{course}/create', \App\Livewire\Admin\ExamSchedule\Form::class)->name('exam-schedules.create')->middleware('permission:exam_schedules.create');
-    Route::get('exam-schedules/{session}/edit', \App\Livewire\Admin\ExamSchedule\Form::class)->name('exam-schedules.edit')->middleware('permission:exam_schedules.edit');
-    Route::get('exam-schedules/{session}/seating', \App\Livewire\Admin\ExamSchedule\Seating::class)->name('exam-schedules.seating')->middleware('permission:exam_schedules.edit');
+    Route::get('exam-schedules/committees/create', \App\Livewire\Admin\ExamSchedule\Form::class)->name('exam-schedules.create')->middleware('permission:exam_schedules.create');
+    Route::get('exam-schedules/committees/{committee}/edit', \App\Livewire\Admin\ExamSchedule\Form::class)->name('exam-schedules.edit')->middleware('permission:exam_schedules.edit');
+    Route::get('exam-schedules/committees/{committee}', \App\Livewire\Admin\ExamSchedule\Manage::class)->name('exam-schedules.manage')->middleware('permission:exam_schedules.view');
     Route::get('exam-schedules/print/committee/{committee}', [\App\Http\Controllers\Admin\ExamPrintController::class, 'committeeSheet'])->name('exam-schedules.print.committee')->middleware('permission:exam_schedules.view');
+    Route::get('exam-schedules/print/session/{session}', [\App\Http\Controllers\Admin\ExamPrintController::class, 'sessionSheet'])->name('exam-schedules.print.session')->middleware('permission:exam_schedules.view');
     Route::get('exam-schedules/print/student/{student}', [\App\Http\Controllers\Admin\ExamPrintController::class, 'studentSchedule'])->name('exam-schedules.print.student')->middleware('permission:students.view');
 
     // Level Routes

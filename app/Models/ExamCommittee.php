@@ -2,32 +2,44 @@
 
 namespace App\Models;
 
+use App\Enums\ExamSessionStatus;
+use App\Enums\Semester;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * A term-wide exam committee: a room, a hand-picked set of students
+ * (by code) and its own exam timetable.
+ */
 class ExamCommittee extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'exam_session_id',
+        'year_id',
+        'semester',
         'venue_id',
         'name',
         'capacity',
+        'status',
+        'notes',
     ];
 
     protected function casts(): array
     {
         return [
+            'semester' => Semester::class,
+            'status' => ExamSessionStatus::class,
             'capacity' => 'integer',
         ];
     }
 
-    public function examSession(): BelongsTo
+    public function year(): BelongsTo
     {
-        return $this->belongsTo(ExamSession::class);
+        return $this->belongsTo(Year::class);
     }
 
     public function venue(): BelongsTo
@@ -35,18 +47,25 @@ class ExamCommittee extends Model
         return $this->belongsTo(Venue::class);
     }
 
-    public function assignments(): HasMany
+    public function members(): HasMany
     {
-        return $this->hasMany(ExamSeatAssignment::class, 'exam_committee_id');
+        return $this->hasMany(ExamCommitteeStudent::class);
     }
 
-    public function assignedCount(): int
+    public function students(): BelongsToMany
     {
-        return $this->assignments()->count();
+        return $this->belongsToMany(Student::class, 'exam_committee_students')
+            ->withPivot('seat_number')
+            ->withTimestamps();
     }
 
-    public function isFull(): bool
+    public function sessions(): HasMany
     {
-        return $this->assignedCount() >= $this->capacity;
+        return $this->hasMany(ExamSession::class);
+    }
+
+    public function isPublished(): bool
+    {
+        return $this->status === ExamSessionStatus::PUBLISHED;
     }
 }

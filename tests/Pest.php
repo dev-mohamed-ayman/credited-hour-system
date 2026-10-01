@@ -402,12 +402,41 @@ function examService(): \App\Services\ExamScheduleService
     return app(\App\Services\ExamScheduleService::class);
 }
 
-function examAttributes(array $world, array $overrides = []): array
+/**
+ * @param  array<string, mixed>  $overrides
+ */
+function examCommittee(array $world, array $overrides = []): \App\Models\ExamCommittee
+{
+    return examService()->createCommittee(array_merge([
+        'year_id' => $world['year']->id,
+        'semester' => Semester::FIRST->value,
+        'venue_id' => $world['venue']->id,
+        'name' => 'لجنة 1',
+        'capacity' => 10,
+    ], $overrides));
+}
+
+/**
+ * A committee already holding every approved world student.
+ *
+ * @param  array<string, mixed>  $overrides
+ */
+function filledExamCommittee(array $world, array $overrides = []): \App\Models\ExamCommittee
+{
+    $committee = examCommittee($world, $overrides);
+    examService()->addStudentsByCodes($committee, $world['students']->pluck('username')->all());
+
+    return $committee->fresh();
+}
+
+/**
+ * @param  array<string, mixed>  $overrides
+ * @return array<string, mixed>
+ */
+function examSessionAttributes(array $world, array $overrides = []): array
 {
     return array_merge([
         'course_id' => $world['courses']['E1']->id,
-        'year_id' => $world['year']->id,
-        'semester' => Semester::FIRST->value,
         'type' => \App\Enums\ExamType::REGULAR->value,
         'exam_date' => '2026-01-15',
         'start_time' => '09:00',

@@ -2,68 +2,70 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\ExamSessionStatus;
-use App\Enums\RegistrationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\ExamCommittee;
 use App\Models\ExamSession;
-use App\Models\Registration;
 use App\Models\Student;
 use App\Models\Year;
+use App\Services\ExamScheduleService;
+use Illuminate\View\View;
 
 class ExamPrintController extends Controller
 {
-    public function committeeSheet(ExamCommittee $committee)
+    /**
+     * Committee sheet: its exam timetable plus the full student list.
+     */
+    public function committeeSheet(ExamCommittee $committee): View
     {
         abort_unless(auth()->user()->can('exam_schedules.view'), 403);
 
-        $committee->load(['venue:id,name', 'examSession.course:id,name', 'examSession.year:id,year']);
+        $committee->load(['venue:id,name', 'year:id,year']);
 
-        $assignments = $committee->assignments()
-            ->with(['student:id,name,username,section_id', 'student.section:id,name'])
-            ->orderByRaw('CAST(seat_number AS UNSIGNED)')
+        $sessions = $committee->sessions()
+            ->with('course:id,name')
+            ->orderBy('exam_date')
+            ->orderBy('start_time')
             ->get();
 
-        return view('admin.pages.exam.committee-sheet', compact('committee', 'assignments'));
+        $members = $committee->members()
+            ->with(['student:id,name,username,section_id', 'student.section:id,name'])
+            ->orderBy('seat_number')
+            ->get();
+
+        return view('admin.pages.exam.committee-sheet', compact('committee', 'sessions', 'members'));
     }
 
-    public function studentSchedule(Student $student)
+    /**
+     * Attendance sheet for one exam: only the committee members sitting it.
+     */
+    public function sessionSheet(ExamSession $session): View
+    {
+        abort_unless(auth()->user()->can('exam_schedules.view'), 403);
+
+        $session->load(['course:id,name', 'committee.venue:id,name', 'committee.year:id,year']);
+
+        $members = app(ExamScheduleService::class)->examinees($session);
+
+        return view('admin.pages.exam.session-sheet', compact('session', 'members'));
+    }
+
+    public function studentSchedule(Student $student): View
     {
         abort_unless(auth()->user()->can('students.view'), 403);
 
         $year = Year::current();
         $semester = $year?->getCurrentSemester();
 
-        $sessions = collect();
+        $timetable = $year !== null && $semester !== null
+            ? app(ExamScheduleService::class)->studentTimetable($student, $year, $semester)
+            : ['membership' => null, 'sessions' => collect(), 'unscheduled' => collect()];
 
-        if ($year !== null && $semester !== null) {
-            $courseIds = Registration::query()
-                ->where('student_id', $student->id)
-                ->where('year_id', $year->id)
-                ->where('semester', $semester->value)
-                ->where('status', RegistrationStatus::APPROVED->value)
-                ->with('courses.course:id')
-                ->get()
-                ->flatMap(fn (Registration $registration) => $registration->courses->pluck('course_id'))
-                ->unique()
-                ->values();
-
-            $sessions = ExamSession::query()
-                ->with([
-                    'course:id,name',
-                    'seatAssignments' => fn ($query) => $query
-                        ->where('student_id', $student->id)
-                        ->with('committee.venue:id,name'),
-                ])
-                ->whereIn('course_id', $courseIds->all())
-                ->where('year_id', $year->id)
-                ->where('semester', $semester->value)
-                ->where('status', ExamSessionStatus::PUBLISHED->value)
-                ->orderBy('exam_date')
-                ->orderBy('start_time')
-                ->get();
-        }
-
-        return view('admin.pages.exam.student-schedule', compact('student', 'sessions', 'year', 'semester'));
+        return view('admin.pages.exam.student-schedule', [
+            'student' => $student,
+            'year' => $year,
+            'semester' => $semester,
+            'membership' => $timetable['membership'],
+            'sessions' => $timetable['sessions'],
+        ]);
     }
 }

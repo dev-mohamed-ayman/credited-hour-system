@@ -2,154 +2,115 @@
 
 namespace App\Livewire\Admin\ExamSchedule;
 
-use App\Enums\ExamType;
+use App\Enums\Semester;
 use App\Exceptions\ExamScheduleException;
-use App\Models\Course;
-use App\Models\ExamSession;
+use App\Models\ExamCommittee;
 use App\Models\Venue;
 use App\Models\Year;
 use App\Services\ExamScheduleService;
-use App\Support\CourseSemesterMapper;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class Form extends Component
 {
-    public ?Course $course = null;
-
-    public ?ExamSession $session = null;
+    public ?ExamCommittee $committee = null;
 
     public $year_id = '';
 
-    public $type = 'regular';
+    public $semester = '';
 
-    public $exam_date = '';
+    public $venue_id = '';
 
-    public $start_time = '';
+    public $name = '';
 
-    public $end_time = '';
+    public $capacity = '';
 
     public $notes = '';
-
-    public $committees = [];
 
     protected function rules(): array
     {
         return [
-            'type' => ['required', Rule::enum(ExamType::class)],
-            'exam_date' => 'required|date',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
+            'year_id' => 'required|exists:years,id',
+            'semester' => ['required', Rule::enum(Semester::class)],
+            'venue_id' => 'required|exists:venues,id',
+            'name' => 'required|string|max:255',
+            'capacity' => 'required|integer|min:1',
             'notes' => 'nullable|string|max:2000',
-            'committees' => 'array',
-            'committees.*.venue_id' => 'required|exists:venues,id',
-            'committees.*.name' => 'required|string|max:255',
-            'committees.*.capacity' => 'required|integer|min:1',
         ];
     }
 
     protected function messages(): array
     {
         return [
-            'type.required' => 'يجب اختيار نوع الامتحان',
-            'type.enum' => 'نوع الامتحان المختار غير مسموح به',
-            'exam_date.required' => 'تاريخ الامتحان مطلوب',
-            'exam_date.date' => 'تاريخ الامتحان غير صحيح',
-            'start_time.required' => 'وقت البداية مطلوب',
-            'start_time.date_format' => 'تنسيق وقت البداية غير صحيح',
-            'end_time.required' => 'وقت النهاية مطلوب',
-            'end_time.date_format' => 'تنسيق وقت النهاية غير صحيح',
-            'end_time.after' => 'يجب أن يكون وقت النهاية أكبر من وقت البداية',
-            'committees.*.venue_id.required' => 'يجب اختيار مكان لكل لجنة',
-            'committees.*.venue_id.exists' => 'المكان المختار غير موجود',
-            'committees.*.name.required' => 'اسم اللجنة مطلوب',
-            'committees.*.capacity.required' => 'سعة اللجنة مطلوبة',
-            'committees.*.capacity.integer' => 'سعة اللجنة يجب أن تكون رقمًا',
-            'committees.*.capacity.min' => 'سعة اللجنة يجب أن تكون 1 على الأقل',
+            'year_id.required' => 'يجب اختيار السنة الدراسية',
+            'year_id.exists' => 'السنة الدراسية غير موجودة',
+            'semester.required' => 'يجب اختيار الترم',
+            'semester.enum' => 'الترم المختار غير صحيح',
+            'venue_id.required' => 'يجب اختيار مكان اللجنة',
+            'venue_id.exists' => 'المكان المختار غير موجود',
+            'name.required' => 'اسم اللجنة مطلوب',
+            'name.max' => 'اسم اللجنة طويل جدًا',
+            'capacity.required' => 'سعة اللجنة مطلوبة',
+            'capacity.integer' => 'سعة اللجنة يجب أن تكون رقمًا',
+            'capacity.min' => 'سعة اللجنة يجب أن تكون 1 على الأقل',
         ];
     }
 
-    public function mount(?Course $course = null, ?ExamSession $session = null): void
+    public function mount(?ExamCommittee $committee = null): void
     {
-        if ($session?->exists) {
+        if ($committee?->exists) {
             abort_unless(auth()->user()->can('exam_schedules.edit'), 403);
 
-            $this->session = $session;
-            $this->course = $session->course;
-            $this->year_id = $session->year_id;
-            $this->type = $session->type->value;
-            $this->exam_date = $session->exam_date->toDateString();
-            $this->start_time = substr((string) $session->start_time, 0, 5);
-            $this->end_time = substr((string) $session->end_time, 0, 5);
-            $this->notes = (string) $session->notes;
-            $this->committees = $session->committees()->orderBy('id')->get()
-                ->map(fn ($committee) => [
-                    'id' => $committee->id,
-                    'venue_id' => $committee->venue_id,
-                    'name' => $committee->name,
-                    'capacity' => $committee->capacity,
-                ])
-                ->all();
+            $this->committee = $committee;
+            $this->year_id = $committee->year_id;
+            $this->semester = $committee->semester->value;
+            $this->venue_id = $committee->venue_id;
+            $this->name = $committee->name;
+            $this->capacity = $committee->capacity;
+            $this->notes = (string) $committee->notes;
 
             return;
         }
 
-        abort_unless($course?->exists && auth()->user()->can('exam_schedules.create'), 403);
+        abort_unless(auth()->user()->can('exam_schedules.create'), 403);
 
-        $this->course = $course;
+        $this->committee = null;
         $this->year_id = request()->integer('year') ?: (Year::current()?->id ?? '');
+        $this->semester = (string) (request()->query('semester') ?: (Year::currentSemester()?->value ?? ''));
     }
 
-    public function addCommittee(): void
+    public function updatedVenueId($value): void
     {
-        $this->committees[] = ['venue_id' => '', 'name' => '', 'capacity' => ''];
-    }
-
-    public function removeCommittee($index): void
-    {
-        unset($this->committees[$index]);
-        $this->committees = array_values($this->committees);
+        if ($this->capacity === '' || $this->capacity === null) {
+            $this->capacity = Venue::find($value)?->capacity ?? '';
+        }
     }
 
     public function save(): void
     {
-        $permission = $this->session ? 'exam_schedules.edit' : 'exam_schedules.create';
-        abort_unless(auth()->user()->can($permission), 403);
+        abort_unless(auth()->user()->can($this->committee ? 'exam_schedules.edit' : 'exam_schedules.create'), 403);
 
-        $this->committees = $this->committeePayload();
         $this->validate();
 
-        $semester = CourseSemesterMapper::toEnum((string) $this->course->semester);
-
-        if ($semester === null || $this->year_id === '') {
-            $this->dispatch('toast', [
-                'message' => 'تعذر تحديد الترم أو السنة الدراسية للمادة',
-                'type' => 'danger',
-            ]);
-
-            return;
-        }
-
         $attributes = [
-            'course_id' => $this->course->id,
             'year_id' => (int) $this->year_id,
-            'semester' => $semester,
-            'type' => ExamType::from($this->type),
-            'exam_date' => $this->exam_date,
-            'start_time' => $this->start_time,
-            'end_time' => $this->end_time,
+            'semester' => $this->semester,
+            'venue_id' => (int) $this->venue_id,
+            'name' => $this->name,
+            'capacity' => (int) $this->capacity,
             'notes' => $this->notes !== '' ? $this->notes : null,
         ];
 
         try {
             $service = app(ExamScheduleService::class);
 
-            if ($this->session) {
-                $service->update($this->session, $attributes, $this->committees);
-                $message = 'تم تحديث جلسة الامتحان بنجاح';
+            if ($this->committee) {
+                $service->updateCommittee($this->committee, $attributes);
+                $committee = $this->committee;
+                $message = 'تم تحديث اللجنة بنجاح';
             } else {
-                $service->create($attributes, $this->committees);
-                $message = 'تم إضافة جلسة الامتحان بنجاح';
+                $committee = $service->createCommittee($attributes);
+                $message = 'تم إضافة اللجنة بنجاح — أضف الطلاب والمواعيد';
             }
         } catch (ExamScheduleException $e) {
             $this->dispatch('toast', ['message' => $e->getMessage(), 'type' => 'danger']);
@@ -157,48 +118,19 @@ class Form extends Component
             return;
         }
 
-        $this->dispatch('toast', ['message' => $message, 'type' => 'success']);
-        $this->redirectRoute('exam-schedules.index', ['year' => $this->year_id, 'semester' => $semester->value], navigate: true);
-    }
-
-    /**
-     * Drop fully-empty repeater rows; keep the rest as clean payloads.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private function committeePayload(): array
-    {
-        return array_values(array_filter(
-            array_map(fn ($committee) => [
-                'id' => $committee['id'] ?? null,
-                'venue_id' => $committee['venue_id'] ?? '',
-                'name' => $committee['name'] ?? '',
-                'capacity' => $committee['capacity'] ?? '',
-            ], $this->committees),
-            fn ($committee) => $committee['venue_id'] !== '' || $committee['name'] !== '' || $committee['capacity'] !== '',
-        ));
+        session()->flash('success', $message);
+        $this->redirectRoute('exam-schedules.manage', $committee, navigate: true);
     }
 
     public function render()
     {
-        $semester = CourseSemesterMapper::toEnum((string) $this->course->semester);
-
-        $examineeCount = $this->session
-            ? app(ExamScheduleService::class)->examineeCount($this->session)
-            : ($semester !== null && $this->year_id !== ''
-                ? app(ExamScheduleService::class)->courseAudienceCount($this->course->id, (int) $this->year_id, $semester)
-                : 0);
-
-        $capacityTotal = array_sum(array_map(
-            fn ($committee) => (int) ($committee['capacity'] ?? 0),
-            $this->committees,
-        ));
-
         return view('livewire.admin.exam-schedule.form', [
-            'examTypes' => ExamType::cases(),
-            'venues' => Venue::where('is_active', true)->orderBy('name')->get(),
-            'examineeCount' => $examineeCount,
-            'capacityTotal' => $capacityTotal,
+            'years' => Year::latest('id')->get(),
+            'semesters' => Semester::cases(),
+            'venues' => Venue::query()
+                ->where(fn ($query) => $query->where('is_active', true)->orWhere('id', $this->committee?->venue_id ?? 0))
+                ->orderBy('name')
+                ->get(),
         ])->extends('admin.layouts.app')->section('content');
     }
 }
