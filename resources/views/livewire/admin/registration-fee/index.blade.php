@@ -23,6 +23,16 @@
                 </div>
             @endif
 
+            @if (session()->has('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="ti tabler-alert-circle me-2"></i>
+                        {{ session('error') }}
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
             <div class="card overflow-hidden">
                 <div class="card-header p-0">
                     <div class="nav-align-top">
@@ -146,6 +156,54 @@
                                         </button>
                                     </div>
                                 </form>
+
+                                @if($distributionSummary)
+                                    <hr class="my-5">
+
+                                    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                                        <div>
+                                            <h5 class="mb-1"><i class="ti tabler-users-group me-1"></i> توزيع الطلاب على السكاشن</h5>
+                                            <small class="text-muted">
+                                                يتم توزيع الطلاب غير الموزعين فقط حسب عدد الطلاب في السكشن المحفوظ ({{ $distributionSummary['per_section'] }} طالب)، مع استكمال الأماكن الفارغة في السكاشن الحالية أولًا.
+                                            </small>
+                                        </div>
+                                        @can('registration_fees.edit')
+                                            <button type="button" class="btn btn-label-primary text-nowrap" wire:click="distributeStudents"
+                                                    wire:loading.attr="disabled" @disabled($distributionSummary['undistributed'] === 0)>
+                                                <span wire:loading wire:target="distributeStudents" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                                <i wire:loading.remove wire:target="distributeStudents" class="ti tabler-arrows-split me-2"></i>
+                                                توزيع الطلاب على السكاشن
+                                            </button>
+                                        @endcan
+                                    </div>
+
+                                    <div class="row g-3 mt-2">
+                                        <div class="col-6 col-md-3">
+                                            <div class="border rounded p-3 text-center">
+                                                <div class="small text-muted">إجمالي الطلاب</div>
+                                                <div class="fs-4 fw-bold">{{ $distributionSummary['total'] }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <div class="border rounded p-3 text-center">
+                                                <div class="small text-muted">موزعون</div>
+                                                <div class="fs-4 fw-bold text-success">{{ $distributionSummary['distributed'] }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <div class="border rounded p-3 text-center">
+                                                <div class="small text-muted">غير موزعين</div>
+                                                <div class="fs-4 fw-bold text-warning">{{ $distributionSummary['undistributed'] }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <div class="border rounded p-3 text-center">
+                                                <div class="small text-muted">عدد السكاشن</div>
+                                                <div class="fs-4 fw-bold text-primary">{{ $distributionSummary['sections'] }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>

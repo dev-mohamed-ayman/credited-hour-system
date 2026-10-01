@@ -224,11 +224,12 @@ function makeRequest(array $world, ?string $reason = 'رغبة الطالب'): \
 }
 
 /**
- * Lecture-scheduling world: department + level + first-semester course,
- * N empty sections linked via course_section, an active Year, a 300-seat
- * auditorium, and a fully-permissioned admin.
+ * Lecture-scheduling world: department + level + first-semester course
+ * linked to one شعبة, an active Year, a 300-seat auditorium, a
+ * fully-permissioned admin, and N distributed section numbers (سكاشن)
+ * holding one student each.
  *
- * @return array{department: \App\Models\Department, certificateType: \App\Models\CertificateType, level: \App\Models\Level, year: \App\Models\Year, course: \App\Models\Course, sections: \Illuminate\Support\Collection, venue: \App\Models\Venue, admin: \App\Models\User}
+ * @return array{department: \App\Models\Department, certificateType: \App\Models\CertificateType, level: \App\Models\Level, year: \App\Models\Year, course: \App\Models\Course, section: \App\Models\Section, sectionCount: int, venue: \App\Models\Venue, admin: \App\Models\User}
  */
 function schedulingWorld(int $sectionCount = 12): array
 {
@@ -258,12 +259,8 @@ function schedulingWorld(int $sectionCount = 12): array
         'semester' => 'الأول',
     ]);
 
-    $sections = collect(range(1, $sectionCount))->map(function (int $i) use ($department, $course) {
-        $section = Section::create(['name' => (string) $i, 'department_id' => $department->id]);
-        $course->sections()->attach($section);
-
-        return $section;
-    });
+    $section = Section::create(['name' => 'شعبة المحاسبة', 'department_id' => $department->id]);
+    $course->sections()->attach($section);
 
     $venue = \App\Models\Venue::factory()->create(['name' => 'مدرج أ', 'capacity' => 300]);
 
@@ -273,10 +270,20 @@ function schedulingWorld(int $sectionCount = 12): array
         'lecture_schedules.view', 'lecture_schedules.create', 'lecture_schedules.edit', 'lecture_schedules.delete',
     ]);
 
-    return compact('department', 'certificateType', 'level', 'year', 'course', 'sections', 'venue', 'admin');
+    $world = compact('department', 'certificateType', 'level', 'year', 'course', 'section', 'sectionCount', 'venue', 'admin');
+
+    for ($sectionNumber = 1; $sectionNumber <= $sectionCount; $sectionNumber++) {
+        seedSectionStudents($sectionNumber, 1, $world);
+    }
+
+    return $world;
 }
 
-function seedSectionStudents(\App\Models\Section $section, int $count, array $world): void
+/**
+ * Seed students of the scheduling world's department/level. A null section
+ * number leaves them undistributed.
+ */
+function seedSectionStudents(?int $sectionNumber, int $count, array $world): void
 {
     for ($i = 0; $i < $count; $i++) {
         Student::create([
@@ -286,8 +293,9 @@ function seedSectionStudents(\App\Models\Section $section, int $count, array $wo
             'username' => fake()->unique()->numerify('2#######'),
             'password' => bcrypt('password'),
             'plain_password' => 'password',
-            'section_id' => $section->id,
+            'section_id' => $world['section']->id,
             'level_id' => $world['level']->id,
+            'section_number' => $sectionNumber,
             'year_id' => $world['year']->id,
             'semester' => Semester::FIRST->value,
         ]);

@@ -8,6 +8,7 @@ use App\Models\Course;
 use App\Models\LectureSchedule;
 use App\Models\Venue;
 use App\Services\LectureScheduleService;
+use App\Services\StudentSectionDistributionService;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 
@@ -25,7 +26,7 @@ class Form extends Component
 
     public $end_time = '';
 
-    public $section_ids = [];
+    public $section_numbers = [];
 
     public $range_from = '';
 
@@ -38,8 +39,8 @@ class Form extends Component
             'day' => ['required', Rule::enum(DayOfWeek::class)],
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
-            'section_ids' => 'required|array|min:1',
-            'section_ids.*' => 'exists:sections,id',
+            'section_numbers' => 'required|array|min:1',
+            'section_numbers.*' => 'integer|min:1',
         ];
     }
 
@@ -55,8 +56,10 @@ class Form extends Component
             'end_time.required' => 'وقت النهاية مطلوب',
             'end_time.date_format' => 'تنسيق وقت النهاية غير صحيح',
             'end_time.after' => 'يجب أن يكون وقت النهاية أكبر من وقت البداية',
-            'section_ids.required' => 'يجب اختيار شعبة واحدة على الأقل',
-            'section_ids.min' => 'يجب اختيار شعبة واحدة على الأقل',
+            'section_numbers.required' => 'يجب اختيار سكشن واحد على الأقل',
+            'section_numbers.min' => 'يجب اختيار سكشن واحد على الأقل',
+            'section_numbers.*.integer' => 'رقم السكشن غير صحيح',
+            'section_numbers.*.min' => 'رقم السكشن غير صحيح',
         ];
     }
 
@@ -71,7 +74,7 @@ class Form extends Component
             $this->day = $schedule->day->value;
             $this->start_time = substr((string) $schedule->start_time, 0, 5);
             $this->end_time = substr((string) $schedule->end_time, 0, 5);
-            $this->section_ids = $schedule->sections->pluck('id')->all();
+            $this->section_numbers = $schedule->section_numbers ?? [];
 
             return;
         }
@@ -82,8 +85,8 @@ class Form extends Component
     }
 
     /**
-     * Apply the "from section X to section Y" shorthand: reversed ranges are
-     * normalized (min/max) and merged with checkbox picks, deduplicated (R6).
+     * "From section X to section Y" shorthand: reversed ranges are normalized
+     * and merged with the checkbox picks.
      */
     public function applyRange(): void
     {
@@ -91,21 +94,22 @@ class Form extends Component
             return;
         }
 
-        [$from, $to] = [(int) $this->range_from, (int) $this->range_to];
+        $range = range(min((int) $this->range_from, (int) $this->range_to), max((int) $this->range_from, (int) $this->range_to));
 
-        if ($from > $to) {
-            [$from, $to] = [$to, $from];
-        }
+        $this->section_numbers = app(LectureScheduleService::class)->normalizeSectionNumbers(array_merge(
+            $this->section_numbers,
+            array_intersect($range, array_keys($this->availableSections())),
+        ));
+    }
 
-        $rangeIds = $this->availableSections()
-            ->whereBetween('id', [$from, $to])
-            ->pluck('id')
-            ->all();
+    public function selectAllSections(): void
+    {
+        $this->section_numbers = array_keys($this->availableSections());
+    }
 
-        $this->section_ids = array_values(array_unique(array_merge(
-            array_map('intval', $this->section_ids),
-            $rangeIds,
-        )));
+    public function clearSections(): void
+    {
+        $this->section_numbers = [];
     }
 
     public function save(): void
@@ -128,16 +132,17 @@ class Form extends Component
             'day' => DayOfWeek::from($this->day),
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
+            'section_numbers' => $this->section_numbers,
         ];
 
         try {
             $service = app(LectureScheduleService::class);
 
             if ($this->schedule) {
-                $service->update($this->schedule, $attributes, $this->section_ids);
+                $service->update($this->schedule, $attributes);
                 $message = 'تم تحديث جلسة المحاضرة بنجاح';
             } else {
-                $service->create($this->course, $attributes, $this->section_ids);
+                $service->create($this->course, $attributes);
                 $message = 'تم إضافة جلسة المحاضرة بنجاح';
             }
         } catch (LectureScheduleConflictException $e) {
@@ -150,13 +155,13 @@ class Form extends Component
         $this->redirectRoute('lecture-schedules.index', ['course' => $this->course->id], navigate: true);
     }
 
-    public function availableSections()
+    /**
+     * @return array<int, int> section number => students count
+     */
+    public function availableSections(): array
     {
-        return $this->course
-            ->sections()
-            ->withCount('students')
-            ->orderBy('id')
-            ->get();
+        return app(StudentSectionDistributionService::class)
+            ->studentsCountPerSection($this->course->department_id, $this->course->level_id);
     }
 
     public function venueOptions()
@@ -177,8 +182,8 @@ class Form extends Component
         $venue = $this->venue_id ? Venue::find($this->venue_id) : null;
 
         $selectedTotal = 0;
-        if ($this->section_ids) {
-            $selectedTotal = app(LectureScheduleService::class)->selectedStudentsCount($this->course, $this->section_ids);
+        if ($this->section_numbers) {
+            $selectedTotal = app(LectureScheduleService::class)->selectedStudentsCount($this->course, $this->section_numbers);
         }
 
         return view('livewire.admin.lecture-schedule.form', [

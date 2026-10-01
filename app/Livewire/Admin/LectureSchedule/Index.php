@@ -6,7 +6,6 @@ use App\Models\Course;
 use App\Models\Department;
 use App\Models\LectureSchedule;
 use App\Models\Level;
-use App\Models\Section;
 use App\Services\LectureScheduleService;
 use Livewire\Component;
 
@@ -70,26 +69,21 @@ class Index extends Component
         $flags = [];
 
         if ($selectedCourse !== null) {
-            $sessions = LectureSchedule::with(['venue', 'sections'])
+            $sessions = LectureSchedule::with('venue')
                 ->where('course_id', $selectedCourse->id)
                 ->get()
                 ->sortBy(fn (LectureSchedule $schedule) => [$schedule->day->order(), $schedule->start_time])
                 ->values();
 
             $service = app(LectureScheduleService::class);
-            $linkedSectionIds = $selectedCourse->sections()->pluck('sections.id')->all();
 
             foreach ($sessions as $session) {
-                $sessionSectionIds = $session->sections->pluck('id')->all();
-                $total = $service->selectedStudentsCount($selectedCourse, $sessionSectionIds);
+                $total = $service->selectedStudentsCount($selectedCourse, $session->section_numbers ?? []);
 
                 $flags[$session->id] = [
                     'total' => $total,
                     'over_capacity' => $session->venue->capacity !== null && $total > $session->venue->capacity,
-                    'orphans' => $session->sections
-                        ->reject(fn (Section $section) => in_array($section->id, $linkedSectionIds, true))
-                        ->pluck('name')
-                        ->all(),
+                    'missing_sections' => empty($session->section_numbers),
                 ];
             }
         }

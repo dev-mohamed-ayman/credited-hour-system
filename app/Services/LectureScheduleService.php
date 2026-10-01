@@ -6,8 +6,6 @@ use App\Enums\DayOfWeek;
 use App\Exceptions\LectureScheduleConflictException;
 use App\Models\Course;
 use App\Models\LectureSchedule;
-use App\Models\RegistrationFee;
-use App\Models\Section;
 use App\Models\Venue;
 use App\Models\Year;
 use Illuminate\Database\Eloquent\Builder;
@@ -19,63 +17,65 @@ use Illuminate\Support\Facades\DB;
  */
 class LectureScheduleService
 {
+    public function __construct(public StudentSectionDistributionService $distribution) {}
+
     /**
      * Single authoritative student count — shared by the Form's live preview
      * and the server-side capacity check so they can never drift (R1).
      *
-     * @param  array<int, int|string>  $sectionIds
+     * @param  array<int, int|string>  $sectionNumbers
      */
-    public function selectedStudentsCount(Course $course, array $sectionIds): int
+    public function selectedStudentsCount(Course $course, array $sectionNumbers): int
     {
-        $sections = Section::whereIn('id', $sectionIds)->withCount('students')->get();
+        $sectionNumbers = $this->normalizeSectionNumbers($sectionNumbers);
 
-        $fallback = null;
-        $total = 0;
-
-        foreach ($sections as $section) {
-            $count = (int) $section->students_count;
-
-            if ($count === 0) {
-                $fallback ??= (int) (RegistrationFee::query()
-                    ->where('department_id', $course->department_id)
-                    ->where('level_id', $course->level_id)
-                    ->value('number_of_students_per_section') ?? 0);
-
-                $count = $fallback;
-            }
-
-            $total += $count;
+        if ($sectionNumbers === []) {
+            return 0;
         }
 
-        return $total;
+        return $this->distribution
+            ->groupQuery($course->department_id, $course->level_id)
+            ->whereIn('section_number', $sectionNumbers)
+            ->count();
+    }
+
+    public function sectionsCount(Course $course): int
+    {
+        return $this->distribution->sectionsCount($course->department_id, $course->level_id);
     }
 
     /**
-     * @param  array<int, int|string>  $sectionIds
+     * @param  array<int, int>  $sectionNumbers
      */
-    public function assertSectionsBelongToCourse(Course $course, array $sectionIds): void
+    public function assertValidSectionNumbers(Course $course, array $sectionNumbers): void
     {
-        if ($sectionIds === []) {
-            throw new LectureScheduleConflictException('يجب اختيار شعبة واحدة على الأقل.');
+        $sectionsCount = $this->sectionsCount($course);
+
+        if ($sectionsCount === 0) {
+            throw new LectureScheduleConflictException(
+                'لم يتم توزيع طلاب هذه الفرقة على السكاشن بعد — قم بالتوزيع من إعدادات مصاريف التسجيل.'
+            );
         }
 
-        $linked = $course->sections()->whereIn('sections.id', $sectionIds)->count();
+        if ($sectionNumbers === []) {
+            throw new LectureScheduleConflictException('يجب اختيار سكشن واحد على الأقل.');
+        }
 
-        if ($linked !== count($sectionIds)) {
-            throw new LectureScheduleConflictException('بعض الشعب المختارة غير مرتبطة بالمادة الدراسية.');
+        if (min($sectionNumbers) < 1 || max($sectionNumbers) > $sectionsCount) {
+            throw new LectureScheduleConflictException("عدد السكاشن المتاحة لهذه الفرقة {$sectionsCount} سكشن فقط.");
         }
     }
 
     /**
-     * @param  array<int, int|string>  $sectionIds
+     * @param  array<int, int>  $sectionNumbers
      */
-    public function assertVenueCapacity(Course $course, Venue $venue, array $sectionIds): void
+    public function assertVenueCapacity(Course $course, Venue $venue, array $sectionNumbers): void
     {
         if ($venue->capacity === null) {
             return;
         }
 
-        $total = $this->selectedStudentsCount($course, $sectionIds);
+        $total = $this->selectedStudentsCount($course, $sectionNumbers);
 
         if ($total > $venue->capacity) {
             throw new LectureScheduleConflictException(
@@ -84,9 +84,6 @@ class LectureScheduleService
         }
     }
 
-    /**
-     * @param  array<int, int|string>  $sectionIds
-     */
     public function assertNoVenueConflict(
         Venue $venue,
         Course $course,
@@ -110,10 +107,13 @@ class LectureScheduleService
     }
 
     /**
-     * @param  array<int, int|string>  $sectionIds
+     * Section numbers are scoped per department/level, so only sessions of
+     * courses in the same department/level sharing a section number can clash.
+     *
+     * @param  array<int, int>  $sectionNumbers
      */
     public function assertNoSectionConflict(
-        array $sectionIds,
+        array $sectionNumbers,
         Course $course,
         DayOfWeek $day,
         string $start,
@@ -121,17 +121,25 @@ class LectureScheduleService
         ?int $yearId,
         ?int $ignoreScheduleId = null,
     ): void {
+        $clashing = [];
+
         $conflict = $this->overlappingQuery($course, $day, $start, $end, $yearId, $ignoreScheduleId)
-            ->whereHas('sections', fn ($query) => $query->whereIn('sections.id', $sectionIds))
-            ->with(['course:id,name', 'venue:id,name', 'sections:id,name'])
-            ->first();
+            ->whereHas('course', fn ($query) => $query
+                ->where('department_id', $course->department_id)
+                ->where('level_id', $course->level_id))
+            ->with(['course:id,name', 'venue:id,name'])
+            ->get()
+            ->first(function (LectureSchedule $schedule) use ($sectionNumbers, &$clashing) {
+                $clashing = array_values(array_intersect($sectionNumbers, $this->normalizeSectionNumbers($schedule->section_numbers ?? [])));
+
+                return $clashing !== [];
+            });
 
         if ($conflict !== null) {
-            $clashing = $conflict->sections->whereIn('id', $sectionIds)->first();
-            $name = $clashing?->name ?? 'غير معروفة';
+            $label = (new LectureSchedule(['section_numbers' => $clashing]))->sectionNumbersLabel();
 
             throw new LectureScheduleConflictException(
-                "لا يمكن الحفظ: الشعبة ({$name}) لديها محاضرة {$conflict->day->label()} "
+                "لا يمكن الحفظ: {$label} لديها محاضرة {$conflict->day->label()} "
                 ."من {$conflict->start_time} إلى {$conflict->end_time} في \"{$conflict->venue->name}\" "
                 ."للمادة \"{$conflict->course->name}\""
             );
@@ -141,7 +149,7 @@ class LectureScheduleService
     /**
      * Full rule battery (FR-005..FR-013). Throws the first violation found.
      *
-     * @param  array<int, int|string>  $sectionIds
+     * @param  array<int, int|string>  $sectionNumbers
      */
     public function validate(
         Course $course,
@@ -149,64 +157,59 @@ class LectureScheduleService
         DayOfWeek $day,
         string $start,
         string $end,
-        array $sectionIds,
+        array $sectionNumbers,
         ?int $yearId,
         ?int $ignoreScheduleId = null,
     ): void {
-        $sectionIds = $this->normalizeSectionIds($sectionIds);
+        $sectionNumbers = $this->normalizeSectionNumbers($sectionNumbers);
 
         $this->assertValidTimeRange($start, $end);
-        $this->assertSectionsBelongToCourse($course, $sectionIds);
-        $this->assertVenueCapacity($course, $venue, $sectionIds);
+        $this->assertValidSectionNumbers($course, $sectionNumbers);
+        $this->assertVenueCapacity($course, $venue, $sectionNumbers);
         $this->assertNoVenueConflict($venue, $course, $day, $start, $end, $yearId, $ignoreScheduleId);
-        $this->assertNoSectionConflict($sectionIds, $course, $day, $start, $end, $yearId, $ignoreScheduleId);
+        $this->assertNoSectionConflict($sectionNumbers, $course, $day, $start, $end, $yearId, $ignoreScheduleId);
     }
 
     /**
-     * @param  array{venue_id: int, day: DayOfWeek|string, start_time: string, end_time: string}  $attributes
-     * @param  array<int, int|string>  $sectionIds
+     * @param  array{venue_id: int, day: DayOfWeek|string, start_time: string, end_time: string, section_numbers: array<int, int|string>}  $attributes
      */
-    public function create(Course $course, array $attributes, array $sectionIds): LectureSchedule
+    public function create(Course $course, array $attributes): LectureSchedule
     {
         $venue = Venue::findOrFail($attributes['venue_id']);
         $day = $attributes['day'] instanceof DayOfWeek ? $attributes['day'] : DayOfWeek::from($attributes['day']);
-        $sectionIds = $this->normalizeSectionIds($sectionIds);
+        $sectionNumbers = $this->normalizeSectionNumbers($attributes['section_numbers']);
 
-        return DB::transaction(function () use ($course, $venue, $day, $attributes, $sectionIds) {
-            $this->lockRows($venue, $sectionIds);
+        return DB::transaction(function () use ($course, $venue, $day, $attributes, $sectionNumbers) {
+            $this->lockRows($venue);
 
             $yearId = Year::current()?->id;
 
-            $this->validate($course, $venue, $day, $attributes['start_time'], $attributes['end_time'], $sectionIds, $yearId);
+            $this->validate($course, $venue, $day, $attributes['start_time'], $attributes['end_time'], $sectionNumbers, $yearId);
 
-            $schedule = LectureSchedule::create([
+            return LectureSchedule::create([
                 'course_id' => $course->id,
                 'venue_id' => $venue->id,
                 'year_id' => $yearId,
                 'day' => $day,
                 'start_time' => $attributes['start_time'],
                 'end_time' => $attributes['end_time'],
+                'section_numbers' => $sectionNumbers,
             ]);
-
-            $schedule->sections()->sync($sectionIds);
-
-            return $schedule;
         });
     }
 
     /**
-     * @param  array{venue_id: int, day: DayOfWeek|string, start_time: string, end_time: string}  $attributes
-     * @param  array<int, int|string>  $sectionIds
+     * @param  array{venue_id: int, day: DayOfWeek|string, start_time: string, end_time: string, section_numbers: array<int, int|string>}  $attributes
      */
-    public function update(LectureSchedule $schedule, array $attributes, array $sectionIds): void
+    public function update(LectureSchedule $schedule, array $attributes): void
     {
         $course = $schedule->course;
         $venue = Venue::findOrFail($attributes['venue_id']);
         $day = $attributes['day'] instanceof DayOfWeek ? $attributes['day'] : DayOfWeek::from($attributes['day']);
-        $sectionIds = $this->normalizeSectionIds($sectionIds);
+        $sectionNumbers = $this->normalizeSectionNumbers($attributes['section_numbers']);
 
-        DB::transaction(function () use ($schedule, $course, $venue, $day, $attributes, $sectionIds) {
-            $this->lockRows($venue, $sectionIds);
+        DB::transaction(function () use ($schedule, $course, $venue, $day, $attributes, $sectionNumbers) {
+            $this->lockRows($venue);
 
             $this->validate(
                 $course,
@@ -214,7 +217,7 @@ class LectureScheduleService
                 $day,
                 $attributes['start_time'],
                 $attributes['end_time'],
-                $sectionIds,
+                $sectionNumbers,
                 $schedule->year_id,
                 $schedule->id,
             );
@@ -224,18 +227,21 @@ class LectureScheduleService
                 'day' => $day,
                 'start_time' => $attributes['start_time'],
                 'end_time' => $attributes['end_time'],
+                'section_numbers' => $sectionNumbers,
             ]);
-
-            $schedule->sections()->sync($sectionIds);
         });
     }
 
     /**
-     * @param  array<int, int|string>  $sectionIds
+     * @param  array<int, int|string>  $sectionNumbers
+     * @return array<int, int>
      */
-    private function normalizeSectionIds(array $sectionIds): array
+    public function normalizeSectionNumbers(array $sectionNumbers): array
     {
-        return array_values(array_unique(array_map('intval', $sectionIds)));
+        $normalized = array_values(array_unique(array_map('intval', $sectionNumbers)));
+        sort($normalized);
+
+        return $normalized;
     }
 
     private function assertValidTimeRange(string $start, string $end): void
@@ -278,13 +284,9 @@ class LectureScheduleService
             ->when($ignoreScheduleId, fn ($query) => $query->whereKeyNot($ignoreScheduleId));
     }
 
-    /**
-     * @param  array<int, int>  $sectionIds
-     */
-    private function lockRows(Venue $venue, array $sectionIds): void
+    private function lockRows(Venue $venue): void
     {
         Venue::whereKey($venue->id)->lockForUpdate()->first();
-        Section::whereIn('id', $sectionIds)->lockForUpdate()->get();
     }
 
     private function padTime(string $time): string

@@ -43,6 +43,7 @@ class Student extends Authenticatable
         'status_notes',
         'section_id',
         'level_id',
+        'section_number',
         'study_status',
         'username',
         'password',
@@ -61,6 +62,7 @@ class Student extends Authenticatable
             'password' => 'hashed',
             'is_foreign' => 'boolean',
             'military_education_passed' => 'boolean',
+            'section_number' => 'integer',
         ];
     }
 
@@ -70,6 +72,14 @@ class Student extends Authenticatable
 
     protected static function booted(): void
     {
+        static::updating(function (Student $student) {
+            if ($student->isDirty('section_number') || ! $student->movedToAnotherSectionGroup()) {
+                return;
+            }
+
+            $student->section_number = null;
+        });
+
         static::deleted(function (Student $student) {
             app(\App\Services\DiscountService::class)->revokeActiveForStudent($student, 'حذف الطالب');
         });
@@ -160,6 +170,31 @@ class Student extends Authenticatable
     public function registrations(): HasMany
     {
         return $this->hasMany(Registration::class);
+    }
+
+    /**
+     * Section numbers are scoped per department/level, so a level change or a
+     * move to a شعبة in another department invalidates the current number.
+     */
+    public function movedToAnotherSectionGroup(): bool
+    {
+        if ($this->getOriginal('section_number') === null) {
+            return false;
+        }
+
+        if ($this->isDirty('level_id')) {
+            return true;
+        }
+
+        if (! $this->isDirty('section_id')) {
+            return false;
+        }
+
+        $departmentIds = Section::query()
+            ->whereKey(array_filter([$this->getOriginal('section_id'), $this->section_id]))
+            ->pluck('department_id', 'id');
+
+        return $departmentIds->get($this->getOriginal('section_id')) !== $departmentIds->get($this->section_id);
     }
 
     public function departmentId(): ?int

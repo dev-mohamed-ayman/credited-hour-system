@@ -6,7 +6,6 @@ use App\Enums\DayOfWeek;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class LectureSchedule extends Model
 {
@@ -19,12 +18,14 @@ class LectureSchedule extends Model
         'day',
         'start_time',
         'end_time',
+        'section_numbers',
     ];
 
     protected function casts(): array
     {
         return [
             'day' => DayOfWeek::class,
+            'section_numbers' => 'array',
         ];
     }
 
@@ -43,9 +44,34 @@ class LectureSchedule extends Model
         return $this->belongsTo(Year::class);
     }
 
-    public function sections(): BelongsToMany
+    /**
+     * Human label that collapses consecutive numbers: "سكاشن 1-3، 5، 7-9".
+     */
+    public function sectionNumbersLabel(): string
     {
-        return $this->belongsToMany(Section::class, 'lecture_schedule_section')->withTimestamps();
+        $numbers = collect($this->section_numbers ?? [])->map(fn ($number) => (int) $number)->unique()->sort()->values();
+
+        if ($numbers->isEmpty()) {
+            return 'غير محدد';
+        }
+
+        $groups = [];
+        $start = $previous = $numbers->first();
+
+        foreach ($numbers->slice(1) as $number) {
+            if ($number === $previous + 1) {
+                $previous = $number;
+
+                continue;
+            }
+
+            $groups[] = $start === $previous ? (string) $start : "{$start}-{$previous}";
+            $start = $previous = $number;
+        }
+
+        $groups[] = $start === $previous ? (string) $start : "{$start}-{$previous}";
+
+        return ($numbers->count() === 1 ? 'سكشن ' : 'سكاشن ').implode('، ', $groups);
     }
 
     public function durationInMinutes(): int

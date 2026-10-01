@@ -1,7 +1,6 @@
 <?php
 
 use App\Enums\DayOfWeek;
-use App\Exceptions\LectureScheduleConflictException;
 use App\Livewire\Admin\LectureSchedule\Index;
 use App\Livewire\Admin\LectureSchedule\WeekGrid;
 use App\Services\LectureScheduleService;
@@ -10,7 +9,7 @@ use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
 
-function gridSession(array $world, array $overrides = [], ?array $sectionIds = null)
+function gridSession(array $world, array $overrides = [])
 {
     return app(LectureScheduleService::class)->create(
         $world['course'],
@@ -19,8 +18,8 @@ function gridSession(array $world, array $overrides = [], ?array $sectionIds = n
             'day' => DayOfWeek::SUNDAY,
             'start_time' => '09:00',
             'end_time' => '10:30',
+            'section_numbers' => range(1, 3),
         ], $overrides),
-        $sectionIds ?? $world['sections']->take(3)->pluck('id')->all(),
     );
 }
 
@@ -32,7 +31,8 @@ test('weekly grid shows each session in its day and time', function () {
         'day' => DayOfWeek::TUESDAY,
         'start_time' => '11:00',
         'end_time' => '12:30',
-    ], $world['sections']->slice(3, 3)->pluck('id')->all());
+        'section_numbers' => range(4, 6),
+    ]);
 
     Livewire::actingAs($world['admin'])
         ->test(WeekGrid::class, ['course' => $world['course']])
@@ -40,14 +40,16 @@ test('weekly grid shows each session in its day and time', function () {
         ->assertSee('الثلاثاء')
         ->assertSee('مدرج أ')
         ->assertSee('09:00')
-        ->assertSee('11:00');
+        ->assertSee('11:00')
+        ->assertSee('سكاشن 1-3')
+        ->assertSee('سكاشن 4-6');
 });
 
 test('lowering venue capacity flags scheduled sessions as over capacity without deleting them', function () {
     $world = schedulingWorld();
-    seedSectionStudents($world['sections'][0], 200, $world);
+    seedSectionStudents(1, 200, $world);
 
-    gridSession($world, [], [$world['sections'][0]->id]);
+    gridSession($world, ['section_numbers' => [1]]);
 
     $world['venue']->update(['capacity' => 100]);
 
@@ -59,21 +61,13 @@ test('lowering venue capacity flags scheduled sessions as over capacity without 
     expect(\App\Models\LectureSchedule::count())->toBe(1);
 });
 
-test('unlinked section is flagged as orphan and blocked from new sessions', function () {
+test('legacy sessions without section numbers are flagged', function () {
     $world = schedulingWorld();
-    $orphan = $world['sections'][0];
 
-    gridSession($world, [], [$orphan->id]);
-
-    $world['course']->sections()->detach($orphan->id);
+    gridSession($world)->update(['section_numbers' => null]);
 
     Livewire::actingAs($world['admin'])
         ->test(Index::class)
         ->set('course_id', $world['course']->id)
-        ->assertSee('شعب غير مرتبطة');
-
-    // The orphaned section cannot join a new session of this course.
-    expect(fn () => gridSession($world, [
-        'day' => DayOfWeek::MONDAY,
-    ], [$orphan->id]))->toThrow(LectureScheduleConflictException::class, 'غير مرتبطة');
+        ->assertSee('لم تحدد السكاشن');
 });

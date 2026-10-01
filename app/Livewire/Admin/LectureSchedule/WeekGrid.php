@@ -20,7 +20,7 @@ class WeekGrid extends Component
 
     public function render()
     {
-        $sessions = LectureSchedule::with(['venue:id,name,type,capacity', 'sections:id,name'])
+        $sessions = LectureSchedule::with('venue:id,name,type,capacity')
             ->where('course_id', $this->course->id)
             ->get();
 

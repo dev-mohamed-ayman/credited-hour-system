@@ -33,8 +33,7 @@ test('staff without edit permission gets 403 on the edit route', function () {
 
     $schedule = app(\App\Services\LectureScheduleService::class)->create(
         $world['course'],
-        ['venue_id' => $world['venue']->id, 'day' => DayOfWeek::SUNDAY, 'start_time' => '09:00', 'end_time' => '10:30'],
-        $world['sections']->take(2)->pluck('id')->all(),
+        ['venue_id' => $world['venue']->id, 'day' => DayOfWeek::SUNDAY, 'start_time' => '09:00', 'end_time' => '10:30', 'section_numbers' => range(1, 2)],
     );
 
     $bare = User::factory()->create();
@@ -55,7 +54,7 @@ test('a permission-less user cannot trigger save or delete actions', function ()
         ->assertStatus(403);
 });
 
-test('valid session is created with pivot rows and success toast', function () {
+test('valid session is created with its section range and success toast', function () {
     $world = schedulingWorld();
 
     Livewire::actingAs($world['admin'])
@@ -64,7 +63,7 @@ test('valid session is created with pivot rows and success toast', function () {
         ->set('day', DayOfWeek::SUNDAY->value)
         ->set('start_time', '09:00')
         ->set('end_time', '10:30')
-        ->set('section_ids', $world['sections']->take(3)->pluck('id')->all())
+        ->set('section_numbers', range(1, 3))
         ->call('save')
         ->assertDispatched('toast', ['message' => 'تم إضافة جلسة المحاضرة بنجاح', 'type' => 'success']);
 
@@ -76,7 +75,7 @@ test('valid session is created with pivot rows and success toast', function () {
         'end_time' => '10:30',
     ]);
 
-    $this->assertDatabaseCount('lecture_schedule_section', 3);
+    expect(LectureSchedule::first()->section_numbers)->toBe([1, 2, 3]);
 });
 
 test('conflicting session is rejected with arabic toast and no row is created', function () {
@@ -84,8 +83,7 @@ test('conflicting session is rejected with arabic toast and no row is created', 
 
     $existing = app(\App\Services\LectureScheduleService::class)->create(
         $world['course'],
-        ['venue_id' => $world['venue']->id, 'day' => DayOfWeek::SUNDAY, 'start_time' => '09:00', 'end_time' => '10:30'],
-        $world['sections']->take(5)->pluck('id')->all(),
+        ['venue_id' => $world['venue']->id, 'day' => DayOfWeek::SUNDAY, 'start_time' => '09:00', 'end_time' => '10:30', 'section_numbers' => range(1, 5)],
     );
 
     Livewire::actingAs($world['admin'])
@@ -94,7 +92,7 @@ test('conflicting session is rejected with arabic toast and no row is created', 
         ->set('day', DayOfWeek::SUNDAY->value)
         ->set('start_time', '10:00')
         ->set('end_time', '11:30')
-        ->set('section_ids', $world['sections']->slice(5, 5)->pluck('id')->all())
+        ->set('section_numbers', range(6, 10))
         ->call('save')
         ->assertDispatched('toast', fn (string $name, array $params) => ($params[0]['type'] ?? null) === 'danger'
             && str_contains($params[0]['message'] ?? '', 'محجوز')
@@ -103,36 +101,91 @@ test('conflicting session is rejected with arabic toast and no row is created', 
     expect(LectureSchedule::count())->toBe(1);
 });
 
-test('range picker selects the right sections and normalizes reversed ranges', function () {
+test('at least one section must be checked', function () {
     $world = schedulingWorld();
-    $ids = $world['sections']->pluck('id')->all();
-
-    $component = Livewire::actingAs($world['admin'])
-        ->test(Form::class, ['course' => $world['course']])
-        ->set('range_from', $ids[0])
-        ->set('range_to', $ids[9])
-        ->call('applyRange');
-
-    $component->assertSet('section_ids', array_slice($ids, 0, 10));
-
-    $component->set('section_ids', [])
-        ->set('range_from', $ids[9])
-        ->set('range_to', $ids[0])
-        ->call('applyRange')
-        ->assertSet('section_ids', array_slice($ids, 0, 10));
-});
-
-test('duplicate picks from checkbox and range are deduplicated', function () {
-    $world = schedulingWorld();
-    $ids = $world['sections']->pluck('id')->all();
 
     Livewire::actingAs($world['admin'])
         ->test(Form::class, ['course' => $world['course']])
-        ->set('section_ids', [$ids[0], $ids[1]])
-        ->set('range_from', $ids[1])
-        ->set('range_to', $ids[3])
+        ->set('venue_id', $world['venue']->id)
+        ->set('day', DayOfWeek::SUNDAY->value)
+        ->set('start_time', '09:00')
+        ->set('end_time', '10:30')
+        ->set('section_numbers', [])
+        ->call('save')
+        ->assertHasErrors(['section_numbers' => 'required']);
+
+    expect(LectureSchedule::count())->toBe(0);
+});
+
+test('non-contiguous checked sections are saved as picked', function () {
+    $world = schedulingWorld();
+
+    Livewire::actingAs($world['admin'])
+        ->test(Form::class, ['course' => $world['course']])
+        ->set('venue_id', $world['venue']->id)
+        ->set('day', DayOfWeek::SUNDAY->value)
+        ->set('start_time', '09:00')
+        ->set('end_time', '10:30')
+        ->set('section_numbers', ['2', '5', '9'])
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(LectureSchedule::first()->section_numbers)->toBe([2, 5, 9]);
+});
+
+test('range shortcut merges with checked sections and normalizes reversed ranges', function () {
+    $world = schedulingWorld();
+
+    Livewire::actingAs($world['admin'])
+        ->test(Form::class, ['course' => $world['course']])
+        ->set('section_numbers', ['1', '11'])
+        ->set('range_from', 6)
+        ->set('range_to', 4)
         ->call('applyRange')
-        ->assertSet('section_ids', [$ids[0], $ids[1], $ids[2], $ids[3]]);
+        ->assertSet('section_numbers', [1, 4, 5, 6, 11]);
+});
+
+test('select all and clear toggle every available section', function () {
+    $world = schedulingWorld(4);
+
+    Livewire::actingAs($world['admin'])
+        ->test(Form::class, ['course' => $world['course']])
+        ->call('selectAllSections')
+        ->assertSet('section_numbers', [1, 2, 3, 4])
+        ->call('clearSections')
+        ->assertSet('section_numbers', []);
+});
+
+test('editing a session pre-checks its sections', function () {
+    $world = schedulingWorld();
+
+    $schedule = app(\App\Services\LectureScheduleService::class)->create(
+        $world['course'],
+        ['venue_id' => $world['venue']->id, 'day' => DayOfWeek::SUNDAY, 'start_time' => '09:00', 'end_time' => '10:30', 'section_numbers' => [3, 8]],
+    );
+
+    Livewire::actingAs($world['admin'])
+        ->test(Form::class, ['schedule' => $schedule->fresh()])
+        ->assertSet('section_numbers', [3, 8]);
+});
+
+test('form lists distributed section numbers with their student counts', function () {
+    $world = schedulingWorld(3);
+    seedSectionStudents(2, 4, $world);
+
+    Livewire::actingAs($world['admin'])
+        ->test(Form::class, ['course' => $world['course']])
+        ->assertSee('3 سكشن متاح')
+        ->assertSee('سكشن 2')
+        ->assertSee('5 طالب');
+});
+
+test('form warns when students are not distributed yet', function () {
+    $world = schedulingWorld(0);
+
+    Livewire::actingAs($world['admin'])
+        ->test(Form::class, ['course' => $world['course']])
+        ->assertSee('لم يتم توزيع طلاب');
 });
 
 test('friday cannot be selected as a session day', function () {
@@ -144,7 +197,7 @@ test('friday cannot be selected as a session day', function () {
         ->set('day', 'friday')
         ->set('start_time', '09:00')
         ->set('end_time', '10:30')
-        ->set('section_ids', [$world['sections'][0]->id])
+        ->set('section_numbers', [1])
         ->call('save')
         ->assertHasErrors(['day']);
 });
@@ -158,31 +211,30 @@ test('invalid time ranges produce arabic validation errors', function () {
         ->set('day', DayOfWeek::SUNDAY->value)
         ->set('start_time', '11:00')
         ->set('end_time', '09:00')
-        ->set('section_ids', [$world['sections'][0]->id])
+        ->set('section_numbers', [1])
         ->call('save')
         ->assertHasErrors(['end_time' => 'after']);
 });
 
 test('live total reflects the current selection against venue capacity', function () {
     $world = schedulingWorld();
-    seedSectionStudents($world['sections'][0], 7, $world);
+    seedSectionStudents(1, 6, $world);
 
     Livewire::actingAs($world['admin'])
         ->test(Form::class, ['course' => $world['course']])
         ->set('venue_id', $world['venue']->id)
-        ->set('section_ids', [$world['sections'][0]->id])
+        ->set('section_numbers', [1])
         ->assertSee('الإجمالي المختار: ')
         ->assertSee('<strong>7</strong>', false)
         ->assertSee('السعة: <strong>300</strong>', false);
 });
 
-test('session delete removes the schedule and its pivot rows', function () {
+test('session delete removes the schedule', function () {
     $world = schedulingWorld();
 
     $schedule = app(\App\Services\LectureScheduleService::class)->create(
         $world['course'],
-        ['venue_id' => $world['venue']->id, 'day' => DayOfWeek::SUNDAY, 'start_time' => '09:00', 'end_time' => '10:30'],
-        $world['sections']->take(2)->pluck('id')->all(),
+        ['venue_id' => $world['venue']->id, 'day' => DayOfWeek::SUNDAY, 'start_time' => '09:00', 'end_time' => '10:30', 'section_numbers' => range(1, 2)],
     );
 
     Livewire::actingAs($world['admin'])
@@ -192,5 +244,4 @@ test('session delete removes the schedule and its pivot rows', function () {
         ->assertDispatched('toast');
 
     $this->assertDatabaseMissing('lecture_schedules', ['id' => $schedule->id]);
-    $this->assertDatabaseCount('lecture_schedule_section', 0);
 });

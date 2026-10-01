@@ -68,8 +68,7 @@ test('deleting a venue referenced by sessions is blocked with guard message', fu
 
     app(LectureScheduleService::class)->create(
         $world['course'],
-        ['venue_id' => $world['venue']->id, 'day' => DayOfWeek::SUNDAY, 'start_time' => '09:00', 'end_time' => '10:30'],
-        $world['sections']->take(2)->pluck('id')->all(),
+        ['venue_id' => $world['venue']->id, 'day' => DayOfWeek::SUNDAY, 'start_time' => '09:00', 'end_time' => '10:30', 'section_numbers' => range(1, 2)],
     );
 
     $this->actingAs($world['admin'])->delete(route('venues.destroy', $world['venue']))
@@ -99,8 +98,7 @@ test('inactive venues are hidden from new sessions but kept when editing', funct
     // A session already booked in the inactive venue keeps it selectable on edit.
     $schedule = app(LectureScheduleService::class)->create(
         $world['course'],
-        ['venue_id' => $inactive->id, 'day' => DayOfWeek::SUNDAY, 'start_time' => '09:00', 'end_time' => '10:30'],
-        $world['sections']->take(2)->pluck('id')->all(),
+        ['venue_id' => $inactive->id, 'day' => DayOfWeek::SUNDAY, 'start_time' => '09:00', 'end_time' => '10:30', 'section_numbers' => range(1, 2)],
     );
 
     Livewire::actingAs($world['admin'])
@@ -118,7 +116,7 @@ test('saving a new session in an inactive venue is rejected server-side', functi
         ->set('day', DayOfWeek::SUNDAY->value)
         ->set('start_time', '09:00')
         ->set('end_time', '10:30')
-        ->set('section_ids', [$world['sections'][0]->id])
+        ->set('section_numbers', [1])
         ->call('save')
         ->assertHasErrors(['venue_id']);
 });

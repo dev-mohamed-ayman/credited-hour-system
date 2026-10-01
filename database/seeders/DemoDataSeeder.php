@@ -38,6 +38,7 @@ use App\Models\Year;
 use App\Services\ExamScheduleService;
 use App\Services\ExamSeatingService;
 use App\Services\RegistrationBillingService;
+use App\Services\StudentSectionDistributionService;
 use App\Services\WalletService;
 use App\Support\CourseSemesterMapper;
 use Illuminate\Database\Seeder;
@@ -473,6 +474,8 @@ class DemoDataSeeder extends Seeder
 
         $section = $refs['section'];
 
+        app(StudentSectionDistributionService::class)->distribute($refs['department']->id, $refs['levels'][1]->id);
+
         $plan = [
             ['CS101', $auditorium->id, DayOfWeek::SUNDAY, '09:00', '10:30'],
             ['CS101', $auditorium->id, DayOfWeek::TUESDAY, '11:00', '12:30'],
@@ -492,10 +495,8 @@ class DemoDataSeeder extends Seeder
                     'start_time' => $start,
                     'year_id' => $year->id,
                 ],
-                ['end_time' => $end],
+                ['end_time' => $end, 'section_numbers' => [1]],
             );
-
-            $schedule->sections()->syncWithoutDetaching([$section->id]);
         }
     }
 

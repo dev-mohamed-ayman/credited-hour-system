@@ -32,9 +32,9 @@ test('two overlapping saves cannot both succeed', function () {
         'end_time' => '10:30',
     ];
 
-    $service->create($world['course'], $attributes, $world['sections']->take(5)->pluck('id')->all());
+    $service->create($world['course'], $attributes + ['section_numbers' => range(1, 5)]);
 
-    expect(fn () => $service->create($world['course'], $attributes, $world['sections']->slice(5, 5)->pluck('id')->all()))
+    expect(fn () => $service->create($world['course'], $attributes + ['section_numbers' => range(6, 10)]))
         ->toThrow(LectureScheduleConflictException::class);
 
     expect(LectureSchedule::count())->toBe(1);
@@ -53,13 +53,13 @@ test('a stale pre-validation never bypasses the atomic save-time check', functio
 
     // Simulate two requesters that both validate cleanly before either saves
     // (the check-then-act hazard): validate() alone passes twice.
-    $service->validate($world['course'], $world['venue'], DayOfWeek::SUNDAY, '09:00', '10:30', $world['sections']->take(5)->pluck('id')->all(), $world['year']->id);
-    $service->validate($world['course'], $world['venue'], DayOfWeek::SUNDAY, '09:00', '10:30', $world['sections']->slice(5, 5)->pluck('id')->all(), $world['year']->id);
+    $service->validate($world['course'], $world['venue'], DayOfWeek::SUNDAY, '09:00', '10:30', range(1, 5), $world['year']->id);
+    $service->validate($world['course'], $world['venue'], DayOfWeek::SUNDAY, '09:00', '10:30', range(6, 10), $world['year']->id);
 
     // create() re-validates atomically, so the second save still fails.
-    $service->create($world['course'], $attributes, $world['sections']->take(5)->pluck('id')->all());
+    $service->create($world['course'], $attributes + ['section_numbers' => range(1, 5)]);
 
-    expect(fn () => $service->create($world['course'], $attributes, $world['sections']->slice(5, 5)->pluck('id')->all()))
+    expect(fn () => $service->create($world['course'], $attributes + ['section_numbers' => range(6, 10)]))
         ->toThrow(LectureScheduleConflictException::class);
 
     expect(LectureSchedule::count())->toBe(1);
@@ -83,8 +83,8 @@ test('conflict queries execute inside the save transaction', function () {
             'day' => DayOfWeek::SUNDAY,
             'start_time' => '09:00',
             'end_time' => '10:30',
+            'section_numbers' => range(1, 5),
         ],
-        $world['sections']->take(5)->pluck('id')->all(),
     );
 
     expect($transactionLevels)->not->toBeEmpty();

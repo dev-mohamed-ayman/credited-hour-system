@@ -50,41 +50,61 @@
                 </div>
             </div>
 
-            <div class="alert alert-info py-2 d-flex flex-wrap align-items-center gap-2">
-                <span class="fw-bold me-1">تحديد سريع بالشعب:</span>
-                <select wire:model="range_from" class="form-select form-select-sm w-auto">
-                    <option value="">من شعبة</option>
-                    @foreach($sections as $section)
-                        <option value="{{ $section->id }}">{{ $section->name }}</option>
-                    @endforeach
-                </select>
-                <select wire:model="range_to" class="form-select form-select-sm w-auto">
-                    <option value="">إلى شعبة</option>
-                    @foreach($sections as $section)
-                        <option value="{{ $section->id }}">{{ $section->name }}</option>
-                    @endforeach
-                </select>
-                <button type="button" class="btn btn-sm btn-primary" wire:click="applyRange">تطبيق المدى</button>
-            </div>
+            @if(empty($sections))
+                <div class="alert alert-warning">
+                    لم يتم توزيع طلاب {{ $course->department->name }} — {{ $course->level->name }} على السكاشن بعد.
+                    @can('registration_fees.edit')
+                        <a href="{{ route('registration-fees.index') }}" class="alert-link">توزيع الطلاب من الإعدادات</a>
+                    @endcan
+                </div>
+            @endif
+
+            @if(!empty($sections))
+                <div class="alert alert-info py-2 d-flex flex-wrap align-items-center gap-2">
+                    <span class="fw-bold me-1">تحديد سريع:</span>
+                    <select wire:model="range_from" class="form-select form-select-sm w-auto">
+                        <option value="">من سكشن</option>
+                        @foreach($sections as $number => $count)
+                            <option value="{{ $number }}" wire:key="range-from-{{ $number }}">{{ $number }}</option>
+                        @endforeach
+                    </select>
+                    <select wire:model="range_to" class="form-select form-select-sm w-auto">
+                        <option value="">إلى سكشن</option>
+                        @foreach($sections as $number => $count)
+                            <option value="{{ $number }}" wire:key="range-to-{{ $number }}">{{ $number }}</option>
+                        @endforeach
+                    </select>
+                    <button type="button" class="btn btn-sm btn-primary" wire:click="applyRange">تحديد المدى</button>
+                    <button type="button" class="btn btn-sm btn-label-primary" wire:click="selectAllSections">تحديد الكل</button>
+                    <button type="button" class="btn btn-sm btn-label-secondary" wire:click="clearSections">إلغاء التحديد</button>
+                </div>
+            @endif
 
             <div class="row g-4">
                 <div class="col-md-7">
-                    <label class="form-label fw-bold">الشعب الحاضرة ({{ $sections->count() }} شعبة)</label>
+                    <label class="form-label fw-bold">
+                        السكاشن الحاضرة ({{ count($sections) }} سكشن متاح — المختار {{ count($section_numbers) }})
+                    </label>
                     <div class="border rounded p-3" style="max-height: 320px; overflow-y: auto;">
-                        @forelse($sections as $section)
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" wire:model.live="section_ids"
-                                       value="{{ $section->id }}" id="section-{{ $section->id }}" wire:key="section-{{ $section->id }}">
-                                <label class="form-check-label" for="section-{{ $section->id }}">
-                                    الشعبة {{ $section->name }}
-                                    <span class="badge bg-label-secondary ms-1">{{ $section->students_count }} طالب</span>
-                                </label>
-                            </div>
-                        @empty
-                            <div class="text-muted">لا توجد شعب مرتبطة بهذه المادة بعد.</div>
-                        @endforelse
+                        <div class="row g-2">
+                            @forelse($sections as $number => $count)
+                                <div class="col-6 col-md-4" wire:key="section-number-{{ $number }}">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" wire:model.live="section_numbers"
+                                               value="{{ $number }}" id="section-number-{{ $number }}">
+                                        <label class="form-check-label" for="section-number-{{ $number }}">
+                                            سكشن {{ $number }}
+                                            <span class="badge bg-label-secondary ms-1">{{ $count }} طالب</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="col-12 text-muted">لا توجد سكاشن متاحة بعد.</div>
+                            @endforelse
+                        </div>
                     </div>
-                    @error('section_ids') <div class="text-danger mt-1 small">{{ $message }}</div> @enderror
+                    @error('section_numbers') <div class="text-danger mt-1 small">{{ $message }}</div> @enderror
+                    @error('section_numbers.*') <div class="text-danger mt-1 small">{{ $message }}</div> @enderror
                 </div>
 
                 <div class="col-md-5">

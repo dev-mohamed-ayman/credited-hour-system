@@ -5,6 +5,8 @@ namespace App\Livewire\Admin\RegistrationFee;
 use App\Models\Department;
 use App\Models\Level;
 use App\Models\RegistrationFee;
+use App\Services\StudentSectionDistributionService;
+use InvalidArgumentException;
 use Livewire\Component;
 
 class Index extends Component
@@ -108,8 +110,33 @@ class Index extends Component
         session()->flash('message', 'تم تحديث البيانات بنجاح.');
     }
 
+    public function distributeStudents(StudentSectionDistributionService $distribution): void
+    {
+        abort_unless(auth()->user()->can('registration_fees.edit'), 403);
+
+        if (! $this->activeDepartmentId || ! $this->activeLevelId) {
+            return;
+        }
+
+        try {
+            $assigned = $distribution->distribute((int) $this->activeDepartmentId, (int) $this->activeLevelId);
+        } catch (InvalidArgumentException $e) {
+            session()->flash('error', $e->getMessage());
+
+            return;
+        }
+
+        session()->flash('message', $assigned > 0
+            ? "تم توزيع {$assigned} طالب على السكاشن بنجاح."
+            : 'جميع الطلاب موزعون على السكاشن بالفعل.');
+    }
+
     public function render()
     {
-        return view('livewire.admin.registration-fee.index')->extends('admin.layouts.app')->section('content');
+        $distributionSummary = $this->activeDepartmentId && $this->activeLevelId
+            ? app(StudentSectionDistributionService::class)->summary((int) $this->activeDepartmentId, (int) $this->activeLevelId)
+            : null;
+
+        return view('livewire.admin.registration-fee.index', ['distributionSummary' => $distributionSummary])->extends('admin.layouts.app')->section('content');
     }
 }

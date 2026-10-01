@@ -35,7 +35,7 @@
                                             {{ $session->venue->name }}
                                             <span class="d-block small fw-normal">
                                                 {{ $session->start_time }} — {{ $session->end_time }}
-                                                ({{ $session->sections->count() }} شعبة)
+                                                ({{ $session->sectionNumbersLabel() }})
                                             </span>
                                         </div>
                                     @endforeach

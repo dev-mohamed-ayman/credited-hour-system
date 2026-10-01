@@ -78,7 +78,7 @@
                             <th>اليوم</th>
                             <th>الوقت</th>
                             <th>المكان</th>
-                            <th>الشعب</th>
+                            <th>السكاشن</th>
                             <th>الإجمالي / السعة</th>
                             <th>الحالة</th>
                             <th class="text-center">إجراءات</th>
@@ -86,13 +86,13 @@
                     </thead>
                     <tbody class="table-border-bottom-0">
                         @forelse($sessions as $session)
-                            @php $flag = $flags[$session->id] ?? ['over_capacity' => false, 'orphans' => [], 'total' => 0]; @endphp
+                            @php $flag = $flags[$session->id] ?? ['over_capacity' => false, 'missing_sections' => false, 'total' => 0]; @endphp
                             <tr>
                                 <td class="text-center">{{ $loop->iteration }}</td>
                                 <td>{{ $session->day->label() }}</td>
                                 <td>{{ $session->start_time }} — {{ $session->end_time }}</td>
                                 <td>{{ $session->venue->name }} <span class="badge bg-label-secondary">{{ $session->venue->type->label() }}</span></td>
-                                <td>{{ $session->sections->count() }} شعبة</td>
+                                <td>{{ $session->sectionNumbersLabel() }}</td>
                                 <td>
                                     {{ $flag['total'] ?? 0 }} / {{ $session->venue->capacity ?? '—' }}
                                 </td>
@@ -100,10 +100,10 @@
                                     @if($flag['over_capacity'])
                                         <span class="badge bg-danger">تجاوز السعة</span>
                                     @endif
-                                    @if(!empty($flag['orphans']))
-                                        <span class="badge bg-warning text-dark">شعب غير مرتبطة: {{ implode('، ', $flag['orphans']) }}</span>
+                                    @if($flag['missing_sections'])
+                                        <span class="badge bg-warning text-dark">لم تحدد السكاشن</span>
                                     @endif
-                                    @if(!$flag['over_capacity'] && empty($flag['orphans']))
+                                    @if(!$flag['over_capacity'] && !$flag['missing_sections'])
                                         <span class="badge bg-label-success">سليمة</span>
                                     @endif
                                 </td>
