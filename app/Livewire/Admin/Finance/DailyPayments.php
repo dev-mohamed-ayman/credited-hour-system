@@ -17,6 +17,7 @@ class DailyPayments extends Component
         'cash' => 'نقدي (كاش)',
         'credit' => 'فيزا',
         'both' => 'نقدي وفيزا',
+        'discount' => 'خصم كامل',
     ];
 
     public string $selectedDate = '';

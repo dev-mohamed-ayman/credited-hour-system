@@ -18,6 +18,7 @@ use App\Models\StudentDiscountUsage;
 use App\Models\StudentFeeTicket;
 use App\Models\Year;
 use App\Services\DiscountService;
+use App\Services\FeeTicketService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -295,7 +296,7 @@ class Index extends Component
         $this->validate();
 
         try {
-            app(DiscountService::class)->grant([
+            $discount = app(DiscountService::class)->grant([
                 'student_id' => (int) $this->form['student_id'],
                 'scope' => $this->form['scope'],
                 'fee_id' => ($this->form['scope'] ?? null) === DiscountScope::Additional->value ? ($this->form['fee_id'] ? (int) $this->form['fee_id'] : null) : null,
@@ -312,8 +313,12 @@ class Index extends Component
             return;
         }
 
+        $settled = app(FeeTicketService::class)->settleFullyDiscountedFees($discount, auth()->user());
+
         $this->showModal = false;
-        $this->dispatch('toast', message: 'تم منح الخصم بنجاح', type: 'success');
+        $this->dispatch('toast', message: $settled->isEmpty()
+            ? 'تم منح الخصم بنجاح'
+            : 'تم منح الخصم وإصدار وسداد '.$settled->count().' حافظة تلقائياً (خصم كامل): '.$settled->pluck('ticket_number')->implode('، '), type: 'success');
     }
 
     public function updateDiscount(): void

@@ -207,6 +207,27 @@ class DiscountService
     }
 
     /**
+     * A pending ticket whose discounts cover its whole amount has nothing left to
+     * collect: mark it paid right away so it never waits at the payment desk.
+     * No wallet deposit and no ministerial receipt — nothing was actually paid.
+     */
+    public function settleIfFullyDiscounted(StudentFeeTicket $ticket): bool
+    {
+        if (! $ticket->isPending() || ! $ticket->hasDiscount() || $this->toCents((string) $ticket->amount) > 0) {
+            return false;
+        }
+
+        $ticket->update([
+            'status' => 'paid',
+            'payment_method' => 'discount',
+            'paid_at' => now(),
+            'notes' => trim(($ticket->notes ? $ticket->notes.' — ' : '').'سداد بخصم كامل'),
+        ]);
+
+        return true;
+    }
+
+    /**
      * Revoke only the unused remainder of a discount (R1). Applications already
      * recorded — including those on now-paid tickets — are immutable history.
      */
@@ -355,6 +376,7 @@ class DiscountService
             $plan = $this->planApplication($eligible, $gross);
 
             $this->applyToTicket($ticket, $plan['applied'], $actor);
+            $this->settleIfFullyDiscounted($ticket->refresh());
 
             $discount->events()->create([
                 'action' => DiscountEventAction::Edited,
