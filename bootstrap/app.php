@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'student.active' => \App\Http\Middleware\EnsureStudentAccountIsActive::class,
         ]);
 
         $middleware->redirectGuestsTo(fn (Request $request) => match (true) {

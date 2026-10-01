@@ -37,10 +37,13 @@
             </a>
         </li>
 
+        @php($isPortalReadOnly = auth('student')->user()?->isPortalReadOnly())
+
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">الخدمات الأكاديمية</span>
         </li>
 
+        @unless ($isPortalReadOnly)
         <li class="menu-item {{isActiveRoute('student.course-registrations.*')}}">
             <a href="{{route('student.course-registrations.index')}}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-clipboard-list"></i>
@@ -54,6 +57,7 @@
                 <div data-i18n="سجلات التسجيل">سجلات التسجيل</div>
             </a>
         </li>
+        @endunless
 
         <li class="menu-item {{isActiveRoute('student.status-statement')}}">
             <a href="{{route('student.status-statement')}}" class="menu-link">
@@ -62,6 +66,7 @@
             </a>
         </li>
 
+        @unless ($isPortalReadOnly)
         <li class="menu-item {{isActiveRoute('student.print-seat-number')}}">
             <a href="{{route('student.print-seat-number')}}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-identity-card"></i>
@@ -79,6 +84,7 @@
                 <div data-i18n="تغيير كلمة المرور">تغيير كلمة المرور</div>
             </a>
         </li>
+        @endunless
 
     </ul>
 </aside>

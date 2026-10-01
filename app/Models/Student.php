@@ -238,4 +238,13 @@ class Student extends Authenticatable
     {
         return $this->hasMany(WalletTransaction::class);
     }
+
+    /**
+     * Dismissed and graduated students keep read-only portal access:
+     * dashboard and status statement only, no actions.
+     */
+    public function isPortalReadOnly(): bool
+    {
+        return in_array($this->status, [StudentStatus::DISMISSED, StudentStatus::GRADUATED], true);
+    }
 }

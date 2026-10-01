@@ -1,7 +1,19 @@
 <div>
     <h4 class="mb-4">مرحباً بك، <strong>{{ $student->name }}</strong> 👋</h4>
 
-    @if ($hasUnpaidFees)
+    @if ($student->isPortalReadOnly())
+        <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+            <span class="alert-icon text-warning me-2">
+                <i class="ti tabler-lock ti-xl"></i>
+            </span>
+            <div class="d-flex flex-column">
+                <h5 class="mb-1 alert-heading">الحساب للعرض فقط — {{ $student->status->label() }}</h5>
+                <span>يمكنك الاطلاع على بياناتك وبيان الحالة فقط، ولا يمكنك إجراء أي عمليات على الحساب.</span>
+            </div>
+        </div>
+    @endif
+
+    @if ($hasUnpaidFees && ! $student->isPortalReadOnly())
         <div class="row mb-4">
             <div class="col-12">
                 <div class="alert alert-danger d-flex align-items-center" role="alert">

@@ -186,11 +186,14 @@ Route::prefix('student')->name('student.')->group(function () {
 
         Route::get('', \App\Livewire\Student\Dashboard::class)->name('dashboard');
 
-        Route::get('course-registrations', \App\Livewire\Student\CourseRegistration\Index::class)->name('course-registrations.index');
-        Route::get('registration-records', \App\Livewire\Student\RegistrationRecord\Index::class)->name('registration-records.index');
         Route::get('status-statement', \App\Livewire\Student\StatusStatement::class)->name('status-statement');
-        Route::get('change-password', \App\Livewire\Student\ChangePassword::class)->name('change-password');
-        Route::get('exam-schedule', \App\Livewire\Student\ExamSchedule::class)->name('exam-schedule');
-        Route::get('print-seat-number', \App\Http\Controllers\Student\SeatNumberPrintController::class)->name('print-seat-number');
+
+        Route::middleware('student.active')->group(function () {
+            Route::get('course-registrations', \App\Livewire\Student\CourseRegistration\Index::class)->name('course-registrations.index');
+            Route::get('registration-records', \App\Livewire\Student\RegistrationRecord\Index::class)->name('registration-records.index');
+            Route::get('change-password', \App\Livewire\Student\ChangePassword::class)->name('change-password');
+            Route::get('exam-schedule', \App\Livewire\Student\ExamSchedule::class)->name('exam-schedule');
+            Route::get('print-seat-number', \App\Http\Controllers\Student\SeatNumberPrintController::class)->name('print-seat-number');
+        });
     });
 });
