@@ -107,6 +107,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('course-registration-settings', \App\Livewire\Admin\GradeSettings\Index::class)->name('course-registration-settings.index')->middleware('permission:course_registration_settings.view');
     Route::get('course-registrations', \App\Livewire\Admin\CourseRegistration\Index::class)->name('course-registrations.index')->middleware('permission:course_registrations.view');
     Route::get('registration-records', \App\Livewire\Admin\RegistrationRecord\Index::class)->name('registration-records.index')->middleware('permission:course_registrations.view');
+    Route::get('registration-log', \App\Livewire\Admin\RegistrationLog\Index::class)->name('registration-log.index')->middleware('permission:course_registrations.view');
     Route::get('registration-records/{registration}', \App\Livewire\Admin\RegistrationRecord\Show::class)->name('registration-records.show')->middleware('permission:course_registrations.view');
 
     // Transfer Equivalency Routes

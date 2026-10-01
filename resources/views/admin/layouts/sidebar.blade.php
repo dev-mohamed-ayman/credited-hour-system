@@ -130,7 +130,7 @@
         @endcanany
 
         @canany(['course_registrations.view', 'courses.view', 'grades.view', 'academic_advisors.view', 'military_education.view', 'transfer_equivalency.view'])
-        <li class="menu-item {{isActiveRoute(['course-registrations.*', 'registration-records.*', 'courses.*', 'grades.*', 'academic-advisors.*', 'military-education-courses.*', 'admin.transfer-equivalency.*'], true)}}">
+        <li class="menu-item {{isActiveRoute(['course-registrations.*', 'registration-records.*', 'registration-log.*', 'courses.*', 'grades.*', 'academic-advisors.*', 'military-education-courses.*', 'admin.transfer-equivalency.*'], true)}}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base ti tabler-book"></i>
                 <div data-i18n="الشئون الأكاديمية">الشئون الأكاديمية</div>
@@ -145,6 +145,11 @@
                 <li class="menu-item {{isActiveRoute('registration-records.*')}}">
                     <a href="{{route('registration-records.index')}}" class="menu-link">
                         <div data-i18n="سجلات التسجيل">سجلات التسجيل</div>
+                    </a>
+                </li>
+                <li class="menu-item {{isActiveRoute('registration-log.*')}}">
+                    <a href="{{route('registration-log.index')}}" class="menu-link">
+                        <div data-i18n="سجل التسجيلات">سجل التسجيلات</div>
                     </a>
                 </li>
                 @endcan
