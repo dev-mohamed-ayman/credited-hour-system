@@ -11,6 +11,10 @@
         </div>
     </div>
 
+    @can('course_registrations.create')
+        <livewire:admin.course-registration.bulk-register />
+    @endcan
+
     <div class="card mb-4">
         <div class="card-body">
             <div class="row g-3 align-items-end">
