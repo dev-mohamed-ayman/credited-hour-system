@@ -9,14 +9,17 @@ use App\Models\Venue;
 use App\Models\Year;
 use App\Services\ExamScheduleService;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 class Form extends Component
 {
     public ?ExamCommittee $committee = null;
 
+    #[Locked]
     public $year_id = '';
 
+    #[Locked]
     public $semester = '';
 
     public $venue_id = '';
@@ -75,8 +78,8 @@ class Form extends Component
         abort_unless(auth()->user()->can('exam_schedules.create'), 403);
 
         $this->committee = null;
-        $this->year_id = request()->integer('year') ?: (Year::current()?->id ?? '');
-        $this->semester = (string) (request()->query('semester') ?: (Year::currentSemester()?->value ?? ''));
+        $this->year_id = Year::current()?->id ?? '';
+        $this->semester = Year::currentSemester()?->value ?? '';
     }
 
     public function updatedVenueId($value): void
@@ -91,6 +94,12 @@ class Form extends Component
         abort_unless(auth()->user()->can($this->committee ? 'exam_schedules.edit' : 'exam_schedules.create'), 403);
 
         $this->validate();
+
+        if (! $this->committee && (Year::current()?->id !== (int) $this->year_id || Year::currentSemester()?->value !== $this->semester)) {
+            $this->dispatch('toast', ['message' => 'لا يمكن إضافة لجنة إلا للسنة والترم الحاليين', 'type' => 'danger']);
+
+            return;
+        }
 
         $attributes = [
             'year_id' => (int) $this->year_id,
@@ -125,8 +134,7 @@ class Form extends Component
     public function render()
     {
         return view('livewire.admin.exam-schedule.form', [
-            'years' => Year::latest('id')->get(),
-            'semesters' => Semester::cases(),
+            'termYear' => Year::find($this->year_id),
             'venues' => Venue::query()
                 ->where(fn ($query) => $query->where('is_active', true)->orWhere('id', $this->committee?->venue_id ?? 0))
                 ->orderBy('name')

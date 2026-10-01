@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Admin\Student;
 
-use App\Enums\Semester;
 use App\Enums\Student\ApplicationCategory;
 use App\Enums\Student\StudentStatus;
 use App\Enums\Student\StudyStatus;
@@ -20,6 +19,7 @@ use App\Models\Year;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -94,8 +94,10 @@ class Create extends Component
 
     public $password;
 
+    #[Locked]
     public $year_id;
 
+    #[Locked]
     public $semester;
 
     public $showFullForm = false;
@@ -118,15 +120,9 @@ class Create extends Component
     }
 
     #[Computed]
-    public function years()
+    public function currentYear(): ?Year
     {
-        return Year::all();
-    }
-
-    #[Computed]
-    public function semesters()
-    {
-        return Semester::cases();
+        return Year::current();
     }
 
     #[Computed]
@@ -330,6 +326,9 @@ class Create extends Component
 
         // Remove department_id as it's not in the students table
         unset($validated['department_id']);
+
+        $validated['year_id'] = Year::current()?->id;
+        $validated['semester'] = Year::currentSemester()?->value;
         unset($validated['requirements']);
 
         // Find best academic advisor

@@ -20,6 +20,15 @@ class CourseSemesterMapper
         return self::ARABIC_TO_ENUM[$arabicSemester] ?? null;
     }
 
+    public static function toArabic(?Semester $semester): ?string
+    {
+        if ($semester === null) {
+            return null;
+        }
+
+        return array_search($semester, self::ARABIC_TO_ENUM, true) ?: null;
+    }
+
     public static function sequence(Semester|string|null $semester): int
     {
         if ($semester === null) {

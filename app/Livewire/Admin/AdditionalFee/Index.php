@@ -8,6 +8,7 @@ use App\Models\Department;
 use App\Models\Level;
 use App\Models\Section;
 use App\Models\Year;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -32,9 +33,13 @@ class Index extends Component
 
     public $selectedSections = [];
 
+    #[Locked]
     public $semester = null;
 
     public $editingFeeId = null;
+
+    #[Locked]
+    public ?string $editingYearLabel = null;
 
     public $showForm = false;
 
@@ -78,7 +83,7 @@ class Index extends Component
         $this->gender = 'both';
         $this->is_one_time = true;
         $this->items = [];
-        $this->semester = null;
+        $this->semester = Year::currentSemester()?->value;
 
         // Default to all selected
         $this->selectedDepartments = Department::pluck('id')->map(fn ($id) => (string) $id)->toArray();
@@ -86,6 +91,7 @@ class Index extends Component
         $this->selectedSections = Section::pluck('id')->map(fn ($id) => (string) $id)->toArray();
 
         $this->editingFeeId = null;
+        $this->editingYearLabel = null;
         $this->showForm = false;
         $this->resetErrorBag();
     }
@@ -159,7 +165,7 @@ class Index extends Component
 
     public function edit($id)
     {
-        $fee = AdditionalFee::with(['departments', 'levels', 'sections', 'items'])->findOrFail($id);
+        $fee = AdditionalFee::with(['departments', 'levels', 'sections', 'items', 'year'])->findOrFail($id);
 
         $this->editingFeeId = $fee->id;
         $this->name = $fee->name;
@@ -167,6 +173,7 @@ class Index extends Component
         $this->gender = $fee->gender;
         $this->is_one_time = $fee->is_one_time;
         $this->semester = $fee->semester?->value;
+        $this->editingYearLabel = $fee->year?->year;
         $this->items = $fee->items->map(fn ($item) => [
             'id' => $item->id,
             'name' => $item->name,
@@ -191,14 +198,11 @@ class Index extends Component
         $this->calculateTotal();
         $this->validate();
 
-        $currentYear = Year::current();
         $data = [
             'name' => $this->name,
             'amount' => $this->amount,
             'gender' => $this->gender,
             'is_one_time' => $this->is_one_time,
-            'year_id' => $currentYear?->id,
-            'semester' => $this->semester,
         ];
 
         if ($this->editingFeeId) {
@@ -206,7 +210,10 @@ class Index extends Component
             $fee->update($data);
             $this->dispatch('success', 'تم تحديث المصروف بنجاح.');
         } else {
-            $fee = AdditionalFee::create($data);
+            $fee = AdditionalFee::create($data + [
+                'year_id' => Year::current()?->id,
+                'semester' => Year::currentSemester()?->value,
+            ]);
             $this->dispatch('success', 'تم إضافة المصروف بنجاح.');
         }
 
@@ -293,7 +300,7 @@ class Index extends Component
             'departments' => Department::all(),
             'levels' => Level::all(),
             'sections' => Section::all(),
-            'years' => Year::all(),
+            'currentYear' => Year::current(),
             'semesters' => Semester::cases(),
         ])->extends('admin.layouts.app')->section('content');
     }

@@ -15,25 +15,13 @@
     <div class="card">
         <div class="card-body">
             <div class="row g-3">
-                <div class="col-md-3">
-                    <label class="form-label" for="year_id">السنة الدراسية</label>
-                    <select id="year_id" wire:model="year_id" class="form-select @error('year_id') is-invalid @enderror" @if($committee) disabled @endif>
-                        <option value="">اختر السنة</option>
-                        @foreach($years as $y)
-                            <option value="{{ $y->id }}">{{ $y->year }}</option>
-                        @endforeach
-                    </select>
-                    @error('year_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label" for="semester">الترم</label>
-                    <select id="semester" wire:model="semester" class="form-select @error('semester') is-invalid @enderror" @if($committee) disabled @endif>
-                        <option value="">اختر الترم</option>
-                        @foreach($semesters as $s)
-                            <option value="{{ $s->value }}">{{ $s->label() }}</option>
-                        @endforeach
-                    </select>
-                    @error('semester') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                <div class="col-md-6">
+                    <label class="form-label">السنة الدراسية / الترم</label>
+                    <div class="form-control bg-label-secondary">
+                        {{ $termYear?->year ?? 'لا توجد سنة حالية' }} — {{ \App\Enums\Semester::tryFrom((string) $semester)?->label() ?? '—' }}
+                    </div>
+                    @error('year_id') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                    @error('semester') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-6">
                     <label class="form-label" for="name">اسم اللجنة</label>
@@ -61,10 +49,6 @@
                     @error('notes') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
             </div>
-
-            @if($committee)
-                <div class="text-muted small mt-3">لا يمكن تغيير السنة أو الترم بعد إنشاء اللجنة.</div>
-            @endif
 
             <div class="d-flex gap-2 mt-4">
                 <button type="button" class="btn btn-primary" wire:click="save" wire:loading.attr="disabled">

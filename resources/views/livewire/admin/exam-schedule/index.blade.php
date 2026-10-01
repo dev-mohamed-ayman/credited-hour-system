@@ -10,7 +10,7 @@
             </nav>
         </div>
         @can('exam_schedules.create')
-            <a class="btn btn-primary" href="{{ route('exam-schedules.create', ['year' => $year_id, 'semester' => $semester]) }}">
+            <a class="btn btn-primary" href="{{ route('exam-schedules.create') }}">
                 <i class="ti tabler-plus me-1"></i> إضافة لجنة
             </a>
         @endcan

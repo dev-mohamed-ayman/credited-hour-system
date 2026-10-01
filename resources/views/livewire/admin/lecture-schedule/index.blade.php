@@ -33,13 +33,8 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">الترم</label>
-                    <select wire:model.live="semester" class="form-select">
-                        <option value="">كل الترمات</option>
-                        @foreach($semesters as $term)
-                            <option value="{{ $term }}">{{ $term }}</option>
-                        @endforeach
-                    </select>
+                    <label class="form-label">السنة / الترم</label>
+                    <div class="form-control bg-label-secondary">{{ $currentYear?->year ?? '—' }} — الترم {{ $semester ?: '—' }}</div>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">المادة</label>

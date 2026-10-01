@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Admin\Student;
 
-use App\Enums\Semester;
 use App\Models\AcademicAdvisor;
 use App\Models\CertificateType;
 use App\Models\City;
@@ -13,8 +12,8 @@ use App\Models\Nationality;
 use App\Models\Section;
 use App\Models\Student;
 use App\Models\StudentScore;
-use App\Models\Year;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -93,8 +92,10 @@ class Edit extends Component
 
     public $password = '';
 
+    #[Locked]
     public $year_id;
 
+    #[Locked]
     public $semester;
 
     public $showFullForm = false;
@@ -160,18 +161,6 @@ class Edit extends Component
         } else {
             $this->showFullForm = false;
         }
-    }
-
-    #[Computed]
-    public function years()
-    {
-        return Year::all();
-    }
-
-    #[Computed]
-    public function semesters()
-    {
-        return Semester::cases();
     }
 
     #[Computed]

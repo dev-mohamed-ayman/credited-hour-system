@@ -95,35 +95,10 @@
             </div>
 
             <div class="form-group col-md-4 mb-3">
-                <label class="form-label">السنة الدراسية</label>
-                <div wire:ignore>
-                    <select wire:model.live="year_id" id="year_id"
-                        class="form-select select2 @error('year_id') is-invalid @enderror">
-                        <option value="">اختر السنة</option>
-                        @foreach($this->years as $year)
-                            <option value="{{$year->id}}">{{$year->year}}</option>
-                        @endforeach
-                    </select>
+                <label class="form-label">السنة الدراسية / الترم</label>
+                <div class="form-control bg-label-secondary">
+                    {{ $this->currentYear?->year ?? 'لا توجد سنة حالية' }} — {{ \App\Enums\Semester::tryFrom((string) $semester)?->label() ?? '—' }}
                 </div>
-                @error('year_id')
-                    <div class="text-danger small mt-1">{{ $message }}</div>
-                @enderror
-            </div>
-
-            <div class="form-group col-md-4 mb-3">
-                <label class="form-label">الترم</label>
-                <div wire:ignore>
-                    <select wire:model.live="semester" id="semester"
-                        class="form-select select2 @error('semester') is-invalid @enderror">
-                        <option value="">اختر الترم</option>
-                        @foreach($this->semesters as $semester)
-                            <option value="{{$semester->value}}">{{$semester->label()}}</option>
-                        @endforeach
-                    </select>
-                </div>
-                @error('semester')
-                    <div class="text-danger small mt-1">{{ $message }}</div>
-                @enderror
             </div>
 
             <div class="form-group col-md-6 mb-3">

@@ -43,6 +43,8 @@ class Student extends Authenticatable
         'status_notes',
         'section_id',
         'level_id',
+        'year_id',
+        'semester',
         'section_number',
         'study_status',
         'username',

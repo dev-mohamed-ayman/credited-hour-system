@@ -48,8 +48,8 @@ test('the form creates a committee and defaults capacity from the venue', functi
 
     Livewire::actingAs($world['admin'])
         ->test(Form::class)
-        ->set('year_id', $world['year']->id)
-        ->set('semester', 'first')
+        ->assertSet('year_id', $world['year']->id)
+        ->assertSet('semester', 'first')
         ->set('name', 'لجنة 7')
         ->set('venue_id', $world['venue']->id)
         ->assertSet('capacity', 300)
@@ -65,8 +65,8 @@ test('the form validates required fields', function () {
 
     Livewire::actingAs($world['admin'])
         ->test(Form::class)
-        ->set('year_id', $world['year']->id)
-        ->set('semester', 'first')
+        ->assertSet('year_id', $world['year']->id)
+        ->assertSet('semester', 'first')
         ->call('save')
         ->assertHasErrors(['name' => 'required', 'venue_id' => 'required', 'capacity' => 'required']);
 });
@@ -171,6 +171,14 @@ test('a viewer without edit permission cannot add students', function () {
         ->call('addCodes')
         ->assertForbidden();
 });
+
+test('the committee form term cannot be changed from the browser', function () {
+    $world = examWorld();
+
+    Livewire::actingAs($world['admin'])
+        ->test(Form::class)
+        ->set('semester', 'second');
+})->throws(\Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException::class);
 
 test('exam schedule pages render', function () {
     $world = examWorld();

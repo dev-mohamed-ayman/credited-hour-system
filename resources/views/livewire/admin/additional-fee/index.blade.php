@@ -77,14 +77,11 @@
                                     @enderror
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label">الترم</label>
-                                    <select class="form-select @error('semester') is-invalid @enderror" wire:model="semester">
-                                        <option value="">اختر الترم</option>
-                                        @foreach($semesters as $semester)
-                                            <option value="{{ $semester->value }}">{{ $semester->label() }}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('semester') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    <label class="form-label">السنة / الترم</label>
+                                    <div class="form-control bg-label-secondary">
+                                        {{ $editingFeeId ? ($editingYearLabel ?? '—') : ($currentYear?->year ?? 'لا توجد سنة حالية') }}
+                                        — {{ \App\Enums\Semester::tryFrom((string) $semester)?->label() ?? '—' }}
+                                    </div>
                                 </div>
 
                                 {{-- Fee Items Section --}}

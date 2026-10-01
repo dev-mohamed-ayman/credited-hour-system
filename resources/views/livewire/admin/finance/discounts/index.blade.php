@@ -386,23 +386,12 @@
                                         @error('form.fee_id') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                                     </div>
                                 @endif
-                                <div class="col-md-6">
-                                    <label class="form-label">السنة الدراسية</label>
-                                    <select class="form-select" wire:model="form.year_id">
-                                        <option value="">كل السنوات</option>
-                                        @foreach($years as $year)
-                                            <option value="{{ $year->id }}">{{ $year->year }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">الترم</label>
-                                    <select class="form-select" wire:model="form.semester">
-                                        <option value="">كل الأتراب</option>
-                                        @foreach($semesters as $semester)
-                                            <option value="{{ $semester->value }}">{{ $semester->label() }}</option>
-                                        @endforeach
-                                    </select>
+                                <div class="col-md-12">
+                                    <label class="form-label">السنة الدراسية / الترم</label>
+                                    <div class="form-control bg-label-secondary">
+                                        {{ $years->firstWhere('id', $form['year_id'] ?? null)?->year ?? 'كل السنوات' }}
+                                        — {{ \App\Enums\Semester::tryFrom((string) ($form['semester'] ?? ''))?->label() ?? 'كل الأتراب' }}
+                                    </div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label required">نوع القيمة</label>

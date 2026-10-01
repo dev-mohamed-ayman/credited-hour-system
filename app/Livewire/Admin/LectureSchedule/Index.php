@@ -6,7 +6,10 @@ use App\Models\Course;
 use App\Models\Department;
 use App\Models\LectureSchedule;
 use App\Models\Level;
+use App\Models\Year;
 use App\Services\LectureScheduleService;
+use App\Support\CourseSemesterMapper;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 class Index extends Component
@@ -15,6 +18,10 @@ class Index extends Component
 
     public $level_id = '';
 
+    /**
+     * Course-catalog semester of the current term — fixed, never user-picked.
+     */
+    #[Locked]
     public $semester = '';
 
     public $course_id = '';
@@ -22,6 +29,8 @@ class Index extends Component
     public function mount(): void
     {
         abort_unless(auth()->user()->can('lecture_schedules.view'), 403);
+
+        $this->semester = CourseSemesterMapper::toArabic(Year::currentSemester()) ?? '';
 
         if (request()->filled('course')) {
             $this->course_id = (int) request()->integer('course');
@@ -34,11 +43,6 @@ class Index extends Component
     }
 
     public function updatedLevelId(): void
-    {
-        $this->reset('course_id');
-    }
-
-    public function updatedSemester(): void
     {
         $this->reset('course_id');
     }
@@ -92,7 +96,7 @@ class Index extends Component
             'courses' => $courses,
             'departments' => Department::all(),
             'levels' => Level::orderBy('id')->get(),
-            'semesters' => ['الأول', 'الثاني', 'الصيفي'],
+            'currentYear' => Year::current(),
             'selectedCourse' => $selectedCourse,
             'sessions' => $sessions,
             'flags' => $flags,
