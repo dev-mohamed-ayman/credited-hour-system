@@ -20,8 +20,8 @@ class BulkCourseRegistrationService
     ) {}
 
     /**
-     * Register every "clean" student in their own level's required courses for the
-     * given term. A clean student has no failed (retake), improvement, or overdue
+     * Register every "clean" student of the given level in that level's required
+     * courses for the given term. A clean student has no failed (retake), improvement, or overdue
      * courses from earlier terms — anyone else is skipped and must be registered
      * individually. Each student goes through the normal registration path, so the
      * fee gate and wallet charge still apply.
@@ -31,12 +31,12 @@ class BulkCourseRegistrationService
      *     skipped: array<int, array{code: string, name: string, reason: string}>
      * }
      */
-    public function register(Year $year, Semester $semester, ?int $departmentId = null, ?int $levelId = null): array
+    public function register(Year $year, Semester $semester, int $levelId, ?int $departmentId = null, ?int $sectionId = null): array
     {
         $registered = [];
         $skipped = [];
 
-        foreach ($this->candidateStudents($departmentId, $levelId) as $student) {
+        foreach ($this->candidateStudents($levelId, $departmentId, $sectionId) as $student) {
             $outcome = $this->registerStudent($student, $year, $semester);
 
             if ($outcome['success']) {
@@ -52,15 +52,15 @@ class BulkCourseRegistrationService
     /**
      * @return Collection<int, Student>
      */
-    private function candidateStudents(?int $departmentId, ?int $levelId): Collection
+    private function candidateStudents(int $levelId, ?int $departmentId, ?int $sectionId): Collection
     {
         return Student::query()
             ->with(['level', 'section'])
-            ->whereNotNull('level_id')
+            ->where('level_id', $levelId)
             ->whereNotNull('section_id')
             ->where(fn ($query) => $query->whereNull('status')->orWhere('status', StudentStatus::REGISTERED->value))
             ->when($departmentId, fn ($query) => $query->whereHas('section', fn ($section) => $section->where('department_id', $departmentId)))
-            ->when($levelId, fn ($query) => $query->where('level_id', $levelId))
+            ->when($sectionId, fn ($query) => $query->where('section_id', $sectionId))
             ->orderBy('username')
             ->get();
     }

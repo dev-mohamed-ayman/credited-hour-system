@@ -2,49 +2,40 @@
     <div class="card-header">
         <h5 class="mb-1">تسجيل المواد الأساسية تلقائياً</h5>
         <small class="text-muted">
-            يسجّل المواد الأساسية لفرقة كل طالب في الترم المختار، للطلاب الذين ليس لديهم مواد رسوب أو تحسين أو مواد متأخرة فقط.
+            يسجّل المواد الأساسية لطلاب الفرقة الأولى في الترم الحالي، للطلاب الذين ليس لديهم مواد رسوب أو تحسين أو مواد متأخرة فقط.
             باقي الطلاب يتم تخطيهم ويُسجَّلون يدوياً.
         </small>
     </div>
     <div class="card-body">
         <div class="row g-3 align-items-end">
             <div class="col-md-3">
-                <label class="form-label fw-bold">السنة الدراسية</label>
-                <select class="form-select" wire:model="yearId">
-                    <option value="">اختر السنة</option>
-                    @foreach($years as $year)
-                        <option value="{{ $year->id }}">{{ $year->year }}</option>
-                    @endforeach
-                </select>
-                @error('yearId')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                <label class="form-label fw-bold">السنة / الترم الحالي</label>
+                <input type="text" class="form-control" readonly
+                       value="{{ $currentYear?->year ?? 'غير محدد' }} — {{ $currentSemester?->label() ?? 'غير محدد' }}">
             </div>
             <div class="col-md-2">
-                <label class="form-label fw-bold">الترم</label>
-                <select class="form-select" wire:model="semester">
-                    <option value="">اختر الترم</option>
-                    @foreach($semesters as $option)
-                        <option value="{{ $option->value }}">{{ $option->label() }}</option>
-                    @endforeach
-                </select>
-                @error('semester')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                <label class="form-label fw-bold">الفرقة</label>
+                <input type="text" class="form-control" readonly value="{{ $firstLevel?->name ?? 'غير محدد' }}">
             </div>
             <div class="col-md-2">
                 <label class="form-label fw-bold">التخصص</label>
-                <select class="form-select" wire:model="departmentId">
+                <select class="form-select" wire:model.live="departmentId">
                     <option value="">الكل</option>
                     @foreach($departments as $department)
                         <option value="{{ $department->id }}">{{ $department->name }}</option>
                     @endforeach
                 </select>
+                @error('departmentId')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
             </div>
             <div class="col-md-2">
-                <label class="form-label fw-bold">الفرقة</label>
-                <select class="form-select" wire:model="levelId">
+                <label class="form-label fw-bold">الشعبة</label>
+                <select class="form-select" wire:model="sectionId">
                     <option value="">الكل</option>
-                    @foreach($levels as $level)
-                        <option value="{{ $level->id }}">{{ $level->name }}</option>
+                    @foreach($sections as $section)
+                        <option value="{{ $section->id }}">{{ $section->name }}</option>
                     @endforeach
                 </select>
+                @error('sectionId')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
             </div>
             <div class="col-md-3">
                 <button type="button" class="btn btn-primary w-100" wire:click="register"
@@ -55,6 +46,7 @@
                 </button>
             </div>
         </div>
+        @error('register')<div class="alert alert-danger mt-3 mb-0">{{ $message }}</div>@enderror
 
         @if($result)
             <div class="row g-3 mt-2">

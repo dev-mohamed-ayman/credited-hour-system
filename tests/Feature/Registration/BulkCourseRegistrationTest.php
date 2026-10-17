@@ -2,12 +2,15 @@
 
 use App\Enums\RegistrationStatus;
 use App\Enums\Semester;
+use App\Enums\SemesterStatus;
 use App\Enums\Student\StudentStatus;
 use App\Livewire\Admin\CourseRegistration\BulkRegister;
 use App\Models\Course;
 use App\Models\Grade;
+use App\Models\Level;
 use App\Models\Registration;
 use App\Models\RegistrationCourse;
+use App\Models\Section;
 use App\Models\User;
 use App\Models\Year;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -24,8 +27,6 @@ function runBulkRegistration(array $world): \Livewire\Features\SupportTesting\Te
 {
     return Livewire::actingAs($world['admin'])
         ->test(BulkRegister::class)
-        ->set('yearId', $world['year']->id)
-        ->set('semester', Semester::FIRST->value)
         ->call('register')
         ->assertHasNoErrors();
 }
@@ -118,6 +119,42 @@ it('skips a student whose wallet cannot cover the charge without leaving an empt
     expect($component->get('result')['registered'])->toHaveCount(1)
         ->and($component->get('result')['skipped'])->toHaveCount(1)
         ->and(Registration::where('student_id', $poorStudent->id)->exists())->toBeFalse();
+});
+
+it('only registers students of the first level', function () {
+    $secondLevel = Level::create(['name' => 'الفرقة الثانية']);
+    $this->world['student']->update(['level_id' => $secondLevel->id]);
+
+    $component = runBulkRegistration($this->world);
+
+    expect(Registration::count())->toBe(0)
+        ->and($component->get('result')['registered'])->toBeEmpty()
+        ->and($component->get('result')['skipped'])->toBeEmpty();
+});
+
+it('filters students by section', function () {
+    $otherSection = Section::create(['name' => 'شعبة ب', 'department_id' => $this->world['department']->id, 'cgpa' => 2.0]);
+
+    $component = Livewire::actingAs($this->world['admin'])
+        ->test(BulkRegister::class)
+        ->set('departmentId', $this->world['department']->id)
+        ->set('sectionId', $otherSection->id)
+        ->call('register')
+        ->assertHasNoErrors();
+
+    expect(Registration::count())->toBe(0)
+        ->and($component->get('result')['registered'])->toBeEmpty();
+});
+
+it('refuses to run when no first or second term is currently active', function () {
+    $this->world['year']->update(['first_semester_status' => SemesterStatus::DISABLED]);
+
+    Livewire::actingAs($this->world['admin'])
+        ->test(BulkRegister::class)
+        ->call('register')
+        ->assertHasErrors('register');
+
+    expect(Registration::count())->toBe(0);
 });
 
 it('forbids users without the create permission', function () {

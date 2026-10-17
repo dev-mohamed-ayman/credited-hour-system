@@ -5,30 +5,24 @@ namespace App\Livewire\Admin\CourseRegistration;
 use App\Enums\Semester;
 use App\Models\Department;
 use App\Models\Level;
+use App\Models\Section;
 use App\Models\Year;
 use App\Services\BulkCourseRegistrationService;
 use Illuminate\Contracts\View\View;
-use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class BulkRegister extends Component
 {
-    public ?int $yearId = null;
-
-    public ?string $semester = null;
-
     public ?int $departmentId = null;
 
-    public ?int $levelId = null;
+    public ?int $sectionId = null;
 
     /** @var array{registered: array<int, array{code: string, name: string, courses: int}>, skipped: array<int, array{code: string, name: string, reason: string}>}|null */
     public ?array $result = null;
 
-    public function mount(): void
+    public function updatedDepartmentId(): void
     {
-        $this->yearId = Year::current()?->id;
-        $currentSemester = Year::currentSemester();
-        $this->semester = in_array($currentSemester, [Semester::FIRST, Semester::SECOND], true) ? $currentSemester->value : null;
+        $this->sectionId = null;
     }
 
     public function register(BulkCourseRegistrationService $service): void
@@ -36,21 +30,33 @@ class BulkRegister extends Component
         abort_unless(auth()->user()->can('course_registrations.create'), 403);
 
         $this->validate([
-            'yearId' => ['required', 'integer', 'exists:years,id'],
-            'semester' => ['required', Rule::in([Semester::FIRST->value, Semester::SECOND->value])],
             'departmentId' => ['nullable', 'integer', 'exists:departments,id'],
-            'levelId' => ['nullable', 'integer', 'exists:levels,id'],
-        ], [
-            'yearId.required' => 'برجاء اختيار السنة الدراسية',
-            'semester.required' => 'برجاء اختيار الترم',
-            'semester.in' => 'التسجيل التلقائي متاح للترم الأول أو الثاني فقط',
+            'sectionId' => ['nullable', 'integer', 'exists:sections,id'],
         ]);
 
+        $year = Year::current();
+        $semester = Year::currentSemester();
+
+        if (! $year || ! in_array($semester, [Semester::FIRST, Semester::SECOND], true)) {
+            $this->addError('register', 'التسجيل التلقائي متاح فقط أثناء الترم الأول أو الثاني الحالي.');
+
+            return;
+        }
+
+        $firstLevel = $this->firstLevel();
+
+        if (! $firstLevel) {
+            $this->addError('register', 'لا توجد فرقة أولى معرّفة في النظام.');
+
+            return;
+        }
+
         $this->result = $service->register(
-            Year::findOrFail($this->yearId),
-            Semester::from($this->semester),
+            $year,
+            $semester,
+            $firstLevel->id,
             $this->departmentId ?: null,
-            $this->levelId ?: null,
+            $this->sectionId ?: null,
         );
 
         $this->dispatch('toast', [
@@ -59,13 +65,22 @@ class BulkRegister extends Component
         ]);
     }
 
+    private function firstLevel(): ?Level
+    {
+        return Level::query()->orderBy('id')->first(['id', 'name']);
+    }
+
     public function render(): View
     {
         return view('livewire.admin.course-registration.bulk-register', [
-            'years' => Year::orderByDesc('year')->get(['id', 'year']),
-            'semesters' => [Semester::FIRST, Semester::SECOND],
+            'currentYear' => Year::current(),
+            'currentSemester' => Year::currentSemester(),
+            'firstLevel' => $this->firstLevel(),
             'departments' => Department::orderBy('name')->get(['id', 'name']),
-            'levels' => Level::orderBy('id')->get(['id', 'name']),
+            'sections' => Section::query()
+                ->when($this->departmentId, fn ($query) => $query->where('department_id', $this->departmentId))
+                ->orderBy('name')
+                ->get(['id', 'name']),
         ]);
     }
 }
