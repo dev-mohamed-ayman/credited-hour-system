@@ -117,9 +117,7 @@ class StudentSectionDistributionService
             $assignments = [];
 
             foreach ($pending as $studentId) {
-                while (($counts[$sectionNumber] ?? 0) >= $perSection) {
-                    $sectionNumber++;
-                }
+                $sectionNumber = $this->firstSectionWithFreeSeat($counts, $perSection, $sectionNumber);
 
                 $assignments[$sectionNumber][] = $studentId;
                 $counts[$sectionNumber] = ($counts[$sectionNumber] ?? 0) + 1;
@@ -131,5 +129,62 @@ class StudentSectionDistributionService
 
             return $pending->count();
         });
+    }
+
+    /**
+     * Place a single not-yet-distributed student in the first section with a
+     * free seat of their department/level. Students already distributed,
+     * inactive students, and groups without a configured section size are
+     * left untouched. Returns the assigned section number, if any.
+     */
+    public function assign(Student $student): ?int
+    {
+        return DB::transaction(function () use ($student) {
+            $student = Student::query()->with('section')->lockForUpdate()->find($student->id);
+
+            if (! $student || $student->section_number !== null || ! $student->level_id || ! $student->section) {
+                return null;
+            }
+
+            $departmentId = (int) $student->section->department_id;
+            $levelId = (int) $student->level_id;
+
+            if (! $this->groupQuery($departmentId, $levelId)->whereKey($student->id)->exists()) {
+                return null;
+            }
+
+            $perSection = (int) (RegistrationFee::query()
+                ->where('department_id', $departmentId)
+                ->where('level_id', $levelId)
+                ->lockForUpdate()
+                ->value('number_of_students_per_section') ?? 0);
+
+            if ($perSection <= 0) {
+                return null;
+            }
+
+            $sectionNumber = $this->firstSectionWithFreeSeat(
+                $this->studentsCountPerSection($departmentId, $levelId),
+                $perSection,
+            );
+
+            $student->forceFill(['section_number' => $sectionNumber])->save();
+
+            return $sectionNumber;
+        });
+    }
+
+    /**
+     * @param  array<int, int>  $counts  section number => students count
+     */
+    private function firstSectionWithFreeSeat(array $counts, int $perSection, int $startFrom = 1): int
+    {
+        $sectionNumber = $startFrom;
+
+        while (($counts[$sectionNumber] ?? 0) >= $perSection) {
+            $sectionNumber++;
+        }
+
+        return $sectionNumber;
     }
 }

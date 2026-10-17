@@ -20,7 +20,8 @@ class CourseRegistrationService
 {
     public function __construct(
         protected CourseEligibilityService $eligibilityService,
-        protected RegistrationBillingService $billingService
+        protected RegistrationBillingService $billingService,
+        protected StudentSectionDistributionService $sectionDistribution
     ) {}
 
     /**
@@ -197,6 +198,8 @@ class CourseRegistrationService
                 'rejected_course_ids' => $courseIds,
             ];
         }
+
+        $this->sectionDistribution->assign($student);
 
         $savedCount = count($validCourseIds);
         $message = "تم حفظ تسجيل {$savedCount} مادة بنجاح.";
