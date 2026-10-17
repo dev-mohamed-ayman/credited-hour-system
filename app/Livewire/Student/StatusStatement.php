@@ -2,8 +2,7 @@
 
 namespace App\Livewire\Student;
 
-use App\Models\Registration;
-use App\Models\Grade;
+use App\Services\GpaCalculator;
 use Livewire\Component;
 
 class StatusStatement extends Component
@@ -17,36 +16,7 @@ class StatusStatement extends Component
 
     public function calculateGPA($courses): array
     {
-        $totalPoints = 0;
-        $totalHours = 0;
-        $earnedHours = 0;
-
-        $gradePoints = Grade::orderBy('order')->pluck('order', 'name')->toArray();
-
-        foreach ($courses as $courseReg) {
-            $grade = $courseReg->grade;
-            if (!$grade) {
-                continue;
-            }
-
-            $course = $courseReg->course;
-            $hours = $course->hours;
-            $points = $gradePoints[$grade->name] ?? 0;
-
-            if ($points > 0) {
-                $totalPoints += $hours * $points;
-                $totalHours += $hours;
-                $earnedHours += $hours;
-            }
-        }
-
-        $gpa = $totalHours > 0 ? round($totalPoints / $totalHours, 2) : 0;
-
-        return [
-            'gpa' => $gpa,
-            'total_hours' => $totalHours,
-            'earned_hours' => $earnedHours,
-        ];
+        return app(GpaCalculator::class)->forCourses($courses);
     }
 
     public function render()

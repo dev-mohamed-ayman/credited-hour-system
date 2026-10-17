@@ -18,6 +18,9 @@
                         <th class="text-center" style="width: 50px;">#</th>
                         <th>التقييم</th>
                         <th class="text-center">الترتيب</th>
+                        <th class="text-center">النقاط</th>
+                        <th class="text-center">نطاق الدرجات</th>
+                        <th class="text-center">يدخل في المعدل</th>
                         <th class="text-center">افتراضي (Pending)</th>
                         <th class="text-center">الإجراءات</th>
                     </tr>
@@ -28,6 +31,15 @@
                             <td class="text-center">{{ $loop->iteration }}</td>
                             <td><span class="fw-bold text-primary">{{ $grade->name }}</span></td>
                             <td class="text-center">{{ $grade->order }}</td>
+                            <td class="text-center">{{ $grade->points ?? '—' }}</td>
+                            <td class="text-center">{{ $grade->isScored() ? $grade->min_score.' - '.$grade->max_score : '—' }}</td>
+                            <td class="text-center">
+                                @if($grade->countsInGpa())
+                                    <span class="badge bg-label-success">نعم</span>
+                                @else
+                                    <span class="badge bg-label-secondary">لا</span>
+                                @endif
+                            </td>
                             <td class="text-center">
                                 @if($grade->is_pending_default)
                                     <span class="badge bg-label-success">نعم</span>
@@ -82,7 +94,7 @@
                         @endcan
                     @empty
                         <tr>
-                            <td colspan="5" class="text-center py-5">
+                            <td colspan="8" class="text-center py-5">
                                 <div class="text-muted">لا توجد تقييمات مضافة حالياً</div>
                             </td>
                         </tr>

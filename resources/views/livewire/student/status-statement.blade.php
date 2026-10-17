@@ -179,9 +179,10 @@
                                                                         @if($grade)
                                                                             @php
                                                                                 $badgeClass = match(true) {
-                                                                                    $grade->order >= 90 => 'bg-label-success',
-                                                                                    $grade->order >= 75 => 'bg-label-info',
-                                                                                    $grade->order >= 50 => 'bg-label-warning',
+                                                                                    ! $grade->countsInGpa() => 'bg-label-secondary',
+                                                                                    $grade->points >= 3.4 => 'bg-label-success',
+                                                                                    $grade->points >= 2.7 => 'bg-label-info',
+                                                                                    $grade->points >= 2 => 'bg-label-warning',
                                                                                     default => 'bg-label-danger',
                                                                                 };
                                                                             @endphp

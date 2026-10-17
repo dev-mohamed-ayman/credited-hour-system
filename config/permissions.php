@@ -37,6 +37,10 @@ return [
         'label' => 'تسجيل المواد الدراسية',
         'actions' => ['view' => 'عرض', 'create' => 'إنشاء'],
     ],
+    'results' => [
+        'label' => 'النتائج',
+        'actions' => ['upload' => 'رفع النتيجة'],
+    ],
     'certificate_types' => [
         'label' => 'الشهادات',
         'actions' => ['view' => 'عرض', 'create' => 'إنشاء', 'edit' => 'تعديل', 'delete' => 'حذف'],

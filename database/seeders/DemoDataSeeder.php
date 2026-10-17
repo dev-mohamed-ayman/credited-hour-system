@@ -151,22 +151,25 @@ class DemoDataSeeder extends Seeder
 
     private function seedGrades(): void
     {
-        // `order` doubles as the grade's GPA points, and the column is an unsigned
-        // integer, so the scale can only be whole numbers on 0-4.
         $grades = [
-            ['name' => 'Pending', 'order' => 0, 'is_pending_default' => true],
-            ['name' => 'A+', 'order' => 4, 'is_pending_default' => false],
-            ['name' => 'A', 'order' => 4, 'is_pending_default' => false],
-            ['name' => 'B', 'order' => 3, 'is_pending_default' => false],
-            ['name' => 'C', 'order' => 2, 'is_pending_default' => false],
-            ['name' => 'D', 'order' => 1, 'is_pending_default' => false],
-            ['name' => 'F', 'order' => 0, 'is_pending_default' => false],
+            ['name' => 'A+', 'points' => 4.00, 'min_score' => 95, 'max_score' => 100, 'counts_in_gpa' => true],
+            ['name' => 'A', 'points' => 3.70, 'min_score' => 90, 'max_score' => 94, 'counts_in_gpa' => true],
+            ['name' => 'B+', 'points' => 3.40, 'min_score' => 85, 'max_score' => 89, 'counts_in_gpa' => true],
+            ['name' => 'B', 'points' => 3.00, 'min_score' => 80, 'max_score' => 84, 'counts_in_gpa' => true],
+            ['name' => 'C+', 'points' => 2.70, 'min_score' => 72, 'max_score' => 79, 'counts_in_gpa' => true],
+            ['name' => 'C', 'points' => 2.30, 'min_score' => 65, 'max_score' => 71, 'counts_in_gpa' => true],
+            ['name' => 'D+', 'points' => 2.20, 'min_score' => 55, 'max_score' => 64, 'counts_in_gpa' => true],
+            ['name' => 'D', 'points' => 2.00, 'min_score' => 50, 'max_score' => 54, 'counts_in_gpa' => true],
+            ['name' => 'F', 'points' => 0.00, 'min_score' => 0, 'max_score' => 49, 'counts_in_gpa' => true],
+            ['name' => 'FX', 'points' => 0.00, 'min_score' => null, 'max_score' => null, 'counts_in_gpa' => true],
+            ['name' => 'IC', 'points' => null, 'min_score' => null, 'max_score' => null, 'counts_in_gpa' => false],
+            ['name' => 'W', 'points' => null, 'min_score' => null, 'max_score' => null, 'counts_in_gpa' => false],
+            ['name' => 'Pending', 'points' => null, 'min_score' => null, 'max_score' => null, 'counts_in_gpa' => false, 'is_pending_default' => true],
         ];
 
-        foreach ($grades as $grade) {
-            Grade::updateOrCreate(['name' => $grade['name']], $grade);
+        foreach ($grades as $index => $grade) {
+            Grade::updateOrCreate(['name' => $grade['name']], $grade + ['order' => $index + 1, 'is_pending_default' => false]);
         }
-
         $failGrade = Grade::where('name', 'F')->first();
         FailingGradeSetting::firstOrCreate(['grade_id' => $failGrade->id]);
     }

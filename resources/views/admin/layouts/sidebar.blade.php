@@ -129,8 +129,8 @@
         </li>
         @endcanany
 
-        @canany(['course_registrations.view', 'courses.view', 'grades.view', 'academic_advisors.view', 'military_education.view', 'transfer_equivalency.view'])
-        <li class="menu-item {{isActiveRoute(['course-registrations.*', 'registration-records.*', 'registration-log.*', 'courses.*', 'grades.*', 'academic-advisors.*', 'military-education-courses.*', 'admin.transfer-equivalency.*'], true)}}">
+        @canany(['course_registrations.view', 'results.upload', 'courses.view', 'grades.view', 'academic_advisors.view', 'military_education.view', 'transfer_equivalency.view'])
+        <li class="menu-item {{isActiveRoute(['course-registrations.*', 'registration-records.*', 'registration-log.*', 'results.*', 'courses.*', 'grades.*', 'academic-advisors.*', 'military-education-courses.*', 'admin.transfer-equivalency.*'], true)}}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base ti tabler-book"></i>
                 <div data-i18n="الشئون الأكاديمية">الشئون الأكاديمية</div>
@@ -150,6 +150,14 @@
                 <li class="menu-item {{isActiveRoute('registration-log.*')}}">
                     <a href="{{route('registration-log.index')}}" class="menu-link">
                         <div data-i18n="سجل التسجيلات">سجل التسجيلات</div>
+                    </a>
+                </li>
+                @endcan
+
+                @can('results.upload')
+                <li class="menu-item {{isActiveRoute('results.*')}}">
+                    <a href="{{route('results.upload')}}" class="menu-link">
+                        <div data-i18n="رفع النتيجة">رفع النتيجة</div>
                     </a>
                 </li>
                 @endcan

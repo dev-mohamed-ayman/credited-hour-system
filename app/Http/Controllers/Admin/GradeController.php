@@ -31,6 +31,7 @@ class GradeController extends Controller
 
         $data = $request->validated();
         $data['is_pending_default'] = $request->boolean('is_pending_default');
+        $data['counts_in_gpa'] = $request->boolean('counts_in_gpa');
 
         Grade::create($data);
 
@@ -50,6 +51,7 @@ class GradeController extends Controller
 
         $data = $request->validated();
         $data['is_pending_default'] = $request->boolean('is_pending_default');
+        $data['counts_in_gpa'] = $request->boolean('counts_in_gpa');
 
         $grade->update($data);
 

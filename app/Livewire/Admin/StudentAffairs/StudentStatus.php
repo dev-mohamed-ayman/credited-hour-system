@@ -3,15 +3,17 @@
 namespace App\Livewire\Admin\StudentAffairs;
 
 use App\Models\Student;
-use App\Models\Registration;
-use App\Models\Grade;
+use App\Services\GpaCalculator;
 use Livewire\Component;
 
 class StudentStatus extends Component
 {
     public $searchQuery;
+
     public $selectedStudentId;
+
     public $student;
+
     public $showScores = false;
 
     public function searchStudent()
@@ -20,8 +22,8 @@ class StudentStatus extends Component
             'searchQuery' => 'required|string',
         ]);
 
-        $this->student = Student::where('username', 'like', '%' . $this->searchQuery . '%')
-            ->orWhere('name', 'like', '%' . $this->searchQuery . '%')
+        $this->student = Student::where('username', 'like', '%'.$this->searchQuery.'%')
+            ->orWhere('name', 'like', '%'.$this->searchQuery.'%')
             ->with([
                 'level',
                 'section',
@@ -40,11 +42,12 @@ class StudentStatus extends Component
             ])
             ->first();
 
-        if (!$this->student) {
+        if (! $this->student) {
             $this->dispatch('alert', [
                 'type' => 'error',
                 'message' => 'لم يتم العثور على طالب بهذا الاسم أو الكود',
             ]);
+
             return;
         }
 
@@ -73,11 +76,12 @@ class StudentStatus extends Component
             },
         ])->find($studentId);
 
-        if (!$this->student) {
+        if (! $this->student) {
             $this->dispatch('alert', [
                 'type' => 'error',
                 'message' => 'لم يتم العثور على الطالب',
             ]);
+
             return;
         }
     }
@@ -91,44 +95,15 @@ class StudentStatus extends Component
 
     public function calculateGPA($courses): array
     {
-        $totalPoints = 0;
-        $totalHours = 0;
-        $earnedHours = 0;
-
-        $gradePoints = Grade::orderBy('order')->pluck('order', 'name')->toArray();
-
-        foreach ($courses as $courseReg) {
-            $grade = $courseReg->grade;
-            if (!$grade) {
-                continue;
-            }
-
-            $course = $courseReg->course;
-            $hours = $course->hours;
-            $points = $gradePoints[$grade->name] ?? 0;
-
-            if ($points > 0) {
-                $totalPoints += $hours * $points;
-                $totalHours += $hours;
-                $earnedHours += $hours;
-            }
-        }
-
-        $gpa = $totalHours > 0 ? round($totalPoints / $totalHours, 2) : 0;
-
-        return [
-            'gpa' => $gpa,
-            'total_hours' => $totalHours,
-            'earned_hours' => $earnedHours,
-        ];
+        return app(GpaCalculator::class)->forCourses($courses);
     }
 
     public function render()
     {
         $recentStudents = collect();
         if (empty($this->student) && strlen($this->searchQuery) >= 2) {
-            $recentStudents = Student::where('username', 'like', '%' . $this->searchQuery . '%')
-                ->orWhere('name', 'like', '%' . $this->searchQuery . '%')
+            $recentStudents = Student::where('username', 'like', '%'.$this->searchQuery.'%')
+                ->orWhere('name', 'like', '%'.$this->searchQuery.'%')
                 ->limit(10)
                 ->get();
         }
@@ -138,4 +113,3 @@ class StudentStatus extends Component
         ])->extends('admin.layouts.app')->section('content');
     }
 }
-

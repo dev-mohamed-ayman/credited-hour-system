@@ -3,11 +3,11 @@
 namespace App\Livewire\Student;
 
 use App\Enums\Student\StudentWarningType;
-use App\Models\Grade;
 use App\Models\Level;
 use App\Models\Registration;
 use App\Models\Setting;
 use App\Models\Year;
+use App\Services\GpaCalculator;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Livewire\Component;
@@ -20,43 +20,17 @@ class Dashboard extends Component
             'registrations' => fn ($q) => $q->with(['courses.course', 'courses.grade', 'year']),
         ]);
 
-        $gradePoints = Grade::query()
-            ->orderBy('order')
-            ->pluck('order', 'id')
-            ->all();
+        $registeredHours = $student->registrations
+            ->flatMap->courses
+            ->sum(fn ($courseReg) => (int) $courseReg->course?->hours);
 
-        $totalPoints = 0;
-        $totalHoursForGPA = 0;
-        $earnedHours = 0;
-        $registeredHours = 0;
-
-        foreach ($student->registrations as $registration) {
-            foreach ($registration->courses as $courseReg) {
-                $courseHours = (int) $courseReg->course->hours;
-                $registeredHours += $courseHours;
-
-                $gradeId = $courseReg->grade_id;
-                if ($gradeId === null) {
-                    continue;
-                }
-
-                $points = $gradePoints[$gradeId] ?? 0;
-
-                if ($points > 0) {
-                    $totalPoints += $courseHours * $points;
-                    $totalHoursForGPA += $courseHours;
-                    $earnedHours += $courseHours;
-                }
-            }
-        }
-
-        $cgpa = $totalHoursForGPA > 0 ? round($totalPoints / $totalHoursForGPA, 2) : 0;
+        $gpa = app(GpaCalculator::class)->cumulative($student);
 
         return [
-            'cgpa' => $cgpa,
-            'earned_hours' => $earnedHours,
+            'cgpa' => $gpa['gpa'],
+            'earned_hours' => $gpa['earned_hours'],
             'registered_hours' => $registeredHours,
-            'total_hours_for_gpa' => $totalHoursForGPA,
+            'total_hours_for_gpa' => $gpa['total_hours'],
         ];
     }
 
