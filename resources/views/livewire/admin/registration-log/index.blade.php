@@ -1,4 +1,14 @@
-<div>
+<div x-on:afterprint.window="$wire.set('printAll', false)">
+    <style>
+        @media print {
+            #layout-menu, #layout-navbar, .layout-footer, .no-print, .card-footer { display: none !important; }
+            .card { border: none !important; box-shadow: none !important; }
+            body { background: #fff !important; }
+            .table { font-size: 11px; }
+            .table-responsive { overflow: visible !important; }
+        }
+    </style>
+
     <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between mb-4 gap-3">
         <div>
             <h4 class="mb-0 fw-bold text-heading">سجل التسجيلات</h4>
@@ -9,9 +19,19 @@
                 </ol>
             </nav>
         </div>
+        @if($enrollments)
+            <div class="d-flex gap-2 no-print">
+                <button type="button" class="btn btn-label-success" wire:click="exportCsv">
+                    <i class="ti tabler-file-download me-1"></i> تصدير Excel (CSV)
+                </button>
+                <button type="button" class="btn btn-label-primary" wire:click="printList" wire:loading.attr="disabled" wire:target="printList">
+                    <i class="ti tabler-printer me-1"></i> طباعة الكشف
+                </button>
+            </div>
+        @endif
     </div>
 
-    <div class="card mb-4">
+    <div class="card mb-4 no-print">
         <div class="card-body">
             <div class="row g-3">
                 <div class="col-md-3">
@@ -55,14 +75,19 @@
     </div>
 
     @if(! $enrollments)
-        <div class="alert alert-info d-flex align-items-center">
+        <div class="alert alert-info no-print d-flex align-items-center">
             <i class="ti tabler-info-circle me-2"></i>
             <span>اختر السنة والترم والمادة لعرض الطلاب المسجلين.</span>
         </div>
     @else
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between border-bottom">
-                <h5 class="card-title mb-0">{{ $selectedCourse?->code }} — {{ $selectedCourse?->name }}</h5>
+                <div>
+                    <h5 class="card-title mb-0">{{ $selectedCourse?->code }} — {{ $selectedCourse?->name }}</h5>
+                    <small class="text-muted d-none d-print-block">
+                        {{ $years->firstWhere('id', $yearId)?->year }} — {{ \App\Enums\Semester::tryFrom($semester)?->label() }}
+                    </small>
+                </div>
                 <span class="badge bg-label-primary fs-6">عدد الطلاب المسجلين: {{ $enrollments->total() }}</span>
             </div>
             <div class="table-responsive text-nowrap">

@@ -75,3 +75,39 @@ it('is reachable from the admin route and guarded by permission', function () {
         ->get(route('registration-log.index'))
         ->assertForbidden();
 });
+
+it('exports the registered students of the course as an Excel-compatible CSV', function () {
+    $course = $this->world['courses'][0];
+    enrollInLog($this->world['student'], $this->world, $course->id);
+    enrollInLog(logStudent($this->world, 'CS250002'), $this->world, $course->id, RegistrationStatus::PENDING);
+    enrollInLog(logStudent($this->world, 'CS250003'), $this->world, $this->world['courses'][1]->id);
+
+    Livewire::actingAs($this->world['admin'])
+        ->test(Index::class)
+        ->set('yearId', $this->world['year']->id)
+        ->set('semester', Semester::FIRST->value)
+        ->set('courseId', $course->id)
+        ->call('exportCsv')
+        ->assertFileDownloaded(contentType: 'text/csv; charset=UTF-8');
+});
+
+it('renders every registered student on one page when printing', function () {
+    $course = $this->world['courses'][0];
+    enrollInLog($this->world['student'], $this->world, $course->id);
+
+    foreach (range(2, 55) as $number) {
+        enrollInLog(logStudent($this->world, sprintf('CS2500%02d', $number)), $this->world, $course->id);
+    }
+
+    Livewire::actingAs($this->world['admin'])
+        ->test(Index::class)
+        ->set('yearId', $this->world['year']->id)
+        ->set('semester', Semester::FIRST->value)
+        ->set('courseId', $course->id)
+        ->assertDontSee('CS250055')
+        ->call('printList')
+        ->assertSet('printAll', true)
+        ->assertSee('CS250055')
+        ->set('courseId', $this->world['courses'][1]->id)
+        ->assertSet('printAll', false);
+});

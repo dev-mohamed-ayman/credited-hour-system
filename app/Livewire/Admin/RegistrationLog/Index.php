@@ -12,6 +12,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class Index extends Component
 {
@@ -24,6 +25,11 @@ class Index extends Component
     public ?int $departmentId = null;
 
     public ?int $courseId = null;
+
+    /**
+     * Render every enrollment without pagination so the browser prints the full list.
+     */
+    public bool $printAll = false;
 
     public function mount(): void
     {
@@ -39,7 +45,60 @@ class Index extends Component
             $this->courseId = null;
         }
 
+        $this->printAll = false;
         $this->resetPage();
+    }
+
+    public function printList(): void
+    {
+        $this->printAll = true;
+        $this->resetPage();
+
+        $this->js('setTimeout(() => window.print(), 300)');
+    }
+
+    public function exportCsv(): ?StreamedResponse
+    {
+        abort_unless(auth()->user()->can('course_registrations.view'), 403);
+
+        if (! $this->isReady()) {
+            return null;
+        }
+
+        $course = Course::find($this->courseId);
+        $enrollments = $this->orderedEnrollmentsQuery()->get();
+
+        $filename = 'registration-log-'.($course?->code ?? $this->courseId).'-'.now()->format('Y-m-d-H-i-s').'.csv';
+
+        return response()->streamDownload(function () use ($enrollments) {
+            $handle = fopen('php://output', 'w');
+            fwrite($handle, "\xEF\xBB\xBF");
+
+            fputcsv($handle, ['#', 'الكود', 'الطالب', 'الفرقة', 'التخصص', 'حالة التسجيل', 'التقدير']);
+
+            foreach ($enrollments as $index => $enrollment) {
+                $student = $enrollment->registration->student;
+
+                fputcsv($handle, [
+                    $index + 1,
+                    $student?->username,
+                    $student?->name,
+                    $student?->level?->name ?? '—',
+                    $student?->section?->department?->name ?? '—',
+                    $enrollment->registration->status?->label(),
+                    $enrollment->grade?->name ?? '—',
+                ]);
+            }
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    private function isReady(): bool
+    {
+        return $this->yearId && $this->semester && $this->courseId;
     }
 
     /**
@@ -56,19 +115,26 @@ class Index extends Component
                 ->whereIn('status', [RegistrationStatus::PENDING->value, RegistrationStatus::APPROVED->value]));
     }
 
+    private function orderedEnrollmentsQuery(): Builder
+    {
+        return $this->enrollmentsQuery()
+            ->with(['registration.student.level', 'registration.student.section.department', 'grade'])
+            ->join('registrations', 'registrations.id', '=', 'registration_courses.registration_id')
+            ->join('students', 'students.id', '=', 'registrations.student_id')
+            ->orderBy('students.username')
+            ->select('registration_courses.*');
+    }
+
     public function render(): View
     {
-        $isReady = $this->yearId && $this->semester && $this->courseId;
+        $enrollments = null;
 
-        $enrollments = $isReady
-            ? $this->enrollmentsQuery()
-                ->with(['registration.student.level', 'registration.student.section.department', 'grade'])
-                ->join('registrations', 'registrations.id', '=', 'registration_courses.registration_id')
-                ->join('students', 'students.id', '=', 'registrations.student_id')
-                ->orderBy('students.username')
-                ->select('registration_courses.*')
-                ->paginate(50)
-            : null;
+        if ($this->isReady()) {
+            $query = $this->orderedEnrollmentsQuery();
+            $enrollments = $this->printAll
+                ? $query->paginate(max($query->count(), 1))
+                : $query->paginate(50);
+        }
 
         return view('livewire.admin.registration-log.index', [
             'years' => Year::query()->latest()->get(['id', 'year']),
