@@ -97,9 +97,9 @@ class Upload extends Component
         $course = Course::findOrFail($this->courseId);
         $path = sys_get_temp_dir().'/'.Str::uuid().'.xlsx';
 
-        $service->writeTemplate($path, $course, Year::findOrFail($this->yearId), Semester::from($this->semester));
+        $service->writeCourseSheet($path, $course, Year::findOrFail($this->yearId), Semester::from($this->semester));
 
-        return response()->download($path, "نتيجة {$course->code}.xlsx")->deleteFileAfterSend();
+        return response()->download($path, "شيت نتيجة {$course->code}.xlsx")->deleteFileAfterSend();
     }
 
     /**

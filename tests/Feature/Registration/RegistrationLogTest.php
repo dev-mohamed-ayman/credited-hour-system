@@ -76,7 +76,7 @@ it('is reachable from the admin route and guarded by permission', function () {
         ->assertForbidden();
 });
 
-it('exports the registered students of the course as an Excel-compatible CSV', function () {
+it('exports the registered students of the course as the result upload sheet', function () {
     $course = $this->world['courses'][0];
     enrollInLog($this->world['student'], $this->world, $course->id);
     enrollInLog(logStudent($this->world, 'CS250002'), $this->world, $course->id, RegistrationStatus::PENDING);
@@ -87,8 +87,8 @@ it('exports the registered students of the course as an Excel-compatible CSV', f
         ->set('yearId', $this->world['year']->id)
         ->set('semester', Semester::FIRST->value)
         ->set('courseId', $course->id)
-        ->call('exportCsv')
-        ->assertFileDownloaded(contentType: 'text/csv; charset=UTF-8');
+        ->call('exportSheet')
+        ->assertFileDownloaded('شيت نتيجة '.$course->code.'.xlsx');
 });
 
 it('renders every registered student on one page when printing', function () {

@@ -245,16 +245,78 @@ it('checks the seat number against the student exam committee seat', function ()
         ->and($rightSeat['errors'])->toBe([]);
 });
 
-it('rejects a sheet whose header does not match', function () {
+it('finds the columns by header in any order and ignores extra columns', function () {
     $analysis = app(ResultUploadService::class)->analyze(
-        [['كود الطالب', 'التحريري', 'رقم الجلوس', 'اعمال السنة', 'المجموع', 'التقدير', 'ملاحظة'], ['CS250001', 45, null, 47, 92, 'A', null]],
+        [
+            ['اسم الطالب', 'كود الطالب', 'التحريري', 'رقم الجلوس', 'اعمال السنة', 'المجموع', 'التقدير', 'ملاحظة', 'الفرقة'],
+            ['طالب', 'CS250001', 45, null, 47, 92, 'A', null, 'الأولى'],
+        ],
+        $this->course,
+        $this->world['year'],
+        Semester::FIRST,
+    );
+
+    expect($analysis['errors'])->toBe([])
+        ->and($analysis['rows'][0])->toMatchArray(['code' => 'CS250001', 'written_score' => 45.0, 'coursework_score' => 47.0, 'grade_name' => 'A']);
+});
+
+it('rejects a sheet missing a required column', function () {
+    $analysis = app(ResultUploadService::class)->analyze(
+        [['كود الطالب', 'رقم الجلوس', 'التحريري', 'المجموع', 'التقدير', 'ملاحظة'], ['CS250001', null, 45, 92, 'A', null]],
         $this->course,
         $this->world['year'],
         Semester::FIRST,
     );
 
     expect($analysis['rows'])->toBe([])
-        ->and($analysis['errors'][0]['message'])->toContain('العمود رقم 2');
+        ->and($analysis['errors'][0]['message'])->toContain('ينقصه الأعمدة: اعمال السنة');
+});
+
+it('skips rows left without marks, grade and note', function () {
+    $pendingStudent = resultStudent($this->world, 'CS250003');
+    enrollForResult($pendingStudent, $this->world, $this->course->id, RegistrationStatus::PENDING);
+
+    $analysis = analyzeResultRows([
+        ['CS250001', null, 45, 47, 92, 'A', null],
+        ['CS250002', null, null, null, null, null, null],
+        ['CS250003', null, null, null, null, null, null],
+    ], $this->world, $this->course);
+
+    expect($analysis['errors'])->toBe([])
+        ->and($analysis['rows'])->toHaveCount(1)
+        ->and($analysis['missing'])->toBe([['code' => 'CS250002', 'name' => 'طالب CS250002']]);
+});
+
+it('round-trips the registration log sheet: fill some marks, upload, download again pre-filled', function () {
+    giveSeat($this->first, $this->world, 101);
+    $path = sys_get_temp_dir().'/'.uniqid('course-sheet-').'.xlsx';
+    $service = app(ResultUploadService::class);
+
+    $service->writeCourseSheet($path, $this->course, $this->world['year'], Semester::FIRST);
+    $exported = $service->readSheet($path, 'xlsx');
+
+    expect($exported[0])->toBe([...RESULT_HEADER, 'اسم الطالب', 'الفرقة', 'التخصص', 'حالة التسجيل'])
+        ->and($exported[1][0])->toBe('CS250001')
+        ->and($exported[1][1])->toBe(101)
+        ->and($exported[1][7])->toBe('طالب تجريبي')
+        ->and($exported[2][0])->toBe('CS250002');
+
+    $exported[1][2] = 45;
+    $exported[1][3] = 47;
+    $exported[1][4] = 92;
+
+    $analysis = $service->analyze($exported, $this->course, $this->world['year'], Semester::FIRST);
+
+    expect($analysis['errors'])->toBe([])
+        ->and($analysis['rows'])->toHaveCount(1);
+
+    $service->save($analysis['rows'], $this->world['admin']);
+    $service->writeCourseSheet($path, $this->course, $this->world['year'], Semester::FIRST);
+    $reExported = $service->readSheet($path, 'xlsx');
+
+    expect(array_slice($reExported[1], 0, 6))->toBe(['CS250001', 101, 45, 47, 92, 'A'])
+        ->and(array_slice($reExported[2], 2, 4))->toBe(['', '', '', ''])
+        ->and($service->analyze($reExported, $this->course, $this->world['year'], Semester::FIRST)['errors'])->toBe([]);
 });
 
 it('accepts header spelling variants and arabic digits', function () {
@@ -387,7 +449,7 @@ it('downloads a template listing the approved students with their seats', functi
         ->set('semester', Semester::FIRST->value)
         ->set('courseId', $this->course->id)
         ->call('downloadTemplate')
-        ->assertFileDownloaded('نتيجة CS101.xlsx');
+        ->assertFileDownloaded('شيت نتيجة CS101.xlsx');
 });
 
 it('is reachable only with the upload permission', function () {

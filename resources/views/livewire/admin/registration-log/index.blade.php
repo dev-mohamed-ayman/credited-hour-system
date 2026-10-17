@@ -21,8 +21,9 @@
         </div>
         @if($enrollments)
             <div class="d-flex gap-2 no-print">
-                <button type="button" class="btn btn-label-success" wire:click="exportCsv">
-                    <i class="ti tabler-file-download me-1"></i> تصدير Excel (CSV)
+                <button type="button" class="btn btn-label-success" wire:click="exportSheet"
+                        wire:loading.attr="disabled" wire:target="exportSheet" title="شيت بطلاب المادة بنفس شكل رفع النتيجة">
+                    <i class="ti tabler-file-download me-1"></i> تنزيل شيت Excel
                 </button>
                 <button type="button" class="btn btn-label-primary" wire:click="printList" wire:loading.attr="disabled" wire:target="printList">
                     <i class="ti tabler-printer me-1"></i> طباعة الكشف

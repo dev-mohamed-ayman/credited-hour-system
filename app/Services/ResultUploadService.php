@@ -37,18 +37,26 @@ class ResultUploadService
     public const TOTAL_MAX = 100;
 
     /**
-     * Accepted spellings of each column header, in sheet order.
+     * Columns added to the exported sheet for the reader only.
      *
-     * @var array<int, array<int, string>>
+     * @var array<int, string>
+     */
+    public const INFO_HEADERS = ['اسم الطالب', 'الفرقة', 'التخصص', 'حالة التسجيل'];
+
+    /**
+     * Columns the upload reads, located by header (any order), with their accepted spellings.
+     * Any other column, such as the student name in the exported sheet, is ignored.
+     *
+     * @var array<string, array<int, string>>
      */
     public const HEADERS = [
-        ['كود الطالب'],
-        ['رقم الجلوس'],
-        ['التحريري', 'التحريرى'],
-        ['اعمال السنة', 'اعمال السنه'],
-        ['المجموع'],
-        ['التقدير'],
-        ['ملاحظة', 'ملاحظه'],
+        'code' => ['كود الطالب'],
+        'seat' => ['رقم الجلوس'],
+        'written' => ['التحريري', 'التحريرى'],
+        'coursework' => ['اعمال السنة', 'اعمال السنه'],
+        'total' => ['المجموع'],
+        'grade' => ['التقدير'],
+        'note' => ['ملاحظة', 'ملاحظه'],
     ];
 
     /**
@@ -95,6 +103,7 @@ class ResultUploadService
 
     /**
      * Validates the sheet rows for one course in one term without writing anything.
+     * Rows left without marks, grade and note are treated as not entered yet.
      *
      * @param  array<int, array<int, mixed>>  $sheetRows  raw rows, header first
      * @return array{
@@ -108,7 +117,7 @@ class ResultUploadService
     {
         $result = ['errors' => [], 'rows' => [], 'missing' => [], 'overwritten' => 0];
 
-        $headerError = $this->headerError($sheetRows[0] ?? []);
+        [$columns, $headerError] = $this->resolveColumns($sheetRows[0] ?? []);
 
         if ($headerError) {
             $result['errors'][] = ['row' => 1, 'message' => $headerError];
@@ -126,13 +135,12 @@ class ResultUploadService
 
         foreach (array_slice($sheetRows, 1, preserve_keys: true) as $index => $cells) {
             $rowNumber = $index + 1;
-            $cells = array_pad(array_map(fn ($cell) => $this->normalizeCell($cell), array_slice($cells, 0, 7)), 7, null);
+            $cells = array_map(fn (int $position) => $this->normalizeCell($cells[$position] ?? null), $columns);
+            ['code' => $code, 'seat' => $seat, 'written' => $written, 'coursework' => $coursework, 'total' => $total, 'grade' => $gradeName, 'note' => $note] = $cells;
 
-            if (count(array_filter($cells, fn ($cell) => $cell !== null)) === 0) {
+            if ($written === null && $coursework === null && $total === null && $gradeName === null && $note === null) {
                 continue;
             }
-
-            [$code, $seat, $written, $coursework, $total, $gradeName, $note] = $cells;
             $code = $code === null ? null : mb_strtoupper($this->asIdentifier($code));
             $rowErrors = [];
 
@@ -243,34 +251,73 @@ class ResultUploadService
     }
 
     /**
-     * Builds a ready-to-fill sheet listing the course's approved students with their seat numbers.
+     * Writes the course sheet shared by the registration log export and the upload page:
+     * the upload columns first, then informational columns the upload ignores. Results
+     * that came through an earlier upload are pre-filled, so the sheet can be re-uploaded
+     * as-is and only the blank rows need filling.
      */
-    public function writeTemplate(string $path, Course $course, Year $year, Semester $semester): void
+    public function writeCourseSheet(string $path, Course $course, Year $year, Semester $semester): void
     {
         $seats = $this->seatNumbers($year, $semester);
 
         $writer = new XlsxWriter;
         $writer->openToFile($path);
-        $writer->addRow(Row::fromValues(array_map(fn (array $spellings) => $spellings[0], self::HEADERS)));
+        $writer->addRow(Row::fromValues([
+            ...array_map(fn (array $spellings) => $spellings[0], array_values(self::HEADERS)),
+            ...self::INFO_HEADERS,
+        ]));
 
-        $this->enrollments($course, $year, $semester)
-            ->filter(fn (RegistrationCourse $enrollment) => $enrollment->registration->status === RegistrationStatus::APPROVED)
+        $this->enrollments($course, $year, $semester, ['registration.student.level', 'registration.student.section.department'])
             ->sortKeys()
             ->each(function (RegistrationCourse $enrollment, string $code) use ($writer, $seats) {
-                $studentSeats = $seats->get($enrollment->registration->student_id, []);
+                $student = $enrollment->registration->student;
+                $studentSeats = $seats->get($student->id, []);
+                $hasUploadedResult = $enrollment->result_uploaded_at !== null;
 
-                $writer->addRow(Row::fromValues([$code, count($studentSeats) === 1 ? $studentSeats[0] : null, null, null, null, null, null]));
+                $writer->addRow(Row::fromValues([
+                    $code,
+                    count($studentSeats) === 1 ? $studentSeats[0] : null,
+                    ...($hasUploadedResult ? $this->uploadedMarks($enrollment) : [null, null, null, null, null]),
+                    $student->name,
+                    $student->level?->name,
+                    $student->section?->department?->name,
+                    $enrollment->registration->status?->label(),
+                ]));
             });
 
         $writer->close();
     }
 
     /**
+     * An uploaded result written back the way the sheet expects it.
+     *
+     * @return array{0: float|string|null, 1: float|null, 2: float|string|null, 3: string|null, 4: string|null}
+     */
+    private function uploadedMarks(RegistrationCourse $enrollment): array
+    {
+        $status = $enrollment->exam_status;
+        $written = $enrollment->written_score !== null ? (float) $enrollment->written_score : null;
+
+        if ($written === null && $status && $status !== ExamResultStatus::CANCELLED) {
+            $written = $status->label();
+        }
+
+        return [
+            $written,
+            $enrollment->coursework_score !== null ? (float) $enrollment->coursework_score : null,
+            $enrollment->total_score !== null ? (float) $enrollment->total_score : $status?->label(),
+            $enrollment->grade?->is_pending_default ? null : $enrollment->grade?->name,
+            $enrollment->result_note,
+        ];
+    }
+
+    /**
      * Course enrollments of the term that may receive a result, keyed by upper-cased student code.
      *
+     * @param  array<int, string>  $with
      * @return Collection<string, RegistrationCourse>
      */
-    private function enrollments(Course $course, Year $year, Semester $semester): Collection
+    private function enrollments(Course $course, Year $year, Semester $semester, array $with = []): Collection
     {
         return RegistrationCourse::query()
             ->where('course_id', $course->id)
@@ -278,7 +325,7 @@ class ResultUploadService
                 ->where('year_id', $year->id)
                 ->where('semester', $semester->value)
                 ->whereIn('status', [RegistrationStatus::PENDING->value, RegistrationStatus::APPROVED->value]))
-            ->with(['registration.student', 'grade'])
+            ->with(['registration.student', 'grade', ...$with])
             ->get()
             ->filter(fn (RegistrationCourse $enrollment) => $enrollment->registration->student !== null)
             ->keyBy(fn (RegistrationCourse $enrollment) => mb_strtoupper(trim($enrollment->registration->student->username)));
@@ -301,30 +348,46 @@ class ResultUploadService
     }
 
     /**
+     * Finds the position of every upload column in the header row.
+     *
      * @param  array<int, mixed>  $headerCells
+     * @return array{0: array<string, int>, 1: string|null}
      */
-    private function headerError(array $headerCells): ?string
+    private function resolveColumns(array $headerCells): array
     {
-        $headerCells = array_values(array_filter(
-            array_map(fn ($cell) => $this->normalizeCell($cell), $headerCells),
-            fn ($cell) => $cell !== null,
-        ));
+        $positions = [];
 
-        $expected = implode('، ', array_map(fn (array $spellings) => $spellings[0], self::HEADERS));
+        foreach ($headerCells as $position => $cell) {
+            $cell = $this->normalizeCell($cell);
 
-        if (count($headerCells) !== count(self::HEADERS)) {
-            return "عناوين الأعمدة غير صحيحة. يجب أن يحتوي الملف على 7 أعمدة بالترتيب: {$expected}.";
-        }
-
-        foreach (self::HEADERS as $position => $spellings) {
-            $accepted = array_map(fn (string $spelling) => $this->normalizeHeader($spelling), $spellings);
-
-            if (! in_array($this->normalizeHeader((string) $headerCells[$position]), $accepted, true)) {
-                return 'العمود رقم '.($position + 1)." يجب أن يكون \"{$spellings[0]}\" وليس \"{$headerCells[$position]}\". الترتيب المطلوب: {$expected}.";
+            if ($cell !== null) {
+                $positions[$this->normalizeHeader((string) $cell)][] = $position;
             }
         }
 
-        return null;
+        $columns = [];
+        $missing = [];
+
+        foreach (self::HEADERS as $key => $spellings) {
+            $found = collect($spellings)
+                ->flatMap(fn (string $spelling) => $positions[$this->normalizeHeader($spelling)] ?? [])
+                ->unique()
+                ->values();
+
+            if ($found->isEmpty()) {
+                $missing[] = $spellings[0];
+            } elseif ($found->count() > 1) {
+                return [[], "العمود \"{$spellings[0]}\" مكرر في الملف."];
+            } else {
+                $columns[$key] = $found->first();
+            }
+        }
+
+        if ($missing !== []) {
+            return [[], 'الملف ينقصه الأعمدة: '.implode('، ', $missing).'. استخدم الشيت المُنزّل من سجل التسجيلات أو من زر نموذج الشيت.'];
+        }
+
+        return [$columns, null];
     }
 
     /**

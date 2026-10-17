@@ -8,11 +8,13 @@ use App\Models\Course;
 use App\Models\Department;
 use App\Models\RegistrationCourse;
 use App\Models\Year;
+use App\Services\ResultUploadService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class Index extends Component
 {
@@ -57,7 +59,11 @@ class Index extends Component
         $this->js('setTimeout(() => window.print(), 300)');
     }
 
-    public function exportCsv(): ?StreamedResponse
+    /**
+     * Downloads the course sheet in the result upload format, so control staff fill
+     * the marks and upload the same file from the results page.
+     */
+    public function exportSheet(ResultUploadService $service): ?BinaryFileResponse
     {
         abort_unless(auth()->user()->can('course_registrations.view'), 403);
 
@@ -65,35 +71,12 @@ class Index extends Component
             return null;
         }
 
-        $course = Course::find($this->courseId);
-        $enrollments = $this->orderedEnrollmentsQuery()->get();
+        $course = Course::findOrFail($this->courseId);
+        $path = sys_get_temp_dir().'/'.Str::uuid().'.xlsx';
 
-        $filename = 'registration-log-'.($course?->code ?? $this->courseId).'-'.now()->format('Y-m-d-H-i-s').'.csv';
+        $service->writeCourseSheet($path, $course, Year::findOrFail($this->yearId), Semester::from($this->semester));
 
-        return response()->streamDownload(function () use ($enrollments) {
-            $handle = fopen('php://output', 'w');
-            fwrite($handle, "\xEF\xBB\xBF");
-
-            fputcsv($handle, ['#', 'الكود', 'الطالب', 'الفرقة', 'التخصص', 'حالة التسجيل', 'التقدير']);
-
-            foreach ($enrollments as $index => $enrollment) {
-                $student = $enrollment->registration->student;
-
-                fputcsv($handle, [
-                    $index + 1,
-                    $student?->username,
-                    $student?->name,
-                    $student?->level?->name ?? '—',
-                    $student?->section?->department?->name ?? '—',
-                    $enrollment->registration->status?->label(),
-                    $enrollment->grade?->name ?? '—',
-                ]);
-            }
-
-            fclose($handle);
-        }, $filename, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-        ]);
+        return response()->download($path, "شيت نتيجة {$course->code}.xlsx")->deleteFileAfterSend();
     }
 
     private function isReady(): bool
