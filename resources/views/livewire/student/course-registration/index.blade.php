@@ -45,6 +45,12 @@
                     <span>المواد الاختيارية المختارة: <strong class="ms-1">{{ $this->selectedOptionalCount }} / {{ $maxOptionalCourses }}</strong></span>
                 </div>
             @endif
+            @if($maxHours !== null)
+                <div class="badge bg-label-{{ $this->selectedHours > $maxHours ? 'danger' : 'primary' }} p-2 px-3 fs-6 d-flex align-items-center rounded-pill">
+                    <i class="ti tabler-clock me-1"></i>
+                    <span>ساعات الترم: <strong class="ms-1">{{ $this->selectedHours }} / {{ $maxHours }}</strong></span>
+                </div>
+            @endif
         </div>
 
         <div class="row g-4">

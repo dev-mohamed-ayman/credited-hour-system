@@ -39,7 +39,18 @@ class Setting extends Model
             'allow_cross_level_registration' => 'boolean',
             'graduation_required_hours' => 'integer',
             'warning_gpa_threshold' => 'decimal:2',
+            'warned_max_hours' => 'integer',
         ];
+    }
+
+    /**
+     * The most hours a student with an active academic warning may register; null when not capped.
+     */
+    public static function warnedMaxHours(): ?int
+    {
+        $hours = static::query()->value('warned_max_hours');
+
+        return $hours === null ? null : (int) $hours;
     }
 
     public static function allowCrossLevelRegistration(): bool

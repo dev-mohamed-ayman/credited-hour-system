@@ -10,6 +10,8 @@ use App\Models\CourseRegistrationSetting;
 use App\Models\Grade;
 use App\Models\Registration;
 use App\Models\RegistrationCourse;
+use App\Models\RegistrationHourLimit;
+use App\Models\Setting;
 use App\Models\Student;
 use App\Models\Year;
 use Illuminate\Database\Eloquent\Model;
@@ -157,6 +159,23 @@ class CourseRegistrationService
             $validCourseIds = array_values(array_diff(
                 $validCourseIds,
                 $optionalValidation['rejected']->pluck('id')->all()
+            ));
+        }
+
+        $hourValidation = $this->validateHourLimit(
+            $student,
+            $semester,
+            $registration,
+            $courses->whereIn('id', $validCourseIds)
+        );
+
+        if ($hourValidation['rejected']->isNotEmpty()) {
+            $rejectedCourseIds = array_merge($rejectedCourseIds, $hourValidation['rejected']->pluck('id')->all());
+            $errors[] = $hourValidation['message'];
+
+            $validCourseIds = array_values(array_diff(
+                $validCourseIds,
+                $hourValidation['rejected']->pluck('id')->all()
             ));
         }
 
@@ -321,6 +340,94 @@ class CourseRegistrationService
             'rejected' => $rejectedOptional,
             'message' => $message,
         ];
+    }
+
+    /**
+     * Accepts the new courses (required before optional, in order) while the term stays
+     * within the student's hour limit; the rest are rejected.
+     *
+     * @param  Collection<int, Course>  $newCourses
+     * @return array{accepted: Collection<int, Course>, rejected: Collection<int, Course>, message: string}
+     */
+    protected function validateHourLimit(
+        Student $student,
+        Semester $semester,
+        Registration $registration,
+        Collection $newCourses
+    ): array {
+        $maxHours = $this->getMaxHours($student, $semester);
+
+        if ($maxHours === null) {
+            return ['accepted' => $newCourses, 'rejected' => collect(), 'message' => ''];
+        }
+
+        $hours = $this->registeredHours($registration);
+        $accepted = collect();
+        $rejected = collect();
+
+        $ordered = $newCourses->filter(fn (Course $course) => ! $course->is_selected)
+            ->merge($newCourses->filter(fn (Course $course) => $course->is_selected))
+            ->values();
+
+        foreach ($ordered as $course) {
+            if ($hours + (int) $course->hours > $maxHours) {
+                $rejected->push($course);
+
+                continue;
+            }
+
+            $hours += (int) $course->hours;
+            $accepted->push($course);
+        }
+
+        return [
+            'accepted' => $accepted,
+            'rejected' => $rejected,
+            'message' => $rejected->isNotEmpty()
+                ? "تم تجاوز الحد الأقصى للساعات في الترم ({$maxHours} ساعة): ".$rejected->pluck('name')->implode('، ').'.'
+                : '',
+        ];
+    }
+
+    /**
+     * The most hours the student may register in the term: the department and level limit,
+     * capped by the warned-student limit while the student has an active academic warning.
+     * Null when no limit applies.
+     */
+    public function getMaxHours(Student $student, Semester $semester): ?int
+    {
+        $student->loadMissing('section');
+
+        $limit = $student->level_id && $student->section?->department_id
+            ? RegistrationHourLimit::query()
+                ->where('department_id', $student->section->department_id)
+                ->where('level_id', $student->level_id)
+                ->where('semester', $semester->value)
+                ->value('max_hours')
+            : null;
+
+        $warnedLimit = Setting::warnedMaxHours();
+
+        if ($warnedLimit !== null && $student->warnings()->academic()->where('is_active', true)->exists()) {
+            return $limit === null ? $warnedLimit : min((int) $limit, $warnedLimit);
+        }
+
+        return $limit === null ? null : (int) $limit;
+    }
+
+    /**
+     * Hours already registered in the registration.
+     */
+    public function registeredHours(?Registration $registration): int
+    {
+        if ($registration === null) {
+            return 0;
+        }
+
+        return (int) $registration->courses()
+            ->with('course:id,hours')
+            ->get()
+            ->sum(fn (RegistrationCourse $registrationCourse) => (int) $registrationCourse->course?->hours);
     }
 
     public function getMaxOptionalCourses(Student $student, Semester $semester): ?int

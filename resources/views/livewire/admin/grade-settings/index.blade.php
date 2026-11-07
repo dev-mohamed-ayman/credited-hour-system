@@ -209,4 +209,72 @@
             </div>
         @endcan
     </div>
+
+    <div class="card mt-4">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <h5 class="mb-0">الحد الأقصى للساعات في الترم (لكل تخصص × فرقة × ترم)</h5>
+            <select wire:model.live="hourLimitDepartmentId" class="form-select w-auto @error('hourLimitDepartmentId') is-invalid @enderror">
+                @foreach($departments as $department)
+                    <option value="{{ $department->id }}">{{ $department->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="card-body">
+            <small class="text-muted mb-3 d-block">
+                <i class="ti tabler-info-circle ti-xs me-1"></i>
+                الساعات المسجلة في الترم (القديمة + الجديدة) متعديش الحد ده. الخانة الفاضية = من غير حد.
+            </small>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>الفرقة الدراسية</th>
+                            @foreach($semesters as $semester)
+                                <th class="text-center">{{ $semester->label() }}</th>
+                            @endforeach
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($levels as $level)
+                            <tr wire:key="hour-limit-{{ $hourLimitDepartmentId }}-{{ $level->id }}">
+                                <td class="fw-medium">{{ $level->name }}</td>
+                                @foreach($semesters as $semester)
+                                    <td>
+                                        <input type="number" min="1"
+                                               wire:model="hourLimits.{{ $level->id }}.{{ $semester->value }}"
+                                               class="form-control form-control-sm text-center @error('hourLimits.'.$level->id.'.'.$semester->value) is-invalid @enderror"
+                                               placeholder="—">
+                                        @error('hourLimits.'.$level->id.'.'.$semester->value) <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    </td>
+                                @endforeach
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-medium" for="warnedMaxHours">حد الساعات للطالب المنذر (كل التخصصات)</label>
+                    <input type="number" min="1" id="warnedMaxHours" wire:model="warnedMaxHours"
+                           class="form-control @error('warnedMaxHours') is-invalid @enderror" placeholder="—">
+                    @error('warnedMaxHours') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    <small class="text-muted d-block mt-1">الطالب اللي عليه إنذار أكاديمي (من إجراءات نهاية الترم) مايسجلش أكتر من كده، حتى لو حد فرقته أعلى.</small>
+                </div>
+            </div>
+        </div>
+        @can('course_registration_settings.edit')
+            <div class="card-footer d-flex justify-content-end border-top pt-3">
+                <button type="button" class="btn btn-primary" wire:click="saveHourLimits" wire:loading.attr="disabled">
+                    <span wire:loading.remove wire:target="saveHourLimits">
+                        <i class="ti tabler-device-floppy me-1"></i> حفظ حدود الساعات
+                    </span>
+                    <span wire:loading wire:target="saveHourLimits">
+                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                        جاري الحفظ...
+                    </span>
+                </button>
+            </div>
+        @endcan
+    </div>
 </div>

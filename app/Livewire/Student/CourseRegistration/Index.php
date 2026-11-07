@@ -40,6 +40,10 @@ class Index extends Component
 
     public ?int $maxOptionalCourses = null;
 
+    public ?int $maxHours = null;
+
+    public int $registeredHours = 0;
+
     public function mount(): void
     {
         $this->retakeCourses = collect();
@@ -113,6 +117,16 @@ class Index extends Component
         }
     }
 
+    /**
+     * Hours of the term once the selected courses are added to the registered ones.
+     */
+    public function getSelectedHoursProperty(): int
+    {
+        $selectedIds = array_merge($this->selectedRetake, $this->selectedImprovement, $this->selectedDue);
+
+        return $this->registeredHours + (int) Course::query()->whereIn('id', $selectedIds ?: [0])->sum('hours');
+    }
+
     public function getSelectedOptionalCountProperty(): int
     {
         $allSelectedIds = array_merge($this->selectedRetake, $this->selectedImprovement, $this->selectedDue);
@@ -181,6 +195,9 @@ class Index extends Component
             $this->student,
             $this->currentSemester
         );
+
+        $this->maxHours = $registrationService->getMaxHours($this->student, $this->currentSemester);
+        $this->registeredHours = $registrationService->registeredHours($registration);
     }
 
     protected function resetSelections(): void

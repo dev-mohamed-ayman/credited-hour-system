@@ -5,10 +5,12 @@ namespace App\Livewire\Admin\GradeSettings;
 use App\Enums\Semester;
 use App\Models\CourseRegistrationSetting;
 use App\Models\CrossLevelVisibility;
+use App\Models\Department;
 use App\Models\FailingGradeSetting;
 use App\Models\Grade;
 use App\Models\ImprovementGradeSetting;
 use App\Models\Level;
+use App\Models\RegistrationHourLimit;
 use App\Models\Setting;
 use Livewire\Component;
 
@@ -27,6 +29,13 @@ class Index extends Component
 
     public int|string $graduationRequiredHours = '';
 
+    public ?int $hourLimitDepartmentId = null;
+
+    /** @var array<int, array<string, int|string|null>> level_id => semester => max hours */
+    public array $hourLimits = [];
+
+    public int|string|null $warnedMaxHours = null;
+
     /** @var array<int, array<int, bool>> */
     public array $crossLevelVisibility = [];
 
@@ -35,6 +44,9 @@ class Index extends Component
         $settings = Setting::query()->first();
         $this->allowCrossLevelRegistration = (bool) ($settings?->allow_cross_level_registration ?? false);
         $this->graduationRequiredHours = Setting::graduationRequiredHours();
+        $this->warnedMaxHours = Setting::warnedMaxHours();
+        $this->hourLimitDepartmentId = Department::query()->orderBy('id')->value('id');
+        $this->loadHourLimits();
         $this->failingGradeIds = FailingGradeSetting::query()->pluck('grade_id')->map(fn ($id) => (int) $id)->all();
         $this->improvementGradeIds = ImprovementGradeSetting::query()->pluck('grade_id')->map(fn ($id) => (int) $id)->all();
 
@@ -120,6 +132,68 @@ class Index extends Component
         $this->dispatch('toast', ['type' => 'success', 'message' => 'تم حفظ إعدادات التسجيل العامة بنجاح.']);
     }
 
+    public function updatedHourLimitDepartmentId(): void
+    {
+        $this->resetValidation();
+        $this->loadHourLimits();
+    }
+
+    public function saveHourLimits(): void
+    {
+        abort_unless(auth()->user()->can('course_registration_settings.edit'), 403);
+
+        $this->validate([
+            'hourLimitDepartmentId' => 'required|exists:departments,id',
+            'hourLimits.*.*' => 'nullable|integer|min:1|max:60',
+            'warnedMaxHours' => 'nullable|integer|min:1|max:60',
+        ], [
+            'hourLimitDepartmentId.required' => 'اختر التخصص.',
+            'hourLimits.*.*.integer' => 'الحد لازم يكون رقم صحيح.',
+            'hourLimits.*.*.min' => 'الحد لازم يكون ساعة واحدة على الأقل.',
+            'hourLimits.*.*.max' => 'الحد لا يزيد عن 60 ساعة.',
+            'warnedMaxHours.integer' => 'الحد لازم يكون رقم صحيح.',
+            'warnedMaxHours.min' => 'الحد لازم يكون ساعة واحدة على الأقل.',
+            'warnedMaxHours.max' => 'الحد لا يزيد عن 60 ساعة.',
+        ]);
+
+        foreach ($this->hourLimits as $levelId => $terms) {
+            foreach ($terms as $semester => $maxHours) {
+                $key = ['department_id' => $this->hourLimitDepartmentId, 'level_id' => (int) $levelId, 'semester' => $semester];
+
+                if ($maxHours === null || $maxHours === '') {
+                    RegistrationHourLimit::query()->where($key)->delete();
+
+                    continue;
+                }
+
+                RegistrationHourLimit::updateOrCreate($key, ['max_hours' => (int) $maxHours]);
+            }
+        }
+
+        Setting::query()->firstOrCreate([])->update([
+            'warned_max_hours' => $this->warnedMaxHours === '' || $this->warnedMaxHours === null ? null : (int) $this->warnedMaxHours,
+        ]);
+
+        $this->dispatch('toast', ['type' => 'success', 'message' => 'تم حفظ حدود الساعات بنجاح.']);
+    }
+
+    protected function loadHourLimits(): void
+    {
+        $limits = $this->hourLimitDepartmentId
+            ? RegistrationHourLimit::query()->where('department_id', $this->hourLimitDepartmentId)->get()
+            : collect();
+
+        $this->hourLimits = [];
+
+        foreach (Level::query()->orderBy('id')->pluck('id') as $levelId) {
+            foreach ([Semester::FIRST, Semester::SECOND] as $semester) {
+                $this->hourLimits[$levelId][$semester->value] = $limits
+                    ->first(fn (RegistrationHourLimit $limit) => (int) $limit->level_id === (int) $levelId && $limit->semester === $semester)
+                    ?->max_hours;
+            }
+        }
+    }
+
     public function saveCrossLevelVisibility(): void
     {
         abort_unless(auth()->user()->can('course_registration_settings.edit'), 403);
@@ -189,6 +263,7 @@ class Index extends Component
         return view('livewire.admin.grade-settings.index', [
             'grades' => $grades,
             'levels' => $levels,
+            'departments' => Department::query()->orderBy('id')->get(),
             'semesters' => [Semester::FIRST, Semester::SECOND],
         ])->extends('admin.layouts.app')->section('content');
     }
