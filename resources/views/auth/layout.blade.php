@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ar" class="layout-wide" dir="rtl" data-skin="default" data-bs-theme="dark"
+<html lang="ar" class="layout-wide" dir="rtl" data-skin="default" data-bs-theme="light"
       data-assets-path="/assets/" data-template="vertical-menu-template">
 <head>
     <meta charset="utf-8"/>
@@ -34,7 +34,6 @@
 
     <!-- Helpers -->
     <script src="{{asset('assets/vendor/js/helpers.js')}}"></script>
-    <script src="{{asset('assets/vendor/js/template-customizer.js')}}"></script>
     <script src="{{asset('assets/js/config.js')}}"></script>
 </head>
 

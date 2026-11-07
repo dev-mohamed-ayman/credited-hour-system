@@ -45,57 +45,11 @@ window.assetsPath = document.documentElement.getAttribute('data-assets-path');
 window.templateName = document.documentElement.getAttribute('data-template');
 
 /**
- * TemplateCustomizer
- * ! You must use(include) template-customizer.js to use TemplateCustomizer settings
- * -----------------------------------------------------------------------------------------------
+ * The template customizer (theme switcher and settings panel) is disabled on purpose:
+ * the dashboard always uses the light theme with the Aboukir Institutes colors from assets/css/brand.css.
+ * Drop any customizer settings saved earlier so they no longer change the layout.
+ * Only the sidebar collapsed state is kept, since it is set from the sidebar toggle.
  */
-
-/**
- * TemplateCustomizer settings
- * -------------------------------------------------------------------------------------
- * displayCustomizer: true(Show customizer), false(Hide customizer)
- * lang: To set default language, Add more languages and set default. Fallback language is 'en'
- * defaultPrimaryColor: '#7367F0' | Set default primary color
- * defaultSkin: 0(Default), 1(Bordered)
- * defaultTheme: 'light', 'dark', 'system'
- * defaultSemiDark: true, false (For dark menu only)
- * defaultContentLayout: 'compact', 'wide' (compact=container-xxl, wide=container-fluid)
- * defaultHeaderType: 'static', 'fixed' (for horizontal layout only)
- * defaultMenuCollapsed: true, false (For vertical layout only)
- * defaultNavbarType: 'sticky', 'static', 'hidden' (For vertical layout only)
- * defaultTextDir: 'ltr', 'rtl' (Direction)
- * defaultFooterFixed: true, false (For vertical layout only)
- * defaultShowDropdownOnHover : true, false (for horizontal layout only)
- * controls: [ 'color', 'theme', 'skins', 'semiDark', 'layoutCollapsed', 'layoutNavbarOptions', 'headerType', 'contentLayout', 'rtl' ] | Show/Hide customizer controls
- */
-
-if (typeof TemplateCustomizer !== 'undefined') {
-  // Brand color is fixed (Aboukir Institutes green), drop any color picked earlier from the customizer
-  localStorage.removeItem('templateCustomizer-' + templateName + '--Color');
-
-  window.templateCustomizer = new TemplateCustomizer({
-    displayCustomizer: true,
-    lang: localStorage.getItem('templateCustomizer-' + templateName + '--Lang') || 'en', // Set default language here
-    defaultPrimaryColor: '#144935',
-    // defaultSkin: 1,
-    // defaultTheme: 'system',
-    // defaultSemiDark: true,
-    // defaultContentLayout: 'wide',
-    // defaultHeaderType: 'static',
-    // defaultMenuCollapsed: true,
-    // defaultNavbarType: 'static',
-    // defaultTextDir: 'rtl',
-    // defaultFooterFixed: false,
-    // defaultShowDropdownOnHover: false,
-    controls: [
-      'theme',
-      'skins',
-      'semiDark',
-      'layoutCollapsed',
-      'layoutNavbarOptions',
-      'headerType',
-      'contentLayout',
-      'rtl'
-    ]
-  });
-}
+Object.keys(localStorage)
+  .filter(key => key.startsWith('templateCustomizer-') && !key.endsWith('--LayoutCollapsed'))
+  .forEach(key => localStorage.removeItem(key));

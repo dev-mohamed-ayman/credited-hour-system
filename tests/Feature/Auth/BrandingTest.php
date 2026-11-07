@@ -13,7 +13,9 @@ test('login pages use the institute logo, font and brand stylesheet', function (
         ->assertSee(asset('images/logo-icon.png'), false)
         ->assertSee(asset('assets/css/brand.css'), false)
         ->assertSee('family=El+Messiri', false)
-        ->assertDontSee('family=Public+Sans', false);
+        ->assertDontSee('family=Public+Sans', false)
+        ->assertSee('data-bs-theme="light"', false)
+        ->assertDontSee('template-customizer.js', false);
 })->with([
     'admin' => ['login'],
     'advisor' => ['advisor.login'],
@@ -33,4 +35,19 @@ test('admin dashboard sidebar shows the institute logo instead of the template b
         ->assertSee(asset('assets/css/brand.css'), false)
         ->assertSee('نظام الساعات المعتمدة')
         ->assertDontSee('Vuexy');
+});
+
+test('admin dashboard is light only without the theme switcher or the template customizer', function () {
+    Permission::firstOrCreate(['name' => 'dashboard.view', 'guard_name' => 'web']);
+
+    $admin = User::factory()->create();
+    $admin->givePermissionTo('dashboard.view');
+
+    $this->actingAs($admin)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('data-bs-theme="light"', false)
+        ->assertDontSee('data-bs-theme="dark"', false)
+        ->assertDontSee('data-bs-theme-value', false)
+        ->assertDontSee('template-customizer.js', false);
 });
