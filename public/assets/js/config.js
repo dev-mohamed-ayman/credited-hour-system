@@ -70,10 +70,13 @@ window.templateName = document.documentElement.getAttribute('data-template');
  */
 
 if (typeof TemplateCustomizer !== 'undefined') {
+  // Brand color is fixed (Aboukir Institutes green), drop any color picked earlier from the customizer
+  localStorage.removeItem('templateCustomizer-' + templateName + '--Color');
+
   window.templateCustomizer = new TemplateCustomizer({
     displayCustomizer: true,
     lang: localStorage.getItem('templateCustomizer-' + templateName + '--Lang') || 'en', // Set default language here
-    // defaultPrimaryColor: '#D11BB4',
+    defaultPrimaryColor: '#144935',
     // defaultSkin: 1,
     // defaultTheme: 'system',
     // defaultSemiDark: true,
@@ -85,7 +88,6 @@ if (typeof TemplateCustomizer !== 'undefined') {
     // defaultFooterFixed: false,
     // defaultShowDropdownOnHover: false,
     controls: [
-      'color',
       'theme',
       'skins',
       'semiDark',

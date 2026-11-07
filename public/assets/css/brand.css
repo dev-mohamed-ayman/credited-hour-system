@@ -1,0 +1,91 @@
+/*
+ * Aboukir Institutes brand identity (https://aboukir-institutes.edu.eg)
+ * Loaded after core.css so it overrides the Vuexy defaults.
+ * The primary color itself is set through `defaultPrimaryColor` in assets/js/config.js,
+ * which lets the template generate the matching subtle/hover shades.
+ */
+
+:root,
+[data-bs-theme=light],
+[data-bs-theme=dark] {
+  --brand-green: #144935;
+  --brand-green-dark: #0e3426;
+  --brand-gold: #daa520;
+  --brand-gold-light: #ffd700;
+  --brand-navy: #031b68;
+  --brand-black: #111113;
+
+  --bs-font-sans-serif: "El Messiri", -apple-system, blinkmacsystemfont, "Segoe UI", sans-serif;
+  --bs-body-font-family: var(--bs-font-sans-serif);
+  --bs-font-family-base: var(--bs-font-sans-serif);
+}
+
+/* Sidebar: green like the website navbar, with gold for the active item */
+.layout-menu.menu,
+.layout-menu.menu[data-bs-theme] {
+  --bs-menu-bg: var(--brand-green);
+  --bs-menu-bg-rgb: 20, 73, 53;
+  --bs-menu-color: rgba(255, 255, 255, 0.85);
+  --bs-menu-color-rgb: 255, 255, 255;
+  --bs-menu-header-color: var(--brand-gold);
+  --bs-menu-hover-bg: rgba(255, 255, 255, 0.08);
+  --bs-menu-hover-color: #fff;
+  --bs-menu-sub-active-bg: rgba(255, 255, 255, 0.12);
+  --bs-menu-sub-active-color: #fff;
+  --bs-menu-active-bg: var(--brand-gold);
+  --bs-menu-active-color: var(--brand-green);
+  --bs-menu-divider-color: rgba(255, 255, 255, 0.12);
+  --bs-heading-color: #fff;
+  background-color: var(--brand-green) !important;
+  color: var(--bs-menu-color);
+}
+
+.layout-menu.menu .menu-inner-shadow {
+  background: linear-gradient(var(--brand-green) 41%, rgba(20, 73, 53, 0.11) 95%, rgba(20, 73, 53, 0)) !important;
+}
+
+/* The template draws the active link with a primary (green) gradient, which disappears on the green sidebar */
+.layout-menu .menu-item.active > .menu-link:not(.menu-toggle),
+:dir(rtl) .layout-menu .menu-item.active > .menu-link:not(.menu-toggle) {
+  background: linear-gradient(-270deg, #f0c75e 0%, var(--brand-gold) 100%);
+  box-shadow: 0 0.125rem 0.375rem 0 rgba(218, 165, 32, 0.35);
+  color: var(--brand-green);
+  font-weight: 600;
+}
+
+.layout-menu .menu-item.active > .menu-link:not(.menu-toggle) .menu-icon {
+  color: var(--brand-green);
+}
+
+.layout-menu .app-brand-text {
+  color: #fff;
+}
+
+.layout-menu .layout-menu-toggle,
+.layout-menu .layout-menu-toggle i {
+  color: #fff !important;
+}
+
+/* Logo */
+.brand-logo-img {
+  width: 2.25rem;
+  height: 2.25rem;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 0.5rem;
+  padding: 0.125rem;
+}
+
+.authentication-wrapper .brand-logo-img,
+.authentication-bg .brand-logo-img {
+  width: 5rem;
+  height: 5rem;
+}
+
+/* Headings use the bold weight like the website */
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6,
+.card-title {
+  font-family: var(--bs-font-sans-serif);
+  font-weight: 700;
+}
