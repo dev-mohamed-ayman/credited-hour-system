@@ -11,6 +11,65 @@
         </div>
     </div>
 
+    <div class="card mb-4" x-data="{ open: {{ $blockers !== [] && $isPromotion ? 'true' : 'false' }} }">
+        <div class="card-header d-flex justify-content-between align-items-center" role="button" @click="open = ! open">
+            <h5 class="mb-0"><i class="ti tabler-settings me-1"></i> إعدادات الترقية والإنذارات</h5>
+            <i class="ti" :class="open ? 'tabler-chevron-up' : 'tabler-chevron-down'"></i>
+        </div>
+        <div class="card-body" x-show="open" x-cloak>
+            <form wire:submit="saveRules">
+                <h6 class="fw-bold">بداية كل فرقة (الساعات المكتسبة)</h6>
+                <div class="row g-3 mb-3">
+                    @foreach($levels as $level)
+                        <div class="col-md-2" wire:key="start-hours-{{ $level->id }}">
+                            <label class="form-label" for="start-{{ $level->id }}">{{ $level->name }}</label>
+                            @if($loop->first)
+                                <input type="text" id="start-{{ $level->id }}" class="form-control" value="0 (بداية الدراسة)" disabled>
+                            @else
+                                <input type="number" min="1" id="start-{{ $level->id }}" wire:model="levelStartHours.{{ $level->id }}"
+                                       class="form-control @error('levelStartHours.'.$level->id) is-invalid @enderror">
+                                @error('levelStartHours.'.$level->id) <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            @endif
+                        </div>
+                    @endforeach
+                    <div class="col-md-2">
+                        <label class="form-label" for="graduationHours">التخرج</label>
+                        <input type="number" min="1" id="graduationHours" wire:model="graduationHours" class="form-control @error('graduationHours') is-invalid @enderror">
+                        @error('graduationHours') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+
+                <h6 class="fw-bold">الإنذارات والفصل</h6>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label" for="warningThreshold">حد الإنذار (المعدل التراكمي أقل من)</label>
+                        <input type="number" step="0.01" min="0" max="4" id="warningThreshold" wire:model="warningThreshold" class="form-control @error('warningThreshold') is-invalid @enderror">
+                        @error('warningThreshold') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="exemptHours">معفي من الإنذار من (ساعات مكتسبة)</label>
+                        <input type="number" min="1" id="exemptHours" wire:model="exemptHours" class="form-control @error('exemptHours') is-invalid @enderror">
+                        @error('exemptHours') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="dismissalWarnings">عدد الإنذارات اللي بتفصل</label>
+                        <input type="number" min="1" id="dismissalWarnings" wire:model="dismissalWarnings" class="form-control @error('dismissalWarnings') is-invalid @enderror">
+                        @error('dismissalWarnings') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="maxYearsInLevel">أقصى سنين "من الخارج" في الفرقة</label>
+                        <input type="number" min="1" id="maxYearsInLevel" wire:model="maxYearsInLevel" class="form-control @error('maxYearsInLevel') is-invalid @enderror">
+                        @error('maxYearsInLevel') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+
+                @can('term_closures.settings')
+                    <button type="submit" class="btn btn-primary mt-3" wire:loading.attr="disabled"><i class="ti tabler-device-floppy me-1"></i> حفظ الإعدادات</button>
+                @endcan
+            </form>
+        </div>
+    </div>
+
     <div class="card mb-4">
         <div class="card-body">
             <div class="row g-3 align-items-end">
@@ -52,11 +111,14 @@
 
             <div class="alert alert-secondary mt-4 mb-0">
                 @if($isPromotion)
-                    <b>بعد الترم الصيفي:</b> ترقية الطالب للفرقة التالية لو ساعاته المكتسبة وصلت لساعات الترقية المحددة للفرقة (وساعات التخرج للفرقة الأخيرة، مع اجتياز التربية العسكرية)،
-                    وإلا تتغير حالة القيد مستجد ← باقي ← من الخارج، والفصل حسب قواعد chs. والطالب اللي معدله رجع فوق الحد بتتلغي إنذاراته.
+                    <b>بعد الترم الصيفي:</b> الطالب بيترقى للفرقة اللي بعدها لو ساعاته المكتسبة وصلت لساعات بدايتها
+                    (@foreach($levels->slice(1) as $level){{ $level->name }} من {{ $level->start_hours ?? '؟' }}@if(! $loop->last)، @endif @endforeach)،
+                    ويتخرج من آخر فرقة عند {{ $rules['graduation_hours'] }} ساعة مع اجتياز التربية العسكرية.
+                    غير كده حالة القيد بتتغير مستجد ← باقي ← من الخارج، والفصل بقواعد chs ("باقي" في الأولى، "من الخارج" في التانية، أو {{ $rules['max_years_in_level'] }} سنين في نفس الفرقة).
+                    واللي معدله {{ $rules['threshold'] }} فأكتر أو ساعاته {{ $rules['exempt_hours'] }} فأكتر بتتلغي كل إنذاراته.
                 @else
-                    <b>بعد الترم الأول والثاني:</b> الطالب اللي معدله التراكمي أقل من حد الإنذار وساعاته المكتسبة أقل من {{ config('grading.warning_exempt_earned_hours') }} ياخد إنذار،
-                    وغيره يتشال عنه إنذار. أول ترم للطالب مبيتحسبش، و{{ config('grading.dismissal_warnings') }} إنذارات = فصل.
+                    <b>بعد الترم الأول والثاني:</b> الطالب اللي معدله التراكمي (لحد آخر الترم ده) أقل من {{ $rules['threshold'] }} وساعاته المكتسبة أقل من {{ $rules['exempt_hours'] }} ياخد إنذار،
+                    وغيره يتشال عنه إنذار. أول ترم للطالب مبيتحسبش، و{{ $rules['dismissal_warnings'] }} إنذارات = فصل.
                 @endif
                 الأعذار بتتقرا من صفحة <b>الأعذار ووقف القيد</b>: عذر عن الترم أو وقف قيد السنة بيعفي من الإنذار، ووقف القيد أو عذر عن الترمين بيعفي من الرسوب في الفرقة بعد الصيفي.
             </div>
@@ -121,7 +183,13 @@
                         @forelse($visibleRows as $index => $row)
                             @php($outcome = \App\Enums\TermOutcome::from($row['outcome']))
                             <tr wire:key="term-row-{{ $index }}-{{ $row['code'] }}">
-                                <td>{{ $row['code'] }}</td>
+                                <td>
+                                    @can('students.view')
+                                        <a href="{{ route('students.show', $row['student_id']) }}" target="_blank" title="مراجعة درجات الطالب">{{ $row['code'] }}</a>
+                                    @else
+                                        {{ $row['code'] }}
+                                    @endcan
+                                </td>
                                 <td>{{ $row['name'] }}</td>
                                 <td>
                                     {{ $row['level'] ?? '—' }}

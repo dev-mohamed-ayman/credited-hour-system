@@ -5,6 +5,8 @@ namespace App\Livewire\Admin\Results;
 use App\Enums\Semester;
 use App\Enums\TermOutcome;
 use App\Exceptions\TermClosureException;
+use App\Models\Level;
+use App\Models\Setting;
 use App\Models\StudentTermRecord;
 use App\Models\TermClosure;
 use App\Models\Year;
@@ -27,16 +29,103 @@ class EndOfTerm extends Component
     /**
      * Rows of the simulation, or of the closure being viewed.
      *
-     * @var array<int, array{code: string, name: string, level: string|null, level_after: string|null, cgpa: float, earned_hours: int, outcome: string, note: string|null, warnings_before: int, warnings_after: int, study_status: string|null, study_status_after: string|null}>|null
+     * @var array<int, array{student_id: int, code: string, name: string, level: string|null, level_after: string|null, cgpa: float, earned_hours: int, outcome: string, note: string|null, warnings_before: int, warnings_after: int, study_status: string|null, study_status_after: string|null}>|null
      */
     public ?array $rows = null;
 
     public ?int $viewingClosureId = null;
 
+    /** @var array<int, int|string|null> level_id => earned hours to start the level */
+    public array $levelStartHours = [];
+
+    public int|string $graduationHours = '';
+
+    public float|string $warningThreshold = '';
+
+    public int|string $exemptHours = '';
+
+    public int|string $dismissalWarnings = '';
+
+    public int|string $maxYearsInLevel = '';
+
     public function mount(): void
     {
         $this->yearId = Year::current()?->id;
         $this->semester = Year::currentSemester()?->value;
+        $this->loadRules();
+    }
+
+    public function saveRules(): void
+    {
+        abort_unless(auth()->user()->can('term_closures.settings'), 403);
+
+        $levels = Level::query()->orderBy('id')->get();
+        $laterLevelIds = $levels->slice(1)->pluck('id');
+
+        $this->validate([
+            ...$laterLevelIds->mapWithKeys(fn (int $id) => ["levelStartHours.{$id}" => 'required|integer|min:1|max:500'])->all(),
+            'graduationHours' => 'required|integer|min:1|max:500',
+            'warningThreshold' => 'required|numeric|min:0|max:4',
+            'exemptHours' => 'required|integer|min:1|max:500',
+            'dismissalWarnings' => 'required|integer|min:1|max:10',
+            'maxYearsInLevel' => 'required|integer|min:1|max:20',
+        ], [
+            'levelStartHours.*.required' => 'اكتب ساعات بداية الفرقة.',
+            'levelStartHours.*.integer' => 'لازم تكون رقم صحيح.',
+            'levelStartHours.*.min' => 'لازم تكون ساعة واحدة على الأقل.',
+            'graduationHours.required' => 'اكتب ساعات التخرج.',
+            'warningThreshold.required' => 'اكتب حد الإنذار.',
+            'warningThreshold.max' => 'المعدل من 4.',
+            'exemptHours.required' => 'اكتب الساعات المعفية من الإنذار.',
+            'dismissalWarnings.required' => 'اكتب عدد الإنذارات اللي بتفصل.',
+            'maxYearsInLevel.required' => 'اكتب أقصى عدد سنين في الفرقة.',
+        ]);
+
+        $previous = 0;
+
+        foreach ($laterLevelIds as $id) {
+            if ((int) $this->levelStartHours[$id] <= $previous) {
+                $this->addError("levelStartHours.{$id}", 'لازم تكون أكبر من ساعات بداية الفرقة اللي قبلها.');
+
+                return;
+            }
+
+            $previous = (int) $this->levelStartHours[$id];
+        }
+
+        if ((int) $this->graduationHours <= $previous) {
+            $this->addError('graduationHours', 'ساعات التخرج لازم تكون أكبر من ساعات بداية آخر فرقة.');
+
+            return;
+        }
+
+        foreach ($levels as $index => $level) {
+            $level->update(['start_hours' => $index === 0 ? null : (int) $this->levelStartHours[$level->id]]);
+        }
+
+        Setting::query()->firstOrCreate([])->update([
+            'graduation_required_hours' => (int) $this->graduationHours,
+            'warning_gpa_threshold' => round((float) $this->warningThreshold, 2),
+            'warning_exempt_earned_hours' => (int) $this->exemptHours,
+            'dismissal_warnings' => (int) $this->dismissalWarnings,
+            'max_years_in_level' => (int) $this->maxYearsInLevel,
+        ]);
+
+        $this->rows = null;
+        $this->viewingClosureId = null;
+        $this->dispatch('toast', ['type' => 'success', 'message' => 'تم حفظ إعدادات الترقية والإنذارات. اعمل محاكاة تاني قبل التنفيذ.']);
+    }
+
+    private function loadRules(): void
+    {
+        $rules = app(TermClosureService::class)->rules();
+
+        $this->levelStartHours = Level::query()->orderBy('id')->pluck('start_hours', 'id')->all();
+        $this->graduationHours = $rules['graduation_hours'];
+        $this->warningThreshold = $rules['threshold'];
+        $this->exemptHours = $rules['exempt_hours'];
+        $this->dismissalWarnings = $rules['dismissal_warnings'];
+        $this->maxYearsInLevel = $rules['max_years_in_level'];
     }
 
     public function updated(string $property): void
@@ -58,6 +147,7 @@ class EndOfTerm extends Component
         $this->outcomeFilter = '';
         $this->rows = $service->simulate($year, $semester)
             ->map(fn (array $decision) => [
+                'student_id' => $decision['student']->id,
                 'code' => $decision['student']->username,
                 'name' => $decision['student']->name,
                 'level' => $decision['student']->level?->name,
@@ -122,6 +212,7 @@ class EndOfTerm extends Component
             ->get()
             ->sortBy(fn (StudentTermRecord $record) => $record->student?->username)
             ->map(fn (StudentTermRecord $record) => [
+                'student_id' => $record->student_id,
                 'code' => (string) $record->student?->username,
                 'name' => (string) $record->student?->name,
                 'level' => $record->levelBefore?->name,
@@ -166,6 +257,8 @@ class EndOfTerm extends Component
             'outcomes' => TermOutcome::cases(),
             'blockers' => $year && $semester ? $service->blockers($year, $semester) : [],
             'isPromotion' => $semester === Semester::SUMMER,
+            'levels' => Level::query()->orderBy('id')->get(),
+            'rules' => $service->rules(),
             'counts' => $rows->countBy('outcome'),
             'visibleRows' => $this->outcomeFilter === '' ? $rows : $rows->where('outcome', $this->outcomeFilter),
             'closures' => TermClosure::query()->with(['year', 'closedBy'])->withCount('records')->latest('id')->get(),

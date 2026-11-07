@@ -27,8 +27,6 @@ class Index extends Component
 
     public bool $allowCrossLevelRegistration = false;
 
-    public int|string $graduationRequiredHours = '';
-
     public ?int $hourLimitDepartmentId = null;
 
     /** @var array<int, array<string, int|string|null>> level_id => semester => max hours */
@@ -43,7 +41,6 @@ class Index extends Component
     {
         $settings = Setting::query()->first();
         $this->allowCrossLevelRegistration = (bool) ($settings?->allow_cross_level_registration ?? false);
-        $this->graduationRequiredHours = Setting::graduationRequiredHours();
         $this->warnedMaxHours = Setting::warnedMaxHours();
         $this->hourLimitDepartmentId = Department::query()->orderBy('id')->value('id');
         $this->loadHourLimits();
@@ -112,21 +109,10 @@ class Index extends Component
     {
         abort_unless(auth()->user()->can('course_registration_settings.edit'), 403);
 
-        $this->validate(
-            ['graduationRequiredHours' => 'required|integer|min:1|max:500'],
-            [
-                'graduationRequiredHours.required' => 'ساعات التخرج المطلوبة إجبارية.',
-                'graduationRequiredHours.integer' => 'ساعات التخرج لازم تكون رقم صحيح.',
-                'graduationRequiredHours.min' => 'ساعات التخرج لازم تكون ساعة واحدة على الأقل.',
-                'graduationRequiredHours.max' => 'ساعات التخرج لا يمكن أن تزيد عن 500 ساعة.',
-            ],
-        );
-
         $settings = Setting::query()->firstOrCreate([]);
 
         $settings->update([
             'allow_cross_level_registration' => $this->allowCrossLevelRegistration,
-            'graduation_required_hours' => (int) $this->graduationRequiredHours,
         ]);
 
         $this->dispatch('toast', ['type' => 'success', 'message' => 'تم حفظ إعدادات التسجيل العامة بنجاح.']);

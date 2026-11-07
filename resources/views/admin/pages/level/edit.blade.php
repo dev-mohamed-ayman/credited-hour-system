@@ -18,16 +18,6 @@
                     @enderror
                 </div>
 
-                <div class="form-group mb-4">
-                    <label for="promotion_hours" class="form-label">ساعات الترقية</label>
-                    <input type="number" min="1" name="promotion_hours" id="promotion_hours" value="{{ old('promotion_hours', $level->promotion_hours) }}"
-                           class="form-control @error('promotion_hours') is-invalid @enderror" placeholder="مثال: 27">
-                    @error('promotion_hours')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                    <small class="text-muted d-block mt-1">الساعات المكتسبة اللي الطالب محتاجها علشان يترقى للفرقة اللي بعدها بعد الترم الصيفي. الفرقة الأخيرة بتستخدم ساعات التخرج من الإعدادات.</small>
-                </div>
-
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <div class="form-check form-switch">

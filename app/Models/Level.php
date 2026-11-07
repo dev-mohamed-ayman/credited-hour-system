@@ -11,12 +11,12 @@ class Level extends Model
 {
     use HasDeletionGuards;
 
-    protected $fillable = ['name', 'promotion_hours', 'military_required_for_males', 'military_required_for_females'];
+    protected $fillable = ['name', 'start_hours', 'military_required_for_males', 'military_required_for_females'];
 
     protected function casts(): array
     {
         return [
-            'promotion_hours' => 'integer',
+            'start_hours' => 'integer',
         ];
     }
 

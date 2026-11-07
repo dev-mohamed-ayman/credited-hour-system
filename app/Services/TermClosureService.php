@@ -32,7 +32,7 @@ use Illuminate\Support\Facades\DB;
  *    GPA threshold with fewer than the exempt earned hours gets a warning, any
  *    other student loses one; a student's first term never counts, and the
  *    configured number of active warnings dismisses the student;
- *  - after the summer: promotion by earned hours (each level's promotion_hours,
+ *  - after the summer: promotion by earned hours (the next level's start_hours,
  *    the graduation hours for the last level), otherwise the study status moves
  *    مستجد → باقي → من الخارج with dismissal on the chs rules; graduating also
  *    needs military education where it is required;
@@ -44,7 +44,30 @@ use Illuminate\Support\Facades\DB;
  */
 class TermClosureService
 {
+    /**
+     * The rules of the current run, read once from the settings.
+     *
+     * @var array{threshold: float, exempt_hours: int, dismissal_warnings: int, max_years_in_level: int, graduation_hours: int}
+     */
+    private array $rules;
+
     public function __construct(private GpaCalculator $gpaCalculator) {}
+
+    /**
+     * The promotion and warning rules from the settings (إعدادات الترقية والإنذارات).
+     *
+     * @return array{threshold: float, exempt_hours: int, dismissal_warnings: int, max_years_in_level: int, graduation_hours: int}
+     */
+    public function rules(): array
+    {
+        return [
+            'threshold' => Setting::warningGpaThreshold(),
+            'exempt_hours' => Setting::warningExemptEarnedHours(),
+            'dismissal_warnings' => Setting::dismissalWarnings(),
+            'max_years_in_level' => Setting::maxYearsInLevel(),
+            'graduation_hours' => Setting::graduationRequiredHours(),
+        ];
+    }
 
     /**
      * Reasons the term cannot be closed yet; empty when it can.
@@ -65,6 +88,10 @@ class TermClosureService
             $blockers[] = "مازال هناك {$pendingResults} نتيجة مادة غير مكتملة (Pending) في الترم.";
         }
 
+        if ($earlier = $this->unclosedEarlierTerm($year, $semester)) {
+            $blockers[] = "لازم تنفذ إجراءات {$earlier->label()} {$year->year} الأول.";
+        }
+
         if ($semester === Semester::SUMMER) {
             $levels = $this->levels();
 
@@ -72,14 +99,38 @@ class TermClosureService
                 $blockers[] = 'لا توجد فرق دراسية.';
             }
 
-            $missingHours = $levels->slice(0, -1)->filter(fn (Level $level) => ! $level->promotion_hours)->pluck('name');
+            $missingHours = $levels->slice(1)->filter(fn (Level $level) => ! $level->start_hours)->pluck('name');
 
             if ($missingHours->isNotEmpty()) {
-                $blockers[] = 'لم يتم تحديد ساعات الترقية للفرق: '.$missingHours->implode('، ').'.';
+                $blockers[] = 'لم يتم تحديد ساعات بداية الفرق: '.$missingHours->implode('، ').' (إعدادات الترقية والإنذارات).';
             }
         }
 
         return $blockers;
+    }
+
+    /**
+     * An earlier term of the same year that has registrations but was not closed yet.
+     */
+    private function unclosedEarlierTerm(Year $year, Semester $semester): ?Semester
+    {
+        foreach (Semester::cases() as $earlier) {
+            if ($earlier->order() >= $semester->order()) {
+                break;
+            }
+
+            $hasRegistrations = Registration::query()
+                ->where('year_id', $year->id)
+                ->where('semester', $earlier->value)
+                ->whereNotIn('status', [RegistrationStatus::REJECTED->value, RegistrationStatus::CANCELLED->value])
+                ->exists();
+
+            if ($hasRegistrations && $this->closureFor($year, $earlier) === null) {
+                return $earlier;
+            }
+        }
+
+        return null;
     }
 
     public function closureFor(Year $year, Semester $semester): ?TermClosure
@@ -98,6 +149,7 @@ class TermClosureService
     public function simulate(Year $year, Semester $semester): Collection
     {
         $levels = $this->levels();
+        $this->rules = $this->rules();
 
         return $this->currentStudents()
             ->map(fn (Student $student) => $this->decide($student, $year, $semester, $levels))
@@ -221,7 +273,7 @@ class TermClosureService
      */
     private function decide(Student $student, Year $year, Semester $semester, Collection $levels): array
     {
-        $standing = $this->gpaCalculator->cumulative($student);
+        $standing = $this->gpaCalculator->cumulative($student, $year, $semester);
         $warnings = $student->warnings;
 
         $decision = [
@@ -265,10 +317,10 @@ class TermClosureService
             return [...$decision, 'outcome' => TermOutcome::FIRST_TERM];
         }
 
-        $threshold = Setting::warningGpaThreshold();
-        $dismissalWarnings = (int) config('grading.dismissal_warnings', 3);
+        $threshold = $this->rules['threshold'];
+        $dismissalWarnings = $this->rules['dismissal_warnings'];
         $underperforming = $decision['cgpa'] < $threshold
-            && $decision['earned_hours'] < (int) config('grading.warning_exempt_earned_hours', 105);
+            && $decision['earned_hours'] < $this->rules['exempt_hours'];
 
         if ($underperforming) {
             $warningsAfter = $decision['warnings_before'] + 1;
@@ -306,8 +358,8 @@ class TermClosureService
     {
         $student = $decision['student'];
 
-        $recovered = $decision['cgpa'] >= Setting::warningGpaThreshold()
-            || $decision['earned_hours'] >= (int) config('grading.warning_exempt_earned_hours', 105);
+        $recovered = $decision['cgpa'] >= $this->rules['threshold']
+            || $decision['earned_hours'] >= $this->rules['exempt_hours'];
 
         if ($recovered && $decision['warnings_before'] > 0) {
             $decision['cleared_warnings'] = $student->warnings;
@@ -321,7 +373,7 @@ class TermClosureService
         }
 
         $isLastLevel = $levelIndex === $levels->count() - 1;
-        $requiredHours = $isLastLevel ? Setting::graduationRequiredHours() : (int) $levels[$levelIndex]->promotion_hours;
+        $requiredHours = $isLastLevel ? $this->rules['graduation_hours'] : (int) $levels[$levelIndex + 1]->start_hours;
 
         if ($decision['earned_hours'] < $requiredHours) {
             return $this->holdBack(
@@ -375,7 +427,7 @@ class TermClosureService
         return match ($student->study_status) {
             StudyStatus::REMAINING => ! $byMilitaryEducation && $levelIndex === 0 ? $dismiss : $stay(StudyStatus::EXTERNAL),
             StudyStatus::EXTERNAL => (! $byMilitaryEducation && $levelIndex === 1)
-                || $this->yearsInLevel($student, $levels[$levelIndex]) >= (int) config('grading.max_years_in_level', 5)
+                || $this->yearsInLevel($student, $levels[$levelIndex]) >= $this->rules['max_years_in_level']
                     ? $dismiss
                     : $stay(StudyStatus::EXTERNAL),
             default => $stay(StudyStatus::REMAINING),

@@ -15,7 +15,6 @@ class StoreLevelRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'promotion_hours' => 'nullable|integer|min:1|max:500',
             'section_ids' => 'nullable|array',
             'section_ids.*' => 'exists:sections,id',
             'military_required_for_males' => [
@@ -51,9 +50,6 @@ class StoreLevelRequest extends FormRequest
     {
         return [
             'name.required' => 'اسم الفرقة الدراسية مطلوب',
-            'promotion_hours.integer' => 'ساعات الترقية لازم تكون رقم صحيح',
-            'promotion_hours.min' => 'ساعات الترقية لازم تكون ساعة واحدة على الأقل',
-            'promotion_hours.max' => 'ساعات الترقية لا يمكن أن تزيد عن 500',
             'section_ids.array' => 'يجب أن تكون الشعب مصفوفة',
             'section_ids.*.exists' => 'إحدى الشعب المختارة غير موجودة',
         ];

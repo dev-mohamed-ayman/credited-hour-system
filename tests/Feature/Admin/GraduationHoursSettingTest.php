@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Admin\GradeSettings\Index;
+use App\Livewire\Student\Dashboard;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -9,41 +10,27 @@ use Spatie\Permission\Models\Permission;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+it('reads the graduation hours the dashboard shows from the setting', function () {
+    Setting::query()->firstOrCreate([])->update(['graduation_required_hours' => 136]);
+
+    expect((new Dashboard)->getGraduationRequiredHours())->toBe(136);
+});
+
+it('defaults to 132 graduation hours before any settings are saved', function () {
+    expect(Setting::graduationRequiredHours())->toBe(132);
+});
+
+it('points the registration settings to where graduation hours are set now', function () {
     foreach (['course_registration_settings.view', 'course_registration_settings.edit'] as $name) {
         Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
     }
 
-    $this->admin = User::factory()->create();
-    $this->admin->givePermissionTo(['course_registration_settings.view', 'course_registration_settings.edit']);
-});
+    $admin = User::factory()->create();
+    $admin->givePermissionTo(['course_registration_settings.view', 'course_registration_settings.edit']);
 
-it('shows the stored graduation hours', function () {
-    Setting::query()->firstOrCreate([])->update(['graduation_required_hours' => 136]);
-
-    Livewire::actingAs($this->admin)
+    Livewire::actingAs($admin)
         ->test(Index::class)
-        ->assertSet('graduationRequiredHours', 136);
-});
-
-it('saves the graduation hours with the general settings', function () {
-    Livewire::actingAs($this->admin)
-        ->test(Index::class)
-        ->set('graduationRequiredHours', 144)
+        ->assertSee('إعدادات الترقية والإنذارات')
         ->call('saveGeneralSettings')
         ->assertHasNoErrors();
-
-    expect(Setting::graduationRequiredHours())->toBe(144);
 });
-
-it('requires a positive whole number of graduation hours', function (mixed $hours, string $rule) {
-    Livewire::actingAs($this->admin)
-        ->test(Index::class)
-        ->set('graduationRequiredHours', $hours)
-        ->call('saveGeneralSettings')
-        ->assertHasErrors(['graduationRequiredHours' => $rule]);
-})->with([
-    'empty' => ['', 'required'],
-    'zero' => [0, 'min'],
-    'too many' => [501, 'max'],
-]);

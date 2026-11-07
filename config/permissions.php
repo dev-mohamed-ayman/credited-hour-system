@@ -52,7 +52,7 @@ return [
     ],
     'term_closures' => [
         'label' => 'إجراءات نهاية الترم',
-        'actions' => ['view' => 'عرض ومحاكاة', 'execute' => 'تنفيذ', 'revert' => 'تراجع'],
+        'actions' => ['view' => 'عرض ومحاكاة', 'execute' => 'تنفيذ', 'revert' => 'تراجع', 'settings' => 'إعدادات الترقية والإنذارات'],
     ],
     'certificate_types' => [
         'label' => 'الشهادات',

@@ -53,7 +53,34 @@ class Setting extends Model
             'graduation_required_hours' => 'integer',
             'warning_gpa_threshold' => 'decimal:2',
             'warned_max_hours' => 'integer',
+            'warning_exempt_earned_hours' => 'integer',
+            'dismissal_warnings' => 'integer',
+            'max_years_in_level' => 'integer',
         ];
+    }
+
+    /**
+     * Students who earned at least this many hours are never warned (chs: 105).
+     */
+    public static function warningExemptEarnedHours(): int
+    {
+        return (int) (static::query()->value('warning_exempt_earned_hours') ?? 105);
+    }
+
+    /**
+     * Active academic warnings that dismiss a student (chs: 3).
+     */
+    public static function dismissalWarnings(): int
+    {
+        return max(1, (int) (static::query()->value('dismissal_warnings') ?? 3));
+    }
+
+    /**
+     * Years a من الخارج student may spend in one level before dismissal (chs: 5).
+     */
+    public static function maxYearsInLevel(): int
+    {
+        return max(1, (int) (static::query()->value('max_years_in_level') ?? 5));
     }
 
     /**

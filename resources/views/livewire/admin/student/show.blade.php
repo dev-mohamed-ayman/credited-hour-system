@@ -454,7 +454,7 @@
                         <div class="card-header border-bottom d-flex justify-content-between align-items-center">
                             <h5 class="card-title mb-0">سجل الترمات (إجراءات نهاية الترم)</h5>
                             <span class="badge bg-label-{{ $academicWarningCount > 0 ? 'warning' : 'success' }}">
-                                الإنذارات الأكاديمية الحالية: {{ $academicWarningCount }} من {{ config('grading.dismissal_warnings') }}
+                                الإنذارات الأكاديمية الحالية: {{ $academicWarningCount }} من {{ \App\Models\Setting::dismissalWarnings() }}
                             </span>
                         </div>
                         <div class="table-responsive">

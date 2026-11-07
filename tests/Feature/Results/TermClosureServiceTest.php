@@ -28,12 +28,11 @@ beforeEach(function () {
     $this->world = billingWorld();
     seedResultScale();
 
-    $this->world['level']->update(['promotion_hours' => 27]);
     $this->levels = collect([
         $this->world['level'],
-        Level::create(['name' => 'الفرقة الثانية', 'promotion_hours' => 60]),
-        Level::create(['name' => 'الفرقة الثالثة', 'promotion_hours' => 93]),
-        Level::create(['name' => 'الفرقة الرابعة']),
+        Level::create(['name' => 'الفرقة الثانية', 'start_hours' => 27]),
+        Level::create(['name' => 'الفرقة الثالثة', 'start_hours' => 60]),
+        Level::create(['name' => 'الفرقة الرابعة', 'start_hours' => 93]),
     ]);
 
     Setting::query()->firstOrCreate([])->update(['warning_gpa_threshold' => 2.0, 'graduation_required_hours' => 132]);
@@ -127,11 +126,11 @@ describe('blockers', function () {
         $this->service->close($this->year, Semester::FIRST);
     })->throws(TermClosureException::class, 'تم تنفيذ إجراءات نهاية هذا الترم من قبل.');
 
-    it('needs promotion hours on every level but the last before the summer', function () {
-        $this->levels[1]->update(['promotion_hours' => null]);
+    it('needs start hours on every level but the first before the summer', function () {
+        $this->levels[1]->update(['start_hours' => null]);
 
         expect($this->service->blockers($this->year, Semester::SUMMER))
-            ->toBe(['لم يتم تحديد ساعات الترقية للفرق: الفرقة الثانية.'])
+            ->toBe(['لم يتم تحديد ساعات بداية الفرق: الفرقة الثانية (إعدادات الترقية والإنذارات).'])
             ->and($this->service->blockers($this->year, Semester::FIRST))->toBe([]);
     });
 });
@@ -204,6 +203,7 @@ describe('warnings after the first and second terms', function () {
         earn($this->student, $this->year, Semester::SECOND, 9, 'F');
         excuseFor($this->student, $this->year, Semester::FIRST, ExcuseType::TERM);
         excuseFor($this->student, $this->year, Semester::SECOND, ExcuseType::COURSE);
+        $this->service->close($this->year, Semester::FIRST);
 
         expect(outcomeOf($this->student, $this->service->close($this->year, Semester::SECOND))->outcome)->toBe(TermOutcome::WARNED);
     });
@@ -241,14 +241,77 @@ it("never counts a student's first term", function () {
 it('counts the second term once the first was studied', function () {
     earn($this->student, $this->year, Semester::FIRST, 3, 'F');
     earn($this->student, $this->year, Semester::SECOND, 3, 'F');
+    $this->service->close($this->year, Semester::FIRST);
 
     expect(outcomeOf($this->student, $this->service->close($this->year, Semester::SECOND))->outcome)->toBe(TermOutcome::WARNED);
+});
+
+it('judges a term by the grades up to its end, not later ones', function () {
+    earn($this->student, $this->previousYear, Semester::SECOND, 3, 'F');
+    earn($this->student, $this->year, Semester::FIRST, 9, 'F');
+    earn($this->student, $this->year, Semester::SECOND, 30, 'A');
+
+    $record = outcomeOf($this->student, $this->service->close($this->year, Semester::FIRST));
+
+    expect($record->outcome)->toBe(TermOutcome::WARNED)
+        ->and((float) $record->cgpa)->toBe(0.0)
+        ->and($record->earned_hours)->toBe(0);
+});
+
+it('closes the terms of a year in order', function () {
+    earn($this->student, $this->year, Semester::FIRST, 3, 'B');
+
+    expect($this->service->blockers($this->year, Semester::SECOND))->toContain('لازم تنفذ إجراءات الترم الأول 2025-2026 الأول.')
+        ->and($this->service->blockers($this->year, Semester::SUMMER))->toContain('لازم تنفذ إجراءات الترم الأول 2025-2026 الأول.');
+
+    $this->service->close($this->year, Semester::FIRST);
+
+    expect($this->service->blockers($this->year, Semester::SECOND))->toBe([]);
+});
+
+describe('rules from the settings', function () {
+    beforeEach(function () {
+        earn($this->student, $this->previousYear, Semester::SECOND, 3, 'F');
+    });
+
+    it('dismisses at the configured number of warnings', function () {
+        Setting::query()->update(['dismissal_warnings' => 2]);
+        academicWarnings($this->student, 1);
+        earn($this->student, $this->year, Semester::FIRST, 3, 'F');
+
+        expect(outcomeOf($this->student, $this->service->close($this->year, Semester::FIRST))->outcome)->toBe(TermOutcome::DISMISSED);
+    });
+
+    it('exempts from warnings at the configured earned hours', function () {
+        Setting::query()->update(['warning_exempt_earned_hours' => 30]);
+        earn($this->student, $this->previousYear, Semester::FIRST, 30, 'D');
+        earn($this->student, $this->year, Semester::FIRST, 60, 'F');
+
+        expect(outcomeOf($this->student, $this->service->close($this->year, Semester::FIRST))->outcome)->toBe(TermOutcome::NO_CHANGE);
+    });
+
+    it('warns under the configured GPA threshold', function () {
+        Setting::query()->update(['warning_gpa_threshold' => 3.5]);
+        earn($this->student, $this->year, Semester::FIRST, 30, 'B');
+
+        expect(outcomeOf($this->student, $this->service->close($this->year, Semester::FIRST))->outcome)->toBe(TermOutcome::WARNED);
+    });
+
+    it('promotes by the start hours of the next level', function () {
+        $this->levels[1]->update(['start_hours' => 30]);
+        earn($this->student, $this->previousYear, Semester::FIRST, 27, 'B');
+
+        $record = outcomeOf($this->student, $this->service->close($this->year, Semester::SUMMER));
+
+        expect($record->outcome)->toBe(TermOutcome::HELD_BACK)
+            ->and($record->note)->toBe('الساعات المكتسبة 27 أقل من 30');
+    });
 });
 
 describe('promotion after the summer', function () {
     it('promotes a student with the level hours to the next level as مستجد', function () {
         $this->student->update(['study_status' => StudyStatus::REMAINING->value]);
-        earn($this->student, $this->year, Semester::FIRST, 27, 'B');
+        earn($this->student, $this->previousYear, Semester::FIRST, 27, 'B');
 
         $record = outcomeOf($this->student, $this->service->close($this->year, Semester::SUMMER));
         $student = $this->student->fresh();
@@ -259,7 +322,7 @@ describe('promotion after the summer', function () {
     });
 
     it('moves a مستجد who misses the hours to باقي', function () {
-        earn($this->student, $this->year, Semester::FIRST, 26, 'B');
+        earn($this->student, $this->previousYear, Semester::FIRST, 26, 'B');
 
         $record = outcomeOf($this->student, $this->service->close($this->year, Semester::SUMMER));
 
@@ -304,7 +367,7 @@ describe('promotion after the summer', function () {
 
     it('graduates a student with the graduation hours', function () {
         $this->student->update(['level_id' => $this->levels[3]->id]);
-        earn($this->student, $this->year, Semester::FIRST, 132, 'B');
+        earn($this->student, $this->previousYear, Semester::FIRST, 132, 'B');
 
         expect(outcomeOf($this->student, $this->service->close($this->year, Semester::SUMMER))->outcome)->toBe(TermOutcome::GRADUATED)
             ->and($this->student->fresh()->status)->toBe(StudentStatus::GRADUATED);
@@ -313,7 +376,7 @@ describe('promotion after the summer', function () {
     it('keeps a student without military education in the last level', function () {
         $this->levels[1]->update(['military_required_for_males' => true]);
         $this->student->update(['level_id' => $this->levels[3]->id, 'gender' => 'male', 'military_education_passed' => false]);
-        earn($this->student, $this->year, Semester::FIRST, 132, 'B');
+        earn($this->student, $this->previousYear, Semester::FIRST, 132, 'B');
 
         $record = outcomeOf($this->student, $this->service->close($this->year, Semester::SUMMER));
 
@@ -326,7 +389,7 @@ describe('promotion after the summer', function () {
     it('graduates a student with military education passed', function () {
         $this->levels[1]->update(['military_required_for_males' => true]);
         $this->student->update(['level_id' => $this->levels[3]->id, 'gender' => 'male', 'military_education_passed' => true]);
-        earn($this->student, $this->year, Semester::FIRST, 132, 'B');
+        earn($this->student, $this->previousYear, Semester::FIRST, 132, 'B');
 
         expect(outcomeOf($this->student, $this->service->close($this->year, Semester::SUMMER))->outcome)->toBe(TermOutcome::GRADUATED);
     });
@@ -358,7 +421,7 @@ describe('promotion after the summer', function () {
 
     it('clears every warning of a student back above the threshold', function () {
         academicWarnings($this->student, 2);
-        earn($this->student, $this->year, Semester::FIRST, 27, 'B');
+        earn($this->student, $this->previousYear, Semester::FIRST, 27, 'B');
 
         $record = outcomeOf($this->student, $this->service->close($this->year, Semester::SUMMER));
 
@@ -368,7 +431,7 @@ describe('promotion after the summer', function () {
 });
 
 it('simulates without changing anything', function () {
-    earn($this->student, $this->year, Semester::FIRST, 27, 'B');
+    earn($this->student, $this->previousYear, Semester::FIRST, 27, 'B');
 
     $decision = $this->service->simulate($this->year, Semester::SUMMER)->firstWhere('student.id', $this->student->id);
 
@@ -381,7 +444,7 @@ it('simulates without changing anything', function () {
 describe('revert', function () {
     it('restores every student and lets the term be closed again', function () {
         academicWarnings($this->student, 1);
-        earn($this->student, $this->year, Semester::FIRST, 27, 'B');
+        earn($this->student, $this->previousYear, Semester::FIRST, 27, 'B');
         $failing = closureStudent($this->world, 'FAIL0000001', ['status' => StudentStatus::REGISTERED->value, 'study_status' => StudyStatus::REMAINING->value]);
 
         $closure = $this->service->close($this->year, Semester::SUMMER);
