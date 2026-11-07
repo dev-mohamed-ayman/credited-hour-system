@@ -9,6 +9,7 @@ uses(RefreshDatabase::class);
 test('login pages use the institute logo, font and brand stylesheet', function (string $loginRoute) {
     $this->get(route($loginRoute))
         ->assertOk()
+        ->assertSee(asset('images/aboukir-logo.png'), false)
         ->assertSee(asset('images/logo-icon.png'), false)
         ->assertSee(asset('assets/css/brand.css'), false)
         ->assertSee('family=El+Messiri', false)

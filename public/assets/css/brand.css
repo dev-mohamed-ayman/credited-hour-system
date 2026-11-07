@@ -143,18 +143,17 @@ html[data-bs-theme=dark] .apexcharts-theme-dark {
 
 /* Logo */
 .brand-logo-img {
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.5rem;
+  height: 2.5rem;
   object-fit: contain;
-  background: #fff;
-  border-radius: 0.5rem;
-  padding: 0.125rem;
 }
 
-.authentication-wrapper .brand-logo-img,
-.authentication-bg .brand-logo-img {
-  width: 5rem;
-  height: 5rem;
+.brand-logo-full {
+  display: block;
+  width: 100%;
+  max-width: 20rem;
+  height: auto;
+  margin-inline: auto;
 }
 
 /* Headings use the bold weight like the website */

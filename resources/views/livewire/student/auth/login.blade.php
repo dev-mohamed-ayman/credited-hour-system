@@ -2,9 +2,7 @@
     <div class="d-flex col-12 col-lg-5 col-xl-4 align-items-center authentication-bg p-sm-12 p-6">
         <div class="w-px-400 mx-auto mt-sm-12 mt-8">
             <div class="text-center mb-6">
-                <span class="app-brand-logo demo mb-3">
-                    <img src="{{ asset('images/logo-icon.png') }}" alt="شعار المعهد" class="brand-logo-img">
-                </span>
+                <img src="{{ asset('images/aboukir-logo.png') }}" alt="معاهد أبوقير العليا" class="brand-logo-full mb-5">
                 <h3 class="mb-1 fw-bold">بوابة الطلاب</h3>
                 <p class="mb-0 text-body">قم بتسجيل الدخول للوصول إلى خدماتك الأكاديمية وتسجيل المواد</p>
             </div>
