@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\MilitaryEducationEnrollmentStatus;
 use App\Enums\RegistrationStatus;
 use App\Enums\Semester;
+use App\Enums\Student\ExcuseType;
 use App\Enums\Student\StudentStatus;
 use App\Enums\Student\StudentWarningType;
 use App\Enums\Student\StudyStatus;
@@ -15,6 +16,7 @@ use App\Models\Registration;
 use App\Models\RegistrationCourse;
 use App\Models\Setting;
 use App\Models\Student;
+use App\Models\StudentExcuse;
 use App\Models\StudentTermRecord;
 use App\Models\StudentWarning;
 use App\Models\TermClosure;
@@ -33,7 +35,10 @@ use Illuminate\Support\Facades\DB;
  *  - after the summer: promotion by earned hours (each level's promotion_hours,
  *    the graduation hours for the last level), otherwise the study status moves
  *    مستجد → باقي → من الخارج with dismissal on the chs rules; graduating also
- *    needs military education where it is required.
+ *    needs military education where it is required;
+ *  - excuses (StudentExcuse): a term excuse or the year's suspension spares the
+ *    term's warning; a suspension or both terms excused spares the summer, and
+ *    the student goes back to مقيد for the next year.
  * Every run is stored as a TermClosure with one StudentTermRecord per student,
  * so a term is never closed twice and the latest closure can be reverted.
  */
@@ -234,8 +239,13 @@ class TermClosureService
             'status_after' => $student->status,
         ];
 
-        if (in_array($student->status, [StudentStatus::EXCUSED, StudentStatus::SUSPENDED], true)) {
-            return [...$decision, 'outcome' => TermOutcome::EXCUSED];
+        if ($this->isExcused($student, $year, $semester)) {
+            return [
+                ...$decision,
+                'outcome' => TermOutcome::EXCUSED,
+                'note' => $student->excuses->where('year_id', $year->id)->map(fn (StudentExcuse $excuse) => $excuse->type->label())->unique()->implode('، '),
+                'status_after' => $semester === Semester::SUMMER ? StudentStatus::REGISTERED : $decision['status_after'],
+            ];
         }
 
         return $semester === Semester::SUMMER
@@ -373,6 +383,22 @@ class TermClosureService
     }
 
     /**
+     * chs: a term excuse or the year's suspension spares the term's warning; after the
+     * summer, a suspension or both terms excused spares failing the level.
+     */
+    private function isExcused(Student $student, Year $year, Semester $semester): bool
+    {
+        $yearExcuses = $student->excuses->where('year_id', $year->id);
+
+        if ($semester !== Semester::SUMMER) {
+            return $yearExcuses->contains(fn (StudentExcuse $excuse) => $excuse->excusesTerm($year->id, $semester));
+        }
+
+        return $yearExcuses->contains('type', ExcuseType::SUSPENSION)
+            || $yearExcuses->where('type', ExcuseType::TERM)->pluck('semester')->unique()->count() >= 2;
+    }
+
+    /**
      * A student's first term in the institute never counts for warnings: true when
      * they have no earlier first/second term, registered or closed.
      */
@@ -441,6 +467,7 @@ class TermClosureService
             ->with([
                 ...GpaCalculator::relations(),
                 'level',
+                'excuses',
                 'warnings' => fn ($query) => $query->academic()->where('is_active', true)->latest('id'),
                 'termRecords.closure.year',
                 'militaryEducationEnrollments',

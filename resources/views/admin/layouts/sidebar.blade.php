@@ -43,9 +43,9 @@
             <span class="menu-header-text">الطلاب والأكاديميا</span>
         </li>
 
-        @canany(['students.view', 'students.create', 'student_warnings.view', 'student_transfers.view', 'finance.view'])
+        @canany(['students.view', 'students.create', 'student_warnings.view', 'student_excuses.view', 'student_transfers.view', 'finance.view'])
     <li
-        class="menu-item {{isActiveRoute(['students.*', 'print.student.cards.*', 'print.seat.numbers.*', 'print.certificates.*', 'student-warnings.*', 'student-search.*', 'student-transfers.*', 'admin.finance.fee-issuance', 'admin.finance.student-financial-status', 'admin.student-affairs.student-status', 'admin.student-affairs.seat-numbers'], true)}}"
+        class="menu-item {{isActiveRoute(['students.*', 'print.student.cards.*', 'print.seat.numbers.*', 'print.certificates.*', 'student-warnings.*', 'student-search.*', 'student-transfers.*', 'admin.finance.fee-issuance', 'admin.finance.student-financial-status', 'admin.student-affairs.student-status', 'admin.student-affairs.seat-numbers', 'admin.student-affairs.excuses'], true)}}"
     >
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base ti tabler-users"></i>
@@ -78,6 +78,13 @@
                 <li class="menu-item {{isActiveRoute('admin.student-affairs.seat-numbers')}}">
                     <a href="{{route('admin.student-affairs.seat-numbers')}}" class="menu-link">
                         <div data-i18n="أرقام الجلوس">أرقام الجلوس</div>
+                    </a>
+                </li>
+                @endcan
+                @can('student_excuses.view')
+                <li class="menu-item {{isActiveRoute('admin.student-affairs.excuses')}}">
+                    <a href="{{route('admin.student-affairs.excuses')}}" class="menu-link">
+                        <div data-i18n="الأعذار ووقف القيد">الأعذار ووقف القيد</div>
                     </a>
                 </li>
                 @endcan

@@ -154,6 +154,11 @@ class Student extends Authenticatable
         return $this->hasMany(StudentWarning::class);
     }
 
+    public function excuses(): HasMany
+    {
+        return $this->hasMany(StudentExcuse::class);
+    }
+
     public function termRecords(): HasMany
     {
         return $this->hasMany(StudentTermRecord::class);

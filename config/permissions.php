@@ -73,6 +73,10 @@ return [
         'label' => 'شئون الطلبه',
         'actions' => ['view' => 'عرض', 'create' => 'إنشاء', 'edit' => 'تعديل', 'delete' => 'حذف'],
     ],
+    'student_excuses' => [
+        'label' => 'أعذار الطلاب ووقف القيد',
+        'actions' => ['view' => 'عرض', 'create' => 'إنشاء', 'delete' => 'حذف'],
+    ],
     'student_warnings' => [
         'label' => 'تنبيه الطلاب',
         'actions' => ['view' => 'عرض', 'create' => 'إنشاء', 'delete' => 'حذف'],

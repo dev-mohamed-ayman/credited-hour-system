@@ -3,6 +3,7 @@
 use App\Enums\RegistrationStatus;
 use App\Enums\Semester;
 use App\Enums\SemesterStatus;
+use App\Enums\Student\ExcuseType;
 use App\Enums\Student\StudentStatus;
 use App\Enums\Student\StudyStatus;
 use App\Enums\TermOutcome;
@@ -94,6 +95,11 @@ function academicWarnings(Student $student, int $count): void
     }
 }
 
+function excuseFor(Student $student, Year $year, Semester $semester, ExcuseType $type): void
+{
+    $student->excuses()->create(['year_id' => $year->id, 'semester' => $semester->value, 'type' => $type->value, 'reason' => 'عذر']);
+}
+
 function outcomeOf(Student $student, TermClosure $closure): StudentTermRecord
 {
     return $closure->records()->where('student_id', $student->id)->firstOrFail();
@@ -182,14 +188,31 @@ describe('warnings after the first and second terms', function () {
         expect(outcomeOf($this->student, $this->service->close($this->year, Semester::FIRST))->outcome)->toBe(TermOutcome::NO_CHANGE);
     });
 
-    it('skips excused and suspended students', function () {
-        $this->student->update(['status' => StudentStatus::EXCUSED->value]);
+    it('spares the warning of a term the student is excused from', function (ExcuseType $type) {
         earn($this->student, $this->year, Semester::FIRST, 9, 'F');
+        excuseFor($this->student, $this->year, Semester::FIRST, $type);
 
         $record = outcomeOf($this->student, $this->service->close($this->year, Semester::FIRST));
 
         expect($record->outcome)->toBe(TermOutcome::EXCUSED)
+            ->and($record->note)->toBe($type->label())
             ->and($this->student->warnings()->count())->toBe(0);
+    })->with([ExcuseType::TERM, ExcuseType::SUSPENSION]);
+
+    it('still warns after a course excuse or an excuse in the other term', function () {
+        earn($this->student, $this->year, Semester::FIRST, 3, 'F');
+        earn($this->student, $this->year, Semester::SECOND, 9, 'F');
+        excuseFor($this->student, $this->year, Semester::FIRST, ExcuseType::TERM);
+        excuseFor($this->student, $this->year, Semester::SECOND, ExcuseType::COURSE);
+
+        expect(outcomeOf($this->student, $this->service->close($this->year, Semester::SECOND))->outcome)->toBe(TermOutcome::WARNED);
+    });
+
+    it('processes a student whose general status is عذر without an excuse record', function () {
+        $this->student->update(['status' => StudentStatus::EXCUSED->value]);
+        earn($this->student, $this->year, Semester::FIRST, 9, 'F');
+
+        expect(outcomeOf($this->student, $this->service->close($this->year, Semester::FIRST))->outcome)->toBe(TermOutcome::WARNED);
     });
 
     it('leaves graduated, dismissed and withdrawn students out', function () {
@@ -299,6 +322,31 @@ describe('promotion after the summer', function () {
         earn($this->student, $this->year, Semester::FIRST, 132, 'B');
 
         expect(outcomeOf($this->student, $this->service->close($this->year, Semester::SUMMER))->outcome)->toBe(TermOutcome::GRADUATED);
+    });
+
+    it('spares failing the level with a suspension or both terms excused, and puts the student back to مقيد', function (array $excuses) {
+        $this->student->update(['status' => StudentStatus::SUSPENDED->value]);
+
+        foreach ($excuses as [$semester, $type]) {
+            excuseFor($this->student, $this->year, $semester, $type);
+        }
+
+        $record = outcomeOf($this->student, $this->service->close($this->year, Semester::SUMMER));
+        $student = $this->student->fresh();
+
+        expect($record->outcome)->toBe(TermOutcome::EXCUSED)
+            ->and($student->status)->toBe(StudentStatus::REGISTERED)
+            ->and($student->study_status)->toBe(StudyStatus::FRESHMAN)
+            ->and($student->level_id)->toBe($this->levels[0]->id);
+    })->with([
+        'suspension' => [[[Semester::FIRST, ExcuseType::SUSPENSION]]],
+        'both terms' => [[[Semester::FIRST, ExcuseType::TERM], [Semester::SECOND, ExcuseType::TERM]]],
+    ]);
+
+    it('holds back a student excused from one term only', function () {
+        excuseFor($this->student, $this->year, Semester::FIRST, ExcuseType::TERM);
+
+        expect(outcomeOf($this->student, $this->service->close($this->year, Semester::SUMMER))->outcome)->toBe(TermOutcome::HELD_BACK);
     });
 
     it('clears every warning of a student back above the threshold', function () {
