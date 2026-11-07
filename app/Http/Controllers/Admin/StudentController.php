@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\Semester;
+use App\Enums\TermOutcome;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\ExamCommitteeStudent;
@@ -102,8 +104,10 @@ class StudentController extends Controller
         $departments = Department::all();
         $sections = Section::all();
         $levels = Level::all();
+        $years = Year::query()->orderByDesc('year')->get();
+        $semesters = Semester::cases();
 
-        return view('admin.pages.student.print_certificate_index', compact('students', 'departments', 'sections', 'levels'));
+        return view('admin.pages.student.print_certificate_index', compact('students', 'departments', 'sections', 'levels', 'years', 'semesters'));
     }
 
     public function printCertificates(Request $request): \Illuminate\View\View
@@ -125,13 +129,22 @@ class StudentController extends Controller
             if ($request->filled('level_id')) {
                 $query->where('level_id', $request->level_id);
             }
-            if ($request->filled('year_graduated')) {
-                $query->where('year_graduated', $request->year_graduated);
-            }
-            if ($request->filled('semester_graduated')) {
-                $query->where('semester_graduated', $request->semester_graduated);
+            $graduationYearId = $request->integer('graduation_year_id') ?: null;
+            $graduationSemester = Semester::tryFrom((string) $request->input('graduation_semester'));
+
+            if ($graduationYearId !== null || $graduationSemester !== null) {
+                $query->whereHas('termRecords', fn ($records) => $records
+                    ->where('outcome', TermOutcome::GRADUATED->value)
+                    ->whereHas('closure', fn ($closure) => $closure
+                        ->when($graduationYearId, fn ($byYear) => $byYear->where('year_id', $graduationYearId))
+                        ->when($graduationSemester, fn ($bySemester) => $bySemester->where('semester', $graduationSemester->value))));
             }
         }
+
+        $query->with(['termRecords' => fn ($records) => $records
+            ->where('outcome', TermOutcome::GRADUATED->value)
+            ->with('closure.year')
+            ->latest('id')]);
 
         $students = $query->with(['examCommitteeMemberships.committee.year'])->get();
         $settings = Setting::query()->firstOrCreate();

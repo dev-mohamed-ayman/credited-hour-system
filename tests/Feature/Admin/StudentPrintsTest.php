@@ -136,3 +136,40 @@ it('refuses numbering that collides with another member of the same committee', 
 
     app(ExamScheduleService::class)->numberSeats($this->world['year'], Semester::FIRST, [$this->student], 50);
 })->throws(ExamScheduleException::class, 'رقم الجلوس 50 مستخدم بالفعل');
+
+function graduateIn(\App\Models\Student $student, \App\Models\Year $year, Semester $semester): void
+{
+    $closure = \App\Models\TermClosure::firstOrCreate(['year_id' => $year->id, 'semester' => $semester->value]);
+
+    \App\Models\StudentTermRecord::create([
+        'term_closure_id' => $closure->id, 'student_id' => $student->id, 'cgpa' => 3, 'earned_hours' => 132,
+        'outcome' => \App\Enums\TermOutcome::GRADUATED->value, 'warnings_before' => 0, 'warnings_after' => 0,
+    ]);
+}
+
+it('filters certificates by the graduation term from the term records', function () {
+    $graduate = seatCardStudent($this->world, 'خريج السنة', 'GRAD000001');
+    $earlier = seatCardStudent($this->world, 'خريج قديم', 'GRAD000002');
+    $olderYear = \App\Models\Year::create(['year' => '2023-2024']);
+
+    graduateIn($graduate, $this->world['year'], Semester::SUMMER);
+    graduateIn($earlier, $olderYear, Semester::SUMMER);
+    Setting::query()->update(['cert_show_semester' => true]);
+
+    $this->actingAs($this->admin)
+        ->post(route('print.certificates.print'), ['graduation_year_id' => $this->world['year']->id, 'graduation_semester' => Semester::SUMMER->value])
+        ->assertSuccessful()
+        ->assertSee('خريج السنة')
+        ->assertSee('الترم الصيفي')
+        ->assertDontSee('خريج قديم')
+        ->assertDontSee($this->student->name);
+});
+
+it('lists the years and semesters as graduation filters', function () {
+    $this->actingAs($this->admin)
+        ->get(route('print.certificates.index'))
+        ->assertSuccessful()
+        ->assertSee('name="graduation_year_id"', false)
+        ->assertSee('2025-2026')
+        ->assertSee('الترم الصيفي');
+});

@@ -273,6 +273,7 @@ html::-webkit-scrollbar,
     $cgpa  = $cumulatives[$student->id]['cgpa'];
     $grade = $cumulatives[$student->id]['classification'];
     $seat  = $lastSeats[$student->id];
+    $graduation = $student->termRecords->first();
 
     $photoUrl = null;
     if ($student->image && file_exists(public_path('uploads/students/' . $student->image))) {
@@ -359,7 +360,7 @@ html::-webkit-scrollbar,
           <div class="names-block">
             @if(optional($settings)->cert_show_semester)
             <div>
-              <label>فصل <span>{{ $student->semester_graduated ?? '-' }}</span> <span class="fontcontent">{{ $student->year_graduated ?? '-' }}</span></label>
+              <label>فصل <span>{{ $graduation?->closure->semester->label() ?? '-' }}</span> <span class="fontcontent">{{ $graduation?->closure->year?->year ?? '-' }}</span></label>
             </div>
             @endif
             @if(optional($settings)->cert_show_grade)

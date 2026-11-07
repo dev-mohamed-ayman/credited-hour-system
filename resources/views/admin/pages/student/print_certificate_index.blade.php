@@ -71,12 +71,12 @@
 
                             <div class="col-md-4 mt-3">
                                 <div class="form-group">
-                                    <label>الفصل الدراسي</label>
-                                    <select class="form-control" name="semester_graduated">
+                                    <label>فصل التخرج</label>
+                                    <select class="form-control" name="graduation_semester">
                                         <option value="">كل الفصول</option>
-                                        <option value="الأول">الفصل الأول</option>
-                                        <option value="الثاني">الفصل الثاني</option>
-                                        <option value="الصيفي">الفصل الصيفي</option>
+                                        @foreach($semesters as $semester)
+                                            <option value="{{ $semester->value }}">{{ $semester->label() }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
                             </div>
@@ -84,7 +84,13 @@
                             <div class="col-md-4 mt-3">
                                 <div class="form-group">
                                     <label>عام التخرج</label>
-                                    <input type="text" class="form-control" name="year_graduated" placeholder="مثال: 2024/2025">
+                                    <select class="form-control" name="graduation_year_id">
+                                        <option value="">كل السنوات</option>
+                                        @foreach($years as $year)
+                                            <option value="{{ $year->id }}">{{ $year->year }}</option>
+                                        @endforeach
+                                    </select>
+                                    <small class="text-muted">من سجل الترمات (الطلاب اللي اتخرجوا من إجراءات نهاية الترم).</small>
                                 </div>
                             </div>
                         </div>
