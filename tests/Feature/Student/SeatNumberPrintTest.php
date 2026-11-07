@@ -1,6 +1,9 @@
 <?php
 
+use App\Enums\Semester;
+use App\Models\ExamCommittee;
 use App\Models\Setting;
+use App\Models\Student;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -20,17 +23,39 @@ beforeEach(function () {
     ]);
 });
 
-it('shows the logged-in student their own printable seat card', function () {
-    $this->student->update(['seat_number' => '99887766']);
+function seatInCommittee(array $world, Student $student, int $seat, bool $published = true): void
+{
+    $factory = ExamCommittee::factory();
+
+    $committee = ($published ? $factory->published() : $factory)->create([
+        'year_id' => $world['year']->id,
+        'semester' => Semester::FIRST,
+        'name' => 'لجنة '.$seat,
+    ]);
+
+    $committee->members()->create(['student_id' => $student->id, 'seat_number' => $seat]);
+}
+
+it('shows the logged-in student their current term committee seat card', function () {
+    seatInCommittee($this->world, $this->student, 99887766);
 
     $this->actingAs($this->student, 'student')
         ->get(route('student.print-seat-number'))
         ->assertSuccessful()
         ->assertSee('بطاقة رقم الجلوس')
         ->assertSee('99887766')
+        ->assertSee('لجنة 99887766')
         ->assertSee($this->student->name)
         ->assertSee($this->student->username)
         ->assertSee('علوم حاسب');
+});
+
+it('ignores the high school seat number stored on the student', function () {
+    $this->student->update(['seat_number' => 'HS-123']);
+
+    $this->actingAs($this->student, 'student')
+        ->get(route('student.print-seat-number'))
+        ->assertRedirect(route('student.dashboard'));
 });
 
 it('bounces the student back with a clear message when no seat number is assigned yet', function () {
@@ -40,8 +65,16 @@ it('bounces the student back with a clear message when no seat number is assigne
         ->assertSessionHas('error', 'لم يتم تخصيص رقم جلوس لك بعد — تابع الشؤون الطلابية.');
 });
 
+it('waits for the committee to be published', function () {
+    seatInCommittee($this->world, $this->student, 777, published: false);
+
+    $this->actingAs($this->student, 'student')
+        ->get(route('student.print-seat-number'))
+        ->assertRedirect(route('student.dashboard'));
+});
+
 it('honours the seat card display settings', function () {
-    $this->student->update(['seat_number' => '555']);
+    seatInCommittee($this->world, $this->student, 555);
 
     Setting::query()->update(['seat_show_name' => false, 'seat_show_department' => false]);
 
@@ -55,10 +88,10 @@ it('honours the seat card display settings', function () {
 });
 
 it('never renders another student card — the page is tied to the session', function () {
-    $this->student->update(['seat_number' => '11111']);
+    seatInCommittee($this->world, $this->student, 11111);
 
     $other = seatCardStudent($this->world, 'طالب تاني', 'OTHER01');
-    $other->update(['seat_number' => '22222']);
+    seatInCommittee($this->world, $other, 22222);
 
     $this->actingAs($this->student, 'student')
         ->get(route('student.print-seat-number'))
@@ -70,19 +103,3 @@ it('sends guests to the student login', function () {
     $this->get(route('student.print-seat-number'))
         ->assertRedirect(route('student.login'));
 });
-
-function seatCardStudent(array $world, string $name, string $username): \App\Models\Student
-{
-    return \App\Models\Student::create([
-        'name' => $name,
-        'certificate_type_id' => $world['student']->certificate_type_id,
-        'national_id' => fake()->unique()->numerify('##############'),
-        'username' => $username,
-        'password' => bcrypt('password'),
-        'plain_password' => 'password',
-        'section_id' => $world['section']->id,
-        'level_id' => $world['level']->id,
-        'year_id' => $world['year']->id,
-        'semester' => \App\Enums\Semester::FIRST->value,
-    ]);
-}

@@ -16,7 +16,6 @@
                         <th class="text-center" style="width: 50px;">#</th>
                         <th>اسم الشعبة</th>
                         <th>التخصص</th>
-                        <th>CGPA</th>
                         <th class="text-center">الإجراءات</th>
                     </tr>
                 </thead>
@@ -29,9 +28,6 @@
                             </td>
                             <td>
                                 <span class="badge bg-label-secondary">{{ $section->department->name }}</span>
-                            </td>
-                            <td>
-                                <span class="badge bg-label-info">{{ $section->cgpa ?? '-' }}</span>
                             </td>
                             <td class="text-center">
                                 <a class="btn btn-sm btn-success" href="{{ route('sections.edit', $section->id) }}">

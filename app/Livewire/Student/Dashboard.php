@@ -2,8 +2,8 @@
 
 namespace App\Livewire\Student;
 
+use App\Enums\RegistrationStatus;
 use App\Enums\Student\StudentWarningType;
-use App\Models\Level;
 use App\Models\Registration;
 use App\Models\Setting;
 use App\Models\Year;
@@ -21,6 +21,7 @@ class Dashboard extends Component
         ]);
 
         $registeredHours = $student->registrations
+            ->reject(fn (Registration $registration) => in_array($registration->status, [RegistrationStatus::REJECTED, RegistrationStatus::CANCELLED], true))
             ->flatMap->courses
             ->sum(fn ($courseReg) => (int) $courseReg->course?->hours);
 
@@ -34,20 +35,9 @@ class Dashboard extends Component
         ];
     }
 
-    public function getGraduationRequiredHours(object $student): int
+    public function getGraduationRequiredHours(): int
     {
-        $settingHours = Setting::graduationRequiredHours();
-
-        if ($settingHours > 0) {
-            return $settingHours;
-        }
-
-        $maxLevel = (int) Level::query()->max('id');
-        if ($maxLevel <= 0) {
-            return 132;
-        }
-
-        return $maxLevel * 36;
+        return Setting::graduationRequiredHours();
     }
 
     public function getWarningThreshold(): float
@@ -103,7 +93,7 @@ class Dashboard extends Component
         $student->loadMissing(['level', 'section', 'section.department', 'academicAdvisor']);
 
         $stats = $this->calculateCumulativeStats($student);
-        $requiredHours = $this->getGraduationRequiredHours($student);
+        $requiredHours = $this->getGraduationRequiredHours();
         $warningThreshold = $this->getWarningThreshold();
         $activeWarnings = $this->getActiveWarnings($student);
         $warningCount = $activeWarnings->count();
@@ -113,6 +103,7 @@ class Dashboard extends Component
         $currentRegistration = $this->getCurrentSemesterRegistration($student);
         $currentYear = Year::current();
         $currentSemester = $currentYear?->getCurrentSemester();
+        $examSeat = $student->currentExamSeat(publishedOnly: true);
         $unpaidFeeTickets = $this->getUnpaidFeeTickets($student);
         $hasUnpaidFees = $unpaidFeeTickets->isNotEmpty();
 
@@ -134,6 +125,7 @@ class Dashboard extends Component
 
         return view('livewire.student.dashboard', [
             'student' => $student,
+            'examSeat' => $examSeat,
             'stats' => $stats,
             'requiredHours' => $requiredHours,
             'warningThreshold' => $warningThreshold,

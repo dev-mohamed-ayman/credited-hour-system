@@ -16,6 +16,12 @@ class Show extends Component
 
     public function render()
     {
-        return view('livewire.admin.student.show');
+        return view('livewire.admin.student.show', [
+            'termRecords' => $this->student->termRecords()
+                ->with(['closure.year', 'levelBefore', 'levelAfter'])
+                ->latest('id')
+                ->get(),
+            'academicWarningCount' => $this->student->warnings()->academic()->where('is_active', true)->count(),
+        ]);
     }
 }

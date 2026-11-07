@@ -71,7 +71,7 @@ function billingWorld(): array
 
     $department = Department::create(['name' => 'علوم حاسب', 'code' => 'CS']);
     $certificateType = CertificateType::create(['name' => 'ثانوية عامة', 'total_score' => 410]);
-    $section = Section::create(['name' => 'شعبة أ', 'department_id' => $department->id, 'cgpa' => 2.0]);
+    $section = Section::create(['name' => 'شعبة أ', 'department_id' => $department->id]);
     $level = Level::create(['name' => 'الفرقة الأولى']);
 
     Grade::create(['name' => 'Pending', 'is_pending_default' => true, 'order' => 0]);
@@ -130,6 +130,46 @@ function billingWorld(): array
     return compact('student', 'admin', 'advisor', 'year', 'courses', 'department', 'level', 'section');
 }
 
+/**
+ * The chs grade scale (A+ … F, FX, IC, W) with points and score ranges.
+ */
+function seedResultScale(): void
+{
+    $scale = [
+        ['A+', 4.00, 95, 100, true], ['A', 3.70, 90, 94, true], ['B+', 3.40, 85, 89, true], ['B', 3.00, 80, 84, true],
+        ['C+', 2.70, 72, 79, true], ['C', 2.30, 65, 71, true], ['D+', 2.20, 55, 64, true], ['D', 2.00, 50, 54, true],
+        ['F', 0.00, 0, 49, true], ['FX', 0.00, null, null, true], ['IC', null, null, null, false], ['W', null, null, null, false],
+    ];
+
+    foreach ($scale as $order => [$name, $points, $min, $max, $countsInGpa]) {
+        Grade::updateOrCreate(['name' => $name], [
+            'points' => $points, 'min_score' => $min, 'max_score' => $max,
+            'counts_in_gpa' => $countsInGpa, 'order' => $order + 1, 'is_pending_default' => false,
+        ]);
+    }
+
+    Grade::pendingDefault()->update(['counts_in_gpa' => false]);
+}
+
+/**
+ * Another student in billingWorld()'s section, level and year.
+ */
+function seatCardStudent(array $world, string $name, string $username): Student
+{
+    return Student::create([
+        'name' => $name,
+        'certificate_type_id' => $world['student']->certificate_type_id,
+        'national_id' => fake()->unique()->numerify('##############'),
+        'username' => $username,
+        'password' => bcrypt('password'),
+        'plain_password' => 'password',
+        'section_id' => $world['section']->id,
+        'level_id' => $world['level']->id,
+        'year_id' => $world['year']->id,
+        'semester' => Semester::FIRST->value,
+    ]);
+}
+
 function fundWallet(Student $student, float $amount, Year $year): void
 {
     app(WalletService::class)->deposit(
@@ -170,7 +210,7 @@ function transferWorld(): array
     }
 
     $targetDepartment = Department::create(['name' => 'English', 'code' => 'E']);
-    $targetSection = Section::create(['name' => 'شعبة إنجليزي', 'department_id' => $targetDepartment->id, 'cgpa' => 2.0]);
+    $targetSection = Section::create(['name' => 'شعبة إنجليزي', 'department_id' => $targetDepartment->id]);
 
     RegistrationFee::create([
         'department_id' => $targetDepartment->id,

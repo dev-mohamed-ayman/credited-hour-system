@@ -192,8 +192,10 @@
                 <div>العام الجامعي: <span class="value">{{$student->year->year}}</span></div>
                 @endif
 
+                <div>اللجنة: <span class="value">{{$seat->committee->name}}</span></div>
+
                 @if(optional($settings)->seat_show_seat_number)
-                <div class="seat-badge">رقم الجلوس: <span>{{$student->seat_number}}</span></div>
+                <div class="seat-badge">رقم الجلوس: <span>{{$seat->seat_number}}</span></div>
                 @endif
             </div>
         </div>

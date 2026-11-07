@@ -172,6 +172,65 @@ class ExamScheduleService
         });
     }
 
+    /**
+     * Renumbers the term seats of the given students, in the order passed, starting
+     * at $startSeat. Students outside every committee of the term are skipped.
+     *
+     * @param  iterable<Student>  $students
+     * @return array{numbered: int, skipped: int}
+     *
+     * @throws ExamScheduleException when a new number is held by another member of the same committee
+     */
+    public function numberSeats(Year $year, Semester $semester, iterable $students, int $startSeat): array
+    {
+        $students = collect($students);
+
+        return DB::transaction(function () use ($year, $semester, $students, $startSeat) {
+            $this->lockYear($year->id);
+
+            $memberships = ExamCommitteeStudent::query()
+                ->forTerm($year, $semester)
+                ->whereIn('student_id', $students->pluck('id')->all() ?: [0])
+                ->get()
+                ->keyBy('student_id');
+
+            $planned = collect();
+            $nextSeat = $startSeat;
+
+            foreach ($students as $student) {
+                if ($membership = $memberships->get($student->id)) {
+                    $planned->push(['membership' => $membership, 'seat' => $nextSeat++]);
+                }
+            }
+
+            foreach ($planned->groupBy(fn (array $plan) => $plan['membership']->exam_committee_id) as $committeeId => $plans) {
+                $clash = ExamCommitteeStudent::query()
+                    ->where('exam_committee_id', $committeeId)
+                    ->whereNotIn('id', $plans->pluck('membership.id')->all())
+                    ->whereIn('seat_number', $plans->pluck('seat')->all())
+                    ->with(['student:id,username', 'committee:id,name'])
+                    ->first();
+
+                if ($clash !== null) {
+                    throw new ExamScheduleException(
+                        "رقم الجلوس {$clash->seat_number} مستخدم بالفعل للطالب {$clash->student?->username} في \"{$clash->committee->name}\""
+                    );
+                }
+            }
+
+            // Park the seats first so swapping numbers inside a committee never trips its unique index.
+            foreach ($planned->values() as $index => $plan) {
+                $plan['membership']->update(['seat_number' => 4_000_000_000 + $index]);
+            }
+
+            foreach ($planned as $plan) {
+                $plan['membership']->update(['seat_number' => $plan['seat']]);
+            }
+
+            return ['numbered' => $planned->count(), 'skipped' => $students->count() - $planned->count()];
+        });
+    }
+
     public function removeStudent(ExamCommittee $committee, int $studentId): void
     {
         DB::transaction(function () use ($committee, $studentId) {

@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Department;
+use App\Models\ExamCommitteeStudent;
 use App\Models\Level;
 use App\Models\Section;
 use App\Models\Setting;
 use App\Models\Student;
+use App\Models\Year;
+use App\Services\GpaCalculator;
 use Illuminate\Http\Request;
 
 class StudentController extends Controller
@@ -56,7 +59,7 @@ class StudentController extends Controller
     {
         abort_unless(auth()->user()->can('students.view'), 403);
 
-        $students = Student::orderBy('name')->get(['id', 'username', 'name']);
+        $students = Student::with($this->currentExamSeats())->orderBy('name')->get(['id', 'username', 'name']);
         $departments = Department::all();
         $sections = Section::all();
         $levels = Level::all();
@@ -68,7 +71,7 @@ class StudentController extends Controller
     {
         abort_unless(auth()->user()->can('students.view'), 403);
 
-        $query = Student::query();
+        $query = Student::with(['section.department', 'level', ...$this->currentExamSeats()]);
 
         if ($request->has('student_ids') && count($request->student_ids) > 0) {
             $query->whereIn('id', $request->student_ids);
@@ -130,10 +133,41 @@ class StudentController extends Controller
             }
         }
 
-        $students = $query->get();
+        $students = $query->with(['examCommitteeMemberships.committee.year'])->get();
         $settings = Setting::query()->firstOrCreate();
 
-        return view('admin.pages.student.print_certificate', compact('students', 'settings'));
+        $calculator = app(GpaCalculator::class);
+        $cumulatives = $students->mapWithKeys(function (Student $student) use ($calculator) {
+            $cumulative = $calculator->cumulative($student);
+
+            return [$student->id => [
+                'cgpa' => $cumulative['total_hours'] > 0 ? $cumulative['gpa'] : null,
+                'classification' => $cumulative['total_hours'] > 0 ? $calculator->classification($cumulative['gpa']) : '',
+            ]];
+        });
+
+        $lastSeats = $students->mapWithKeys(fn (Student $student) => [
+            $student->id => $student->examCommitteeMemberships
+                ->sortBy(fn (ExamCommitteeStudent $seat) => $seat->committee->year?->year.'|'.$seat->committee->semester->order())
+                ->last(),
+        ]);
+
+        return view('admin.pages.student.print_certificate', compact('students', 'settings', 'cumulatives', 'lastSeats'));
+    }
+
+    /**
+     * Eager load for each student's seat in the current term's exam committees.
+     *
+     * @return array<string, \Closure>
+     */
+    private function currentExamSeats(): array
+    {
+        $year = Year::current();
+        $semester = $year?->getCurrentSemester();
+
+        return [
+            'examCommitteeMemberships' => fn ($query) => $query->forTerm($year, $semester)->with('committee'),
+        ];
     }
 
     public function printReport(Student $student): \Illuminate\View\View

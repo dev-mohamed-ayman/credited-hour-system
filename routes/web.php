@@ -110,6 +110,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('registration-log', \App\Livewire\Admin\RegistrationLog\Index::class)->name('registration-log.index')->middleware('permission:course_registrations.view');
     Route::get('registration-records/{registration}', \App\Livewire\Admin\RegistrationRecord\Show::class)->name('registration-records.show')->middleware('permission:course_registrations.view');
     Route::get('results/upload', \App\Livewire\Admin\Results\Upload::class)->name('results.upload')->middleware('permission:results.upload');
+    Route::get('results/term-closure', \App\Livewire\Admin\Results\EndOfTerm::class)->name('results.term-closure')->middleware('permission:term_closures.view');
 
     // Transfer Equivalency Routes
     Route::get('transfer-equivalency', \App\Livewire\Admin\TransferEquivalency\Index::class)->name('admin.transfer-equivalency.index')->middleware('permission:transfer_equivalency.view');

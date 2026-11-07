@@ -111,8 +111,7 @@ class DemoDataSeeder extends Seeder
         );
 
         $section = Section::firstOrCreate(
-            ['name' => 'شعبة نظم المعلومات', 'department_id' => $department->id],
-            ['cgpa' => 2.0]
+            ['name' => 'شعبة نظم المعلومات', 'department_id' => $department->id]
         );
 
         $levels = $this->resolveLevels();

@@ -270,17 +270,9 @@ html::-webkit-scrollbar,
 <div id="student-search-page">
 @foreach($students as $student)
 @php
-    $cgpa  = $student->cgpa ?? null;
-    $grade = '';
-    if ($cgpa !== null) {
-        $cgpa = (float) $cgpa;
-        if ($cgpa >= 3.7)     { $grade = 'امتياز'; }
-        elseif ($cgpa >= 3.0) { $grade = 'ممتاز'; }
-        elseif ($cgpa >= 2.3) { $grade = 'جيد جداً'; }
-        elseif ($cgpa >= 2.0) { $grade = 'جيد'; }
-        elseif ($cgpa >= 1.0) { $grade = 'مقبول'; }
-        else                  { $grade = 'راسب'; }
-    }
+    $cgpa  = $cumulatives[$student->id]['cgpa'];
+    $grade = $cumulatives[$student->id]['classification'];
+    $seat  = $lastSeats[$student->id];
 
     $photoUrl = null;
     if ($student->image && file_exists(public_path('uploads/students/' . $student->image))) {
@@ -354,7 +346,7 @@ html::-webkit-scrollbar,
         @endif
 
 @if(optional($settings)->cert_show_seat_number)
-<label style="text-align: right; direction: rtl;">رقم الجلوس ({{ date('Y') }}): {{ $student->seat_number ?? 'غير متوفر' }}</label> 
+<label style="text-align: right; direction: rtl;">رقم الجلوس ({{ $seat?->committee->year?->year ?? date('Y') }}): {{ $seat?->seat_number ?? 'غير متوفر' }}</label>
 @endif
 
           <div class="student-section-title text-center mb-4" style="padding-top: 20px;">
@@ -378,7 +370,7 @@ html::-webkit-scrollbar,
             @endif
             @if(optional($settings)->cert_show_cgpa)
             <div>
-              <label>بنقاط تراكمية <span>{{ $student->cgpa ? convertNumbersToArabic((string)$student->cgpa) : '---' }}</span> CGPA</label>
+              <label>بنقاط تراكمية <span>{{ $cgpa !== null ? convertNumbersToArabic(number_format($cgpa, 2)) : '---' }}</span> CGPA</label>
             </div>
             @endif
           </div>

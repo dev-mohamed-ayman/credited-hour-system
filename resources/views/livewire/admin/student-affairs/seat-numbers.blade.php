@@ -8,14 +8,21 @@
             <div class="card mb-4">
                 <h5 class="card-header">إنشاء وتوزيع أرقام الجلوس</h5>
                 <div class="card-body">
-                    
+
+                    <div class="alert alert-secondary" role="alert">
+                        أرقام الجلوس خاصة بالترم الحالي
+                        <strong>({{ $this->currentYear?->year ?? '—' }} — {{ $this->currentYear?->getCurrentSemester()?->label() ?? 'لا يوجد ترم مفتوح' }})</strong>،
+                        وتُسجَّل على لجنة الامتحانات الخاصة بالطالب. هي نفس الأرقام اللي بتتطبع في كارت رقم الجلوس واللي بيتراجع عليها رفع النتيجة،
+                        فلازم يكون الطالب مضاف للجنة الأول.
+                    </div>
+
                     @if($this->lastSeatNumber)
                         <div class="alert alert-info d-flex align-items-center" role="alert">
                             <span class="alert-icon text-info me-2">
                                 <i class="ti tabler-info-circle ti-xs"></i>
                             </span>
                             <div>
-                                تنبيه: آخر رقم جلوس تم إنشاؤه في النظام هو <strong>{{ $this->lastSeatNumber }}</strong>. يرجى اختيار رقم بداية غير متعارض.
+                                تنبيه: آخر رقم جلوس في لجان الترم الحالي هو <strong>{{ $this->lastSeatNumber }}</strong>. يرجى اختيار رقم بداية غير متعارض.
                             </div>
                         </div>
                     @endif
@@ -74,7 +81,7 @@
                         </div>
 
                         <div class="mt-4">
-                            <button type="submit" class="btn btn-primary" wire:confirm="سيتم إنشاء أو تحديث أرقام الجلوس للطلاب المطابقين للشروط ترتيباً أبجدياً. هل أنت متأكد؟">
+                            <button type="submit" class="btn btn-primary" wire:confirm="سيتم إنشاء أو تحديث أرقام الجلوس في لجان الترم الحالي للطلاب المطابقين للشروط ترتيباً أبجدياً. هل أنت متأكد؟">
                                 <i class="ti tabler-settings me-1"></i> إنشاء أرقام الجلوس
                             </button>
                         </div>

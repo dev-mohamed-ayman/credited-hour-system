@@ -11,11 +11,14 @@ use App\Models\User;
 use App\Models\WalletTransaction;
 use Database\Seeders\FinancialDemoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    Carbon::setTestNow(now()->setTime(12, 0));
+
     $this->seed(FinancialDemoSeeder::class);
     $this->admin = User::where('is_super_admin', true)->firstOrFail();
 });

@@ -12,7 +12,7 @@ class Section extends Model
 {
     use HasDeletionGuards;
 
-    protected $fillable = ['department_id', 'name', 'cgpa'];
+    protected $fillable = ['department_id', 'name'];
 
     protected $blockingRelations = ['students', 'certificateTypes', 'levels'];
 

@@ -15,6 +15,7 @@
                     <tr>
                         <th class="text-center" style="width: 50px;">#</th>
                         <th>الفرقة الدراسية</th>
+                        <th class="text-center">ساعات الترقية</th>
                         <th>الشعب المرتبطة</th>
                         <th class="text-center">تربية عسكرية (ذكور)</th>
                         <th class="text-center">تربية عسكرية (إناث)</th>
@@ -28,6 +29,7 @@
                             <td>
                                 <span class="fw-bold text-primary">{{ $level->name }}</span>
                             </td>
+                            <td class="text-center">{{ $level->promotion_hours ?? '—' }}</td>
                             <td>
                                 @forelse($level->sections as $section)
                                     <span class="badge bg-label-info me-1">{{ $section->name }}
@@ -95,7 +97,7 @@
                         </div>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center py-5">
+                            <td colspan="7" class="text-center py-5">
                                 <div class="text-muted">لا توجد فرق دراسية مضافة حالياً</div>
                             </td>
                         </tr>

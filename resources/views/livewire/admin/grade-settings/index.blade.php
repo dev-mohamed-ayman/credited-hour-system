@@ -28,6 +28,18 @@
                 عند التفعيل: يمكن للطالب رؤية مواد من فرق أخرى وفقاً لمصفوفة الظهور المحددة أدناه.
                 عند الإيقاف: تظهر مواد فرقته الدراسية فقط.
             </small>
+
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <label class="form-label fw-medium" for="graduationRequiredHours">
+                        ساعات التخرج المطلوبة <span class="text-danger">*</span>
+                    </label>
+                    <input type="number" min="1" id="graduationRequiredHours" wire:model="graduationRequiredHours"
+                           class="form-control @error('graduationRequiredHours') is-invalid @enderror">
+                    @error('graduationRequiredHours') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    <small class="text-muted d-block mt-1">بتظهر للطالب في الداشبورد كإجمالي الساعات المطلوبة للتخرج.</small>
+                </div>
+            </div>
         </div>
         @can('course_registration_settings.edit')
             <div class="card-footer d-flex justify-content-end border-top pt-3">

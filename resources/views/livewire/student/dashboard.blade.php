@@ -299,7 +299,7 @@
     </div>
 
     <div class="row g-4 mb-4">
-        @if (! empty($student->seat_number))
+        @if ($examSeat)
             <div class="col-md-3 col-12">
                 <div class="card">
                     <div class="card-body">
@@ -309,7 +309,8 @@
                             </div>
                             <div>
                                 <p class="text-muted mb-1">رقم الجلوس</p>
-                                <h4 class="fw-bold mb-0">{{ $student->seat_number }}</h4>
+                                <h4 class="fw-bold mb-0">{{ $examSeat->seat_number }}</h4>
+                                <small class="text-muted">{{ $examSeat->committee->name }}</small>
                             </div>
                         </div>
                     </div>

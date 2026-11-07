@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\RegistrationStatus;
-use App\Enums\Semester;
 use App\Models\Grade;
 use App\Models\RegistrationCourse;
 use App\Models\Student;
@@ -21,16 +20,26 @@ use Illuminate\Support\Collection;
 class GpaCalculator
 {
     /**
-     * @return array{gpa: float, total_hours: int, earned_hours: int, points: float}
+     * Student relations cumulative() reads — eager load them when computing many students.
+     *
+     * @return array<string, \Closure>
      */
-    public function cumulative(Student $student): array
+    public static function relations(): array
     {
-        $student->loadMissing([
+        return [
             'transferEquivalencies' => fn ($query) => $query->with(['course', 'grade']),
             'registrations' => fn ($query) => $query
                 ->whereNotIn('status', [RegistrationStatus::REJECTED->value, RegistrationStatus::CANCELLED->value])
                 ->with(['year', 'courses.course', 'courses.grade']),
-        ]);
+        ];
+    }
+
+    /**
+     * @return array{gpa: float, total_hours: int, earned_hours: int, points: float}
+     */
+    public function cumulative(Student $student): array
+    {
+        $student->loadMissing(self::relations());
 
         $attempts = $student->transferEquivalencies
             ->map(fn (TransferEquivalency $equivalency) => [
@@ -45,7 +54,7 @@ class GpaCalculator
                 continue;
             }
 
-            $sort = '1|'.$registration->year?->year.'|'.$this->semesterRank($registration->semester);
+            $sort = '1|'.$registration->year?->year.'|'.($registration->semester?->order() ?? 0);
 
             foreach ($registration->courses as $registrationCourse) {
                 $attempts->push([
@@ -85,6 +94,18 @@ class GpaCalculator
     }
 
     /**
+     * The overall classification (التقدير العام) of a cumulative GPA, from config('grading.classifications').
+     */
+    public function classification(float $gpa): string
+    {
+        $band = collect(config('grading.classifications', []))
+            ->sortByDesc('min')
+            ->first(fn (array $band) => $gpa >= (float) $band['min']);
+
+        return $band['label'] ?? '';
+    }
+
+    /**
      * @param  Collection<int, array{hours: int, grade: Grade}>  $attempts
      * @return array{gpa: float, total_hours: int, earned_hours: int, points: float}
      */
@@ -111,15 +132,5 @@ class GpaCalculator
             'earned_hours' => $earnedHours,
             'points' => round($points, 2),
         ];
-    }
-
-    private function semesterRank(?Semester $semester): int
-    {
-        return match ($semester) {
-            Semester::FIRST => 1,
-            Semester::SECOND => 2,
-            Semester::SUMMER => 3,
-            default => 0,
-        };
     }
 }

@@ -16,4 +16,16 @@ enum Semester: string
             self::SUMMER => 'الترم الصيفي',
         };
     }
+
+    /**
+     * Position within an academic year, for chronological sorting.
+     */
+    public function order(): int
+    {
+        return match ($this) {
+            self::FIRST => 1,
+            self::SECOND => 2,
+            self::SUMMER => 3,
+        };
+    }
 }

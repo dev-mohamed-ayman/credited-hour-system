@@ -165,8 +165,13 @@
                 <div>الفرقة: <span class="value">{{$student->level->name}}</span></div>
                 @endif
 
+                @php($seat = $student->examCommitteeMemberships->first())
+                @if($seat)
+                <div>اللجنة: <span class="value">{{$seat->committee->name}}</span></div>
+                @endif
+
                 @if(optional($settings)->seat_show_seat_number)
-                <div class="seat-badge">رقم الجلوس: <span>{{$student->seat_number ?? 'غير مسجل'}}</span></div>
+                <div class="seat-badge">رقم الجلوس: <span>{{$seat?->seat_number ?? 'غير مسجل'}}</span></div>
                 @endif
             </div>
         </div>

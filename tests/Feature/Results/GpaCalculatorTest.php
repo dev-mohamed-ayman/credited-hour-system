@@ -117,3 +117,24 @@ it('blocks grade ranges that overlap another grade', function () {
 
     expect(Grade::where('name', 'X')->exists())->toBeFalse();
 });
+
+it('classifies a cumulative GPA by the configured bands, as in chs', function (float $gpa, string $classification) {
+    expect($this->calculator->classification($gpa))->toBe($classification);
+})->with([
+    [4.0, 'ممتاز'],
+    [3.7, 'ممتاز'],
+    [3.69, 'جيد جداً'],
+    [3.0, 'جيد جداً'],
+    [2.99, 'جيد'],
+    [2.4, 'جيد'],
+    [2.39, 'مقبول'],
+    [2.0, 'مقبول'],
+    [1.99, 'ضعيف'],
+]);
+
+it('reads the classification bands from config', function () {
+    config(['grading.classifications' => [['min' => 3.5, 'label' => 'متفوق'], ['min' => 0, 'label' => 'عادي']]]);
+
+    expect($this->calculator->classification(3.6))->toBe('متفوق')
+        ->and($this->calculator->classification(3.4))->toBe('عادي');
+});

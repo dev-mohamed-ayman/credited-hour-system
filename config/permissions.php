@@ -41,6 +41,10 @@ return [
         'label' => 'النتائج',
         'actions' => ['upload' => 'رفع النتيجة'],
     ],
+    'term_closures' => [
+        'label' => 'إجراءات نهاية الترم',
+        'actions' => ['view' => 'عرض ومحاكاة', 'execute' => 'تنفيذ', 'revert' => 'تراجع'],
+    ],
     'certificate_types' => [
         'label' => 'الشهادات',
         'actions' => ['view' => 'عرض', 'create' => 'إنشاء', 'edit' => 'تعديل', 'delete' => 'حذف'],

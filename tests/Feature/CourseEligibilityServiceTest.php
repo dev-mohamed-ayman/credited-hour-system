@@ -24,7 +24,7 @@ function createRegistrationTestFixtures(): array
 {
     $department = Department::create(['name' => 'علوم حاسب', 'code' => 'CS']);
     $certificateType = CertificateType::create(['name' => 'ثانوية عامة', 'total_score' => 410]);
-    $section = Section::create(['name' => 'شعبة أ', 'department_id' => $department->id, 'cgpa' => 2.0]);
+    $section = Section::create(['name' => 'شعبة أ', 'department_id' => $department->id]);
     $level1 = Level::create(['name' => 'الفرقة الأولى']);
     $level2 = Level::create(['name' => 'الفرقة الثانية']);
 
@@ -234,7 +234,7 @@ test('cross level registration enabled shows other level courses for same sectio
     ]);
     $level1Course->sections()->attach($section->id);
 
-    $otherSection = Section::create(['name' => 'شعبة ب', 'department_id' => $department->id, 'cgpa' => 2.0]);
+    $otherSection = Section::create(['name' => 'شعبة ب', 'department_id' => $department->id]);
     $otherSectionCourse = Course::create([
         'code' => 'L1003',
         'name' => 'مادة شعبة أخرى',

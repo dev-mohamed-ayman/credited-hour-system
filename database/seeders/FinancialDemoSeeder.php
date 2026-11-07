@@ -125,8 +125,7 @@ class FinancialDemoSeeder extends Seeder
         );
 
         Section::firstOrCreate(
-            ['name' => 'شعبة محاسبة 1', 'department_id' => $accounting->id],
-            ['cgpa' => 2.0]
+            ['name' => 'شعبة محاسبة 1', 'department_id' => $accounting->id]
         );
 
         RegistrationFee::updateOrCreate(

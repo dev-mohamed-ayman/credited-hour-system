@@ -26,7 +26,7 @@
                             <label>اختيار طلاب محددين (اختياري)</label>
                             <select class="select2bs4" multiple="multiple" name="student_ids[]" data-placeholder="اختر كود/اسم الطالب" style="width: 100%;">
                                 @foreach($students as $student)
-                                    <option value="{{ $student->id }}">{{ $student->username }} - {{ $student->name }} - (جلوس: {{ $student->seat_number ?? 'لا يوجد' }})</option>
+                                    <option value="{{ $student->id }}">{{ $student->username }} - {{ $student->name }} - (جلوس: {{ $student->examCommitteeMemberships->first()?->seat_number ?? 'لا يوجد' }})</option>
                                 @endforeach
                             </select>
                         </div>

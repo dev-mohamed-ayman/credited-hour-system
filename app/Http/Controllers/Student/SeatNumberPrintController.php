@@ -10,20 +10,21 @@ use Illuminate\Http\RedirectResponse;
 class SeatNumberPrintController extends Controller
 {
     /**
-     * The student's own printable seat-number card, honouring the admin's seat card
-     * display settings and mirroring the bulk print produced by student affairs.
+     * The student's own printable seat-number card for the current term (their seat in a
+     * published exam committee), honouring the admin's seat card display settings.
      */
     public function __invoke(): View|RedirectResponse
     {
         $student = auth('student')->user()->load(['section.department', 'level', 'year']);
+        $seat = $student->currentExamSeat(publishedOnly: true);
 
-        if (blank($student->seat_number)) {
+        if ($seat === null) {
             return redirect()->route('student.dashboard')
                 ->with('error', 'لم يتم تخصيص رقم جلوس لك بعد — تابع الشؤون الطلابية.');
         }
 
         $settings = Setting::query()->firstOrCreate([]);
 
-        return view('student.pages.print_seat_number', compact('student', 'settings'));
+        return view('student.pages.print_seat_number', compact('student', 'seat', 'settings'));
     }
 }

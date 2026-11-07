@@ -40,24 +40,6 @@ beforeEach(function () {
     $this->secondEnrollment = enrollForResult($this->second, $this->world, $this->course->id);
 });
 
-function seedResultScale(): void
-{
-    $scale = [
-        ['A+', 4.00, 95, 100, true], ['A', 3.70, 90, 94, true], ['B+', 3.40, 85, 89, true], ['B', 3.00, 80, 84, true],
-        ['C+', 2.70, 72, 79, true], ['C', 2.30, 65, 71, true], ['D+', 2.20, 55, 64, true], ['D', 2.00, 50, 54, true],
-        ['F', 0.00, 0, 49, true], ['FX', 0.00, null, null, true], ['IC', null, null, null, false], ['W', null, null, null, false],
-    ];
-
-    foreach ($scale as $order => [$name, $points, $min, $max, $countsInGpa]) {
-        Grade::updateOrCreate(['name' => $name], [
-            'points' => $points, 'min_score' => $min, 'max_score' => $max,
-            'counts_in_gpa' => $countsInGpa, 'order' => $order + 1, 'is_pending_default' => false,
-        ]);
-    }
-
-    Grade::pendingDefault()->update(['counts_in_gpa' => false]);
-}
-
 function resultStudent(array $world, string $code): Student
 {
     $student = $world['student']->replicate();

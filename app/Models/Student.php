@@ -154,6 +154,11 @@ class Student extends Authenticatable
         return $this->hasMany(StudentWarning::class);
     }
 
+    public function termRecords(): HasMany
+    {
+        return $this->hasMany(StudentTermRecord::class);
+    }
+
     public function militaryEducationEnrollments(): HasMany
     {
         return $this->hasMany(MilitaryEducationEnrollment::class);
@@ -207,6 +212,20 @@ class Student extends Authenticatable
     public function examCommitteeMemberships(): HasMany
     {
         return $this->hasMany(ExamCommitteeStudent::class);
+    }
+
+    /**
+     * The student's exam committee seat in the current term — what seat cards print
+     * and what result uploads are checked against.
+     */
+    public function currentExamSeat(bool $publishedOnly = false): ?ExamCommitteeStudent
+    {
+        $year = Year::current();
+
+        return $this->examCommitteeMemberships()
+            ->forTerm($year, $year?->getCurrentSemester(), $publishedOnly)
+            ->with('committee')
+            ->first();
     }
 
     public function feeTickets(): HasMany

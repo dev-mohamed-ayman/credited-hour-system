@@ -133,7 +133,7 @@ it('only registers students of the first level', function () {
 });
 
 it('filters students by section', function () {
-    $otherSection = Section::create(['name' => 'شعبة ب', 'department_id' => $this->world['department']->id, 'cgpa' => 2.0]);
+    $otherSection = Section::create(['name' => 'شعبة ب', 'department_id' => $this->world['department']->id]);
 
     $component = Livewire::actingAs($this->world['admin'])
         ->test(BulkRegister::class)

@@ -44,7 +44,7 @@ test('course registration page shows summer message when current term is summer'
 test('course registration rejects optional courses beyond limit', function () {
     $department = Department::create(['name' => 'علوم حاسب', 'code' => 'CS']);
     $certificateType = CertificateType::create(['name' => 'ثانوية عامة', 'total_score' => 410]);
-    $section = Section::create(['name' => 'شعبة أ', 'department_id' => $department->id, 'cgpa' => 2.0]);
+    $section = Section::create(['name' => 'شعبة أ', 'department_id' => $department->id]);
     $level = Level::create(['name' => 'الفرقة الأولى']);
 
     $pendingGrade = Grade::create(['name' => 'Pending', 'is_pending_default' => true, 'order' => 0]);

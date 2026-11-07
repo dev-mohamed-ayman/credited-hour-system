@@ -157,6 +157,11 @@
                         <i class="ti tabler-shield-star ti-xs me-1"></i> التربية العسكرية
                     </button>
                 </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="terms-tab" data-bs-toggle="tab" data-bs-target="#terms" type="button" role="tab">
+                        <i class="ti tabler-calendar-stats ti-xs me-1"></i> سجل الترمات
+                    </button>
+                </li>
             </ul>
 
             <!-- Tab content -->
@@ -257,7 +262,7 @@
                                 </div>
                                 <div class="col-md-3">
                                     <div class="p-3 bg-light rounded border-start border-info border-4">
-                                        <small class="text-muted d-block">رقم الجلوس</small>
+                                        <small class="text-muted d-block">رقم جلوس الشهادة</small>
                                         <span class="fw-bold text-heading">{{ $student->seat_number ?? '-' }}</span>
                                     </div>
                                 </div>
@@ -441,6 +446,50 @@
                             </div>
                         </div>
                     @endif
+                </div>
+
+                <!-- Term History Tab -->
+                <div class="tab-pane fade" id="terms" role="tabpanel">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">سجل الترمات (إجراءات نهاية الترم)</h5>
+                            <span class="badge bg-label-{{ $academicWarningCount > 0 ? 'warning' : 'success' }}">
+                                الإنذارات الأكاديمية الحالية: {{ $academicWarningCount }} من {{ config('grading.dismissal_warnings') }}
+                            </span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>الترم</th>
+                                        <th>CGPA</th>
+                                        <th>الساعات المكتسبة</th>
+                                        <th>النتيجة</th>
+                                        <th>الإنذارات</th>
+                                        <th>الفرقة</th>
+                                        <th>حالة القيد</th>
+                                        <th>ملاحظة</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($termRecords as $record)
+                                        <tr wire:key="term-record-{{ $record->id }}">
+                                            <td>{{ $record->closure->semester->label() }} {{ $record->closure->year?->year }}</td>
+                                            <td>{{ number_format((float) $record->cgpa, 2) }}</td>
+                                            <td>{{ $record->earned_hours }}</td>
+                                            <td><span class="badge bg-label-{{ $record->outcome->color() }}">{{ $record->outcome->label() }}</span></td>
+                                            <td>{{ $record->warnings_before }} ← {{ $record->warnings_after }}</td>
+                                            <td>{{ $record->levelBefore?->name ?? '—' }} @if($record->level_id_after !== $record->level_id_before) ← {{ $record->levelAfter?->name }} @endif</td>
+                                            <td>{{ $record->study_status_before?->label() ?? '—' }} @if($record->study_status_after !== $record->study_status_before) ← {{ $record->study_status_after?->label() }} @endif</td>
+                                            <td class="small text-muted">{{ $record->note }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="8" class="text-center text-muted py-4">لم يتم تنفيذ إجراءات نهاية أي ترم على هذا الطالب بعد.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
