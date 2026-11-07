@@ -154,6 +154,21 @@ class Student extends Authenticatable
         return $this->hasMany(StudentWarning::class);
     }
 
+    /**
+     * Current students: مقيد، عذر، وقف قيد, or no status recorded — not withdrawn, dismissed or graduated.
+     */
+    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where(fn (\Illuminate\Database\Eloquent\Builder $status) => $status
+            ->whereNull('status')
+            ->orWhereIn('status', [StudentStatus::REGISTERED->value, StudentStatus::EXCUSED->value, StudentStatus::SUSPENDED->value]));
+    }
+
+    public function termNotes(): HasMany
+    {
+        return $this->hasMany(StudentTermNote::class);
+    }
+
     public function excuses(): HasMany
     {
         return $this->hasMany(StudentExcuse::class);

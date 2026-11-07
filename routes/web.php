@@ -111,6 +111,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('registration-log', \App\Livewire\Admin\RegistrationLog\Index::class)->name('registration-log.index')->middleware('permission:course_registrations.view');
     Route::get('registration-records/{registration}', \App\Livewire\Admin\RegistrationRecord\Show::class)->name('registration-records.show')->middleware('permission:course_registrations.view');
     Route::get('results/upload', \App\Livewire\Admin\Results\Upload::class)->name('results.upload')->middleware('permission:results.upload');
+    Route::get('results/edit', \App\Livewire\Admin\Results\EditResult::class)->name('results.edit')->middleware('permission:results.edit');
+    Route::get('results/changes', \App\Livewire\Admin\Results\Changes::class)->name('results.changes')->middleware('permission:results.history');
+    Route::get('results/publication', \App\Livewire\Admin\Results\Publication::class)->name('results.publication')->middleware('permission:results.publish');
+    Route::get('results/notes', \App\Livewire\Admin\Results\Notes::class)->name('results.notes')->middleware('permission:results.notes');
+    Route::get('results/signatures', \App\Livewire\Admin\Results\Signatures::class)->name('results.signatures')->middleware('permission:results.signatures');
+    Route::get('results/reports', \App\Livewire\Admin\Results\Reports::class)->name('results.reports')->middleware('permission:results.reports');
+    Route::get('results/grade-sheets', [\App\Http\Controllers\Admin\GradeSheetController::class, 'index'])->name('results.grade-sheets.index')->middleware('permission:results.sheets');
+    Route::post('results/grade-sheets', [\App\Http\Controllers\Admin\GradeSheetController::class, 'print'])->name('results.grade-sheets.print')->middleware('permission:results.sheets');
     Route::get('results/term-closure', \App\Livewire\Admin\Results\EndOfTerm::class)->name('results.term-closure')->middleware('permission:term_closures.view');
 
     // Transfer Equivalency Routes

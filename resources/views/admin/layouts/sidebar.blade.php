@@ -136,7 +136,7 @@
         </li>
         @endcanany
 
-        @canany(['course_registrations.view', 'results.upload', 'term_closures.view', 'courses.view', 'grades.view', 'academic_advisors.view', 'military_education.view', 'transfer_equivalency.view'])
+        @canany(['course_registrations.view', 'results.upload', 'results.edit', 'results.history', 'results.notes', 'results.publish', 'results.sheets', 'results.reports', 'results.signatures', 'term_closures.view', 'courses.view', 'grades.view', 'academic_advisors.view', 'military_education.view', 'transfer_equivalency.view'])
         <li class="menu-item {{isActiveRoute(['course-registrations.*', 'registration-records.*', 'registration-log.*', 'results.*', 'courses.*', 'grades.*', 'academic-advisors.*', 'military-education-courses.*', 'admin.transfer-equivalency.*'], true)}}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base ti tabler-book"></i>
@@ -168,6 +168,24 @@
                     </a>
                 </li>
                 @endcan
+
+                @foreach([
+                    ['results.edit', 'results.edit', 'تعديل نتيجة طالب'],
+                    ['results.history', 'results.changes', 'سجل تعديلات النتائج'],
+                    ['results.notes', 'results.notes', 'ملاحظات الطلاب'],
+                    ['results.publish', 'results.publication', 'إعلان النتيجة'],
+                    ['results.sheets', 'results.grade-sheets.index', 'كشوف الدرجات'],
+                    ['results.reports', 'results.reports', 'تقارير النتائج'],
+                    ['results.signatures', 'results.signatures', 'إعدادات التوقيعات'],
+                ] as [$permission, $routeName, $label])
+                    @can($permission)
+                    <li class="menu-item {{isActiveRoute($routeName)}}">
+                        <a href="{{route($routeName)}}" class="menu-link">
+                            <div data-i18n="{{ $label }}">{{ $label }}</div>
+                        </a>
+                    </li>
+                    @endcan
+                @endforeach
 
                 @can('term_closures.view')
                 <li class="menu-item {{isActiveRoute('results.term-closure')}}">

@@ -102,7 +102,10 @@
                             <div id="yearAccordion{{ $yearId }}">
                                 @foreach($yearRegistrations as $reg)
                                     @php
-                                        $gpaData = $this->calculateGPA($reg->courses);
+                                        $isPublished = in_array($reg->year_id.'|'.$reg->semester?->value, $publishedTerms, true);
+                                        $gpaData = $isPublished
+                                            ? $this->calculateGPA($reg->courses)
+                                            : ['gpa' => '—', 'earned_hours' => '—', 'total_hours' => $reg->courses->sum(fn ($courseReg) => (int) $courseReg->course?->hours)];
                                         $semesterId = $reg->id;
                                     @endphp
                                     <div class="card border border-light shadow-sm mb-3">
@@ -176,7 +179,9 @@
                                                                         {{ $course?->hours ?? '-' }} ساعة
                                                                     </td>
                                                                     <td class="text-center">
-                                                                        @if($grade)
+                                                                        @if(! $isPublished)
+                                                                            <span class="badge bg-label-secondary">لم تُعلن بعد</span>
+                                                                        @elseif($grade)
                                                                             @php
                                                                                 $badgeClass = match(true) {
                                                                                     ! $grade->countsInGpa() => 'bg-label-secondary',

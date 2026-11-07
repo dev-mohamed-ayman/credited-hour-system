@@ -105,7 +105,7 @@ class Excuses extends Component
         abort_unless(auth()->user()->can('student_excuses.delete'), 403);
 
         try {
-            $service->remove(StudentExcuse::where('student_id', $this->studentId)->findOrFail($excuseId));
+            $service->remove(StudentExcuse::where('student_id', $this->studentId)->findOrFail($excuseId), auth()->user());
         } catch (StudentExcuseException $e) {
             $this->dispatch('toast', ['type' => 'error', 'message' => $e->getMessage()]);
 

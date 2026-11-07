@@ -51,4 +51,29 @@ class RegistrationCourse extends Model
     {
         return $this->belongsTo(User::class, 'result_uploaded_by');
     }
+
+    public function resultChanges(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ResultChange::class);
+    }
+
+    /**
+     * The result as the change log stores it.
+     *
+     * @return array{grade_id: int|null, grade: string|null, written_score: float|null, coursework_score: float|null, total_score: float|null, exam_status: string|null, note: string|null}
+     */
+    public function resultSnapshot(): array
+    {
+        $this->loadMissing('grade');
+
+        return [
+            'grade_id' => $this->grade_id === null ? null : (int) $this->grade_id,
+            'grade' => $this->grade?->name,
+            'written_score' => $this->written_score === null ? null : (float) $this->written_score,
+            'coursework_score' => $this->coursework_score === null ? null : (float) $this->coursework_score,
+            'total_score' => $this->total_score === null ? null : (float) $this->total_score,
+            'exam_status' => $this->exam_status?->value,
+            'note' => $this->result_note,
+        ];
+    }
 }

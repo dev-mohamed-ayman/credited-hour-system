@@ -462,7 +462,7 @@ class TermClosureService
     private function currentStudents(): \Illuminate\Database\Eloquent\Collection
     {
         return Student::query()
-            ->whereIn('status', [StudentStatus::REGISTERED->value, StudentStatus::EXCUSED->value, StudentStatus::SUSPENDED->value])
+            ->active()
             ->whereNotNull('level_id')
             ->with([
                 ...GpaCalculator::relations(),

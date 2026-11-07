@@ -8,6 +8,19 @@ class Setting extends Model
 {
     protected $guarded = [];
 
+    /**
+     * The grade sheet signatures (chs: control/signature), stored as signature_{role}_name / _image.
+     *
+     * @var array<string, string>
+     */
+    public const SIGNATURE_ROLES = [
+        'written' => 'كتبه',
+        'dictated' => 'أملاه',
+        'reviewed' => 'راجعه',
+        'head' => 'رئيس الكنترول',
+        'dean' => 'عميد المعهد',
+    ];
+
     protected function casts(): array
     {
         return [

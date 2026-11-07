@@ -4,12 +4,14 @@ namespace App\Services;
 
 use App\Enums\ExamResultStatus;
 use App\Enums\RegistrationStatus;
+use App\Enums\ResultChangeSource;
 use App\Enums\Semester;
 use App\Enums\SemesterStatus;
 use App\Models\Course;
 use App\Models\ExamCommitteeStudent;
 use App\Models\Grade;
 use App\Models\RegistrationCourse;
+use App\Models\ResultChange;
 use App\Models\User;
 use App\Models\Year;
 use DateTimeInterface;
@@ -233,21 +235,93 @@ class ResultUploadService
         $uploadedAt = now();
 
         DB::transaction(function () use ($rows, $uploadedBy, $uploadedAt) {
+            $enrollments = RegistrationCourse::query()
+                ->with('grade')
+                ->whereKey(array_column($rows, 'registration_course_id'))
+                ->get()
+                ->keyBy('id');
+
             foreach ($rows as $row) {
-                RegistrationCourse::query()->whereKey($row['registration_course_id'])->update([
-                    'grade_id' => $row['grade_id'],
-                    'written_score' => $row['written_score'],
-                    'coursework_score' => $row['coursework_score'],
-                    'total_score' => $row['total_score'],
-                    'exam_status' => $row['exam_status'],
-                    'result_note' => $row['note'],
-                    'result_uploaded_at' => $uploadedAt,
-                    'result_uploaded_by' => $uploadedBy->id,
-                ]);
+                $enrollment = $enrollments->get($row['registration_course_id']);
+
+                if ($enrollment === null) {
+                    continue;
+                }
+
+                $this->write($enrollment, $row, $uploadedBy, $uploadedAt, ResultChangeSource::UPLOAD);
             }
         });
 
         return count($rows);
+    }
+
+    /**
+     * Corrects one student's result by hand (e.g. after an appeal), with the same marks
+     * rules as the sheet. Returns the problems; nothing is written when there are any.
+     *
+     * @return array<int, string>
+     */
+    public function editResult(RegistrationCourse $enrollment, mixed $written, mixed $coursework, mixed $total, mixed $gradeName, ?string $note, string $reason, User $editedBy): array
+    {
+        $errors = [];
+
+        if (trim($reason) === '') {
+            $errors[] = 'اكتب سبب التعديل.';
+        }
+
+        if ($note !== null && mb_strlen($note) > 255) {
+            $errors[] = 'الملاحظة أطول من 255 حرفاً.';
+        }
+
+        $grades = Grade::query()->get();
+        $gradesByName = $grades->keyBy(fn (Grade $grade) => mb_strtoupper(trim($grade->name)));
+        $scale = $grades->filter(fn (Grade $grade) => $grade->isScored())->sortByDesc(fn (Grade $grade) => (float) $grade->min_score);
+
+        $outcome = $this->evaluateMarks(
+            $this->normalizeCell($written),
+            $this->normalizeCell($coursework),
+            $this->normalizeCell($total),
+            $this->normalizeCell($gradeName),
+            $gradesByName,
+            $scale,
+            $errors,
+        );
+
+        if ($errors !== []) {
+            return $errors;
+        }
+
+        DB::transaction(fn () => $this->write($enrollment, [
+            'grade_id' => $outcome['grade']->id,
+            'written_score' => $outcome['written_score'],
+            'coursework_score' => $outcome['coursework_score'],
+            'total_score' => $outcome['total_score'],
+            'exam_status' => $outcome['exam_status']?->value,
+            'note' => $note === null || trim($note) === '' ? null : trim($note),
+        ], $editedBy, now(), ResultChangeSource::MANUAL, trim($reason)));
+
+        return [];
+    }
+
+    /**
+     * @param  array{grade_id: int, written_score: float|null, coursework_score: float|null, total_score: float|null, exam_status: string|null, note: string|null}  $result
+     */
+    private function write(RegistrationCourse $enrollment, array $result, User $user, DateTimeInterface $at, ResultChangeSource $source, ?string $reason = null): void
+    {
+        $before = $enrollment->resultSnapshot();
+
+        $enrollment->forceFill([
+            'grade_id' => $result['grade_id'],
+            'written_score' => $result['written_score'],
+            'coursework_score' => $result['coursework_score'],
+            'total_score' => $result['total_score'],
+            'exam_status' => $result['exam_status'],
+            'result_note' => $result['note'],
+            'result_uploaded_at' => $at,
+            'result_uploaded_by' => $user->id,
+        ])->save();
+
+        ResultChange::record($enrollment, $before, $source, $user, $reason);
     }
 
     /**

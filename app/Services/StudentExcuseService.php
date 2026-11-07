@@ -3,12 +3,14 @@
 namespace App\Services;
 
 use App\Enums\RegistrationStatus;
+use App\Enums\ResultChangeSource;
 use App\Enums\Semester;
 use App\Enums\Student\ExcuseType;
 use App\Enums\Student\StudentStatus;
 use App\Exceptions\StudentExcuseException;
 use App\Models\Grade;
 use App\Models\RegistrationCourse;
+use App\Models\ResultChange;
 use App\Models\Student;
 use App\Models\StudentExcuse;
 use App\Models\TermClosure;
@@ -83,8 +85,8 @@ class StudentExcuseService
         }
 
         return DB::transaction(function () use ($student, $year, $semester, $type, $reason, $user, $excusedCourses, $incomplete) {
-            if ($excusedCourses->isNotEmpty()) {
-                RegistrationCourse::whereKey($excusedCourses->modelKeys())->update(['grade_id' => $incomplete->id]);
+            foreach ($excusedCourses as $enrollment) {
+                $this->setGrade($enrollment, $incomplete->id, $user, "{$type->label()}: {$reason}");
             }
 
             if ($status = $type->studentStatus()) {
@@ -107,7 +109,7 @@ class StudentExcuseService
      *
      * @throws StudentExcuseException
      */
-    public function remove(StudentExcuse $excuse): void
+    public function remove(StudentExcuse $excuse, ?User $user = null): void
     {
         $this->ensureTermOpen(
             $excuse->year,
@@ -116,14 +118,16 @@ class StudentExcuseService
             wholeYear: $excuse->type === ExcuseType::SUSPENSION,
         );
 
-        DB::transaction(function () use ($excuse) {
+        DB::transaction(function () use ($excuse, $user) {
             $incompleteId = Grade::query()->where('name', 'IC')->value('id');
             $pendingId = Grade::pendingDefault()?->id;
 
             if (! empty($excuse->excused_course_ids) && $incompleteId !== null) {
-                RegistrationCourse::whereKey($excuse->excused_course_ids)
+                RegistrationCourse::query()
+                    ->whereKey($excuse->excused_course_ids)
                     ->where('grade_id', $incompleteId)
-                    ->update(['grade_id' => $pendingId]);
+                    ->get()
+                    ->each(fn (RegistrationCourse $enrollment) => $this->setGrade($enrollment, $pendingId, $user, 'حذف العذر'));
             }
 
             $student = $excuse->student;
@@ -152,6 +156,15 @@ class StudentExcuseService
                 ->whereNotIn('status', [RegistrationStatus::REJECTED->value, RegistrationStatus::CANCELLED->value]))
             ->with(['course', 'grade'])
             ->get();
+    }
+
+    private function setGrade(RegistrationCourse $enrollment, ?int $gradeId, ?User $user, string $reason): void
+    {
+        $before = $enrollment->resultSnapshot();
+
+        $enrollment->forceFill(['grade_id' => $gradeId])->save();
+
+        ResultChange::record($enrollment, $before, ResultChangeSource::EXCUSE, $user, $reason);
     }
 
     /**

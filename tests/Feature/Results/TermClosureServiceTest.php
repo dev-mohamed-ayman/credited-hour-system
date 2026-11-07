@@ -215,6 +215,13 @@ describe('warnings after the first and second terms', function () {
         expect(outcomeOf($this->student, $this->service->close($this->year, Semester::FIRST))->outcome)->toBe(TermOutcome::WARNED);
     });
 
+    it('processes a student with no status recorded', function () {
+        $this->student->forceFill(['status' => null])->save();
+        earn($this->student, $this->year, Semester::FIRST, 9, 'F');
+
+        expect(outcomeOf($this->student, $this->service->close($this->year, Semester::FIRST))->outcome)->toBe(TermOutcome::WARNED);
+    });
+
     it('leaves graduated, dismissed and withdrawn students out', function () {
         $graduate = closureStudent($this->world, 'GRAD0000001', ['status' => StudentStatus::GRADUATED->value]);
 

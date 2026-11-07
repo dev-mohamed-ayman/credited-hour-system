@@ -25,7 +25,7 @@ class Dashboard extends Component
             ->flatMap->courses
             ->sum(fn ($courseReg) => (int) $courseReg->course?->hours);
 
-        $gpa = app(GpaCalculator::class)->cumulative($student);
+        $gpa = app(GpaCalculator::class)->cumulative($student, publishedOnly: true);
 
         return [
             'cgpa' => $gpa['gpa'],

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Student;
 
+use App\Models\ResultPublication;
 use App\Services\GpaCalculator;
 use Livewire\Component;
 
@@ -47,6 +48,7 @@ class StatusStatement extends Component
         return view('livewire.student.status-statement', [
             'student' => $student,
             'selectedRegistration' => $selectedRegistration,
+            'publishedTerms' => ResultPublication::publishedTermKeys(),
         ])
             ->extends('student.layouts.app')
             ->section('content');

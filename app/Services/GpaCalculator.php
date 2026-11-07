@@ -3,10 +3,13 @@
 namespace App\Services;
 
 use App\Enums\RegistrationStatus;
+use App\Enums\Semester;
 use App\Models\Grade;
 use App\Models\RegistrationCourse;
+use App\Models\ResultPublication;
 use App\Models\Student;
 use App\Models\TransferEquivalency;
+use App\Models\Year;
 use Illuminate\Support\Collection;
 
 /**
@@ -35,11 +38,16 @@ class GpaCalculator
     }
 
     /**
+     * @param  Year|null  $untilYear  with $untilSemester: the standing at the end of that term
+     * @param  bool  $publishedOnly  leave out terms whose results are not announced yet (what the student sees)
      * @return array{gpa: float, total_hours: int, earned_hours: int, points: float}
      */
-    public function cumulative(Student $student): array
+    public function cumulative(Student $student, ?Year $untilYear = null, ?Semester $untilSemester = null, bool $publishedOnly = false): array
     {
         $student->loadMissing(self::relations());
+
+        $until = $untilYear && $untilSemester ? $untilYear->year.'|'.$untilSemester->order() : null;
+        $published = $publishedOnly ? ResultPublication::publishedTermKeys() : null;
 
         $attempts = $student->transferEquivalencies
             ->map(fn (TransferEquivalency $equivalency) => [
@@ -54,7 +62,17 @@ class GpaCalculator
                 continue;
             }
 
-            $sort = '1|'.$registration->year?->year.'|'.($registration->semester?->order() ?? 0);
+            $term = $registration->year?->year.'|'.($registration->semester?->order() ?? 0);
+
+            if ($until !== null && strcmp($term, $until) > 0) {
+                continue;
+            }
+
+            if ($published !== null && ! in_array($registration->year_id.'|'.$registration->semester?->value, $published, true)) {
+                continue;
+            }
+
+            $sort = '1|'.$term;
 
             foreach ($registration->courses as $registrationCourse) {
                 $attempts->push([
